@@ -3,5 +3,9 @@ public class Hello {
        System.out.println(Math.random());
        System.out.println(Math.random());
        System.out.println(Math.random());
+       System.out.println("Hello Allan, Aiden, Fardeen, George, and Vincent");
+
+        
+
     }
 }
