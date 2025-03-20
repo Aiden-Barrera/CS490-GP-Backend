@@ -1,168 +1,212 @@
-// install express and nodemon if you haven't already - VC
-const express = require('express');
-const mysql = require('mysql');
-app=express();
-var bodyParser = require('body-parser');
+import express from 'express'
+import { addPatientDoc, createComment, createDoctor, createExercise, createForumPost, createPatient, createPharmacy, 
+    createPill, createReveiw, deleteDoctor, deletePatient, deletePill, getComments_id, getDoctorAuth, getDoctors, 
+    getExercises, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getReviews, 
+    getReviewsTop, getTiers, rmPatientDoc, UpdateDoctorInfo, UpdatePatientInfo, UpdatePillInfo} from './PrimeWell_db.js'
+import cors from 'cors'
 
-const conn = require('./PrimeWell_db');
+const app = express()
+app.use(express.json())
+app.use(cors())
 
-//app.use(express.json)
-app.use((req, res, next)=> {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origon, X-Requested-With, Content-Type, Accept");
-    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE, PATCH");
-    next();
-});
+app.use((err, req, res, next) => {
+    console.error(err.stack)
+    res.status(500).send('Something broke!')
+  })
 
-app.use(bodyParser.urlencoded({extended: true})) 
-app.use(bodyParser.json()) 
 
-app.listen(3000, ()=>{
-    console.log("on port 3000");
-    conn.connect((err)=>{
-        if(err) throw err;
-        console.log('connection successful');
-
-    })
-});
+app.listen(3000, () => {
+    console.log('Server is running on port 3000')
+})
 
 //GET DATA ----------------------------------------------------------------------------------------------
 
-//the 5 request below return data from our only populated tables so far - VC
-app.get('/patient', (req, res)=>{
-    //res.set('Content-Type', 'application/json');
-    var query = `
-    SELECT * FROM primewell_clinic.patientbase;
-    `
-    conn.query(query, (err, result)=>{
-        if(err) throw err;
-        res.send(result);
-        res.end();
-    })
-});
+app.get("/patient", async (req, res) => {
+    const rows = await getPatients()
+    res.send(rows)
+})
 
-app.get('/doctor', (req, res)=>{
-    //res.set('Content-Type', 'application/json');
-    var query = `
-    SELECT * FROM primewell_clinic.doctorbase;
-    `
-    conn.query(query, (err, result)=>{
-        if(err) throw err;
-        res.send(result);
-        res.end();
-    })
-});
+app.get("/doctor", async (req, res) => {
+    const rows = await getDoctors()
+    res.send(rows)
+})
 
-app.get('/pharmacies', (req, res)=>{
-    //res.set('Content-Type', 'application/json');
-    var query = `
-    SELECT * FROM primewell_clinic.pharmacies;
-    `
-    conn.query(query, (err, result)=>{
-        if(err) throw err;
-        res.send(result);
-        res.end();
-    })
-});
+app.get("/pharmacies", async (req, res) => {
+    const rows = await getPharmacies()
+    res.send(rows)
+})
 
-app.get('/pharmacies', (req, res)=>{
-    //res.set('Content-Type', 'application/json');
-    var query = `
-    SELECT * FROM primewell_clinic.pharmacies;
-    `
-    conn.query(query, (err, result)=>{
-        if(err) throw err;
-        res.send(result);
-        res.end();
-    })
-});
+app.get("/pillbank", async (req, res) => {
+    const rows = await getPills()
+    res.send(rows)
+})
 
-app.get('/pillbank', (req, res)=>{
-    //res.set('Content-Type', 'application/json');
-    var query = `
-    SELECT * FROM primewell_clinic.pillbank;
-    `
-    conn.query(query, (err, result)=>{
-        if(err) throw err;
-        res.send(result);
-        res.end();
-    })
-});
+app.get("/tiers", async (req, res) => {
+    const rows = await getTiers()
+    res.send(rows)
+})
 
+app.get("/exercisebank", async (req, res) => {
+    const rows = await getExercises()
+    res.send(rows)
+})
 
-app.get('/tiers', (req, res)=>{
-    //res.set('Content-Type', 'application/json');
-    var query = `
-    SELECT * FROM primewell_clinic.pharmacies;
-    `
-    conn.query(query, (err, result)=>{
-        if(err) throw err;
-        res.send(result);
-        res.end();
-    })
-});
+app.get("/forumPosts", async (req, res) => {
+    const rows = await getForumPosts()
+    res.send(rows)
+})
 
-app.get('/exercisebank', (req, res)=>{
-    //res.set('Content-Type', 'application/json');
-    var query = `
-    SELECT * FROM primewell_clinic.exercisebank;
-    `
-    conn.query(query, (err, result)=>{
-        if(err) throw err;
-        res.send(result);
-        res.end();
-    })
-});
+app.get("/comments/:id", async (req, res) => {
+    const rows = await getComments_id(req.params.id)
+    res.send(rows)
+})
+
+app.get("/reviews", async (req, res) => {
+    const rows = await getReviews()
+    res.send(rows)
+})
+
+app.get("/reviews/top", async (req, res) => {
+    const rows = await getReviewsTop()
+    res.send(rows)
+})
+
+app.get("/passAuthPatient/:email", async (req, res) => {
+    const rows = await getPatientAuth(req.params.email)
+    res.send(rows)
+})
+
+app.get("/passAuthDoctor/:email", async (req, res) => {
+    const rows = await getDoctorAuth(req.params.email)
+    res.send(rows)
+})
+
+app.get("/passAuthPharm/:email", async (req, res) => {
+    const rows = await getPharmAuth(req.params.email)
+    res.send(rows)
+})
 
 //ADD DATA ----------------------------------------------------------------------------------------------
-
-// Add to pillbank via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM primewell_clinic.pillbank);
+// All below should have an addtional query to auditlog with type POST
+// Add to db via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM primewell_clinic.table);
 // - VC
-app.post('/pillbank/:id', (req, res)=>{
-    let timeStamp = new Date();
-    let entry = {
-    Pill_ID: req.params.id,
-    Cost: req.body.Cost,
-    Pill_Name: req.body.last_name,
-    email: req.body.email,
-    Pharma_ID: req.body.Pharma_ID,
-    Dosage:  req.body.Dosage,
-    last_update: timeStamp,
-    create_date: timeStamp
-    };
-    let query = `INSERT INTO primewell_clinic.pillbank SET ?;`;
-    conn.query(query, [entry], (err, result)=>{
-        if(err) throw err;
-        res.send(result);
-        res.end();
-    })
-});
 
+app.post("/patient", async (req, res) => {
+    const entry = req.body
+    const newPatient = await createPatient(entry)
+    res.status(201).send(newPatient)
+})
+
+app.post("/doctor", async (req, res) => {
+    const entry = req.body
+    const newDoctor = await createDoctor(entry)
+    res.status(201).send(newDoctor)
+})
+
+app.post("/pharmacies", async (req, res) => {
+    const entry = req.body
+    const newPharm = await createPharmacy(entry)
+    res.status(201).send(newPharm)
+})
+
+app.post("/pillbank", async (req, res) => {
+    const entry = req.body
+    const newPill = await createPill(entry)
+    res.status(201).send(newPill)
+})
+
+app.post("/exercisebank", async (req, res) => {
+    const entry = req.body
+    const newExercise = await createExercise(entry)
+    res.status(201).send(newExercise)
+})
+
+app.post("/forumPosts", async (req, res) => {
+    const entry = req.body
+    const newFPost = await createForumPost(entry)
+    res.status(201).send(newFPost)
+})
+
+app.post("/comments", async (req, res) => {
+    const entry = req.body
+    const newComment = await createComment(entry)
+    res.status(201).send(newComment)
+})
+
+app.post("/comments", async (req, res) => {
+    const entry = req.body
+    const newComment = await createComment(entry)
+    res.status(201).send(newComment)
+})
+
+app.post("/reviews", async (req, res) => {
+    const entry = req.body
+    const newReview = await createReveiw(entry)
+    res.status(201).send(newReview)
+})
 
 //UPDATE DATA ----------------------------------------------------------------------------------------------
-
+// All below should have an addtional query to auditlog with tyoe PATCH
 //update based on a given id - VC
-app.patch('/pillbank/:id', (req, res)=>{
-    let timeStamp = new Date();
-    let entry = req.body;
-    let query = `UPDATE primewell_clinic.pillbank SET ?, \`Last_Update\` = ? Where Pill_ID = ?;`;
-    conn.query(query, [entry, timeStamp, Number(req.params.id)], 
-    (err, result)=>{
-        if(err) throw err;
-        res.send(result);
-        res.end();
-    })
-});
+
+app.patch('/patient/:id', async(req, res)=>{
+    try {
+        const entry = req.body
+        const updateResult = await UpdatePatientInfo(req.params.id, entry)
+        res.status(201).send(updateResult)
+        }
+    catch(error) { res.status(500).send(error).json({"message":req.body}) }
+})
+
+app.patch('/patient/addDoc/:id/:doc_id', async(req, res)=>{ //Give patient a doctor -VC
+    try {
+        const updateResult = await addPatientDoc(req.params.id, req.params.doc_id)
+        res.status(201).send(updateResult)
+        }
+    catch(error) { res.status(500).send(error).json({"message":req.params.id}) }
+})
+
+app.patch('/patient/removeDoc/:id', async(req, res)=>{ //Remove patient doctor -VC
+    try {
+        const updateResult = await rmPatientDoc(req.params.id)
+        res.status(201).send(updateResult)
+        }
+    catch(error) { res.status(500).send(error).json({"message":req.params.id}) }
+})
+
+app.patch('/doctor/:id', async(req, res)=>{
+    try {
+        const entry = req.body
+        const updateResult = await UpdateDoctorInfo(req.params.id, entry)
+        res.status(201).send(updateResult)
+        }
+    catch(error) { res.status(500).send(error).json({"message":req.body}) }
+})
+
+app.patch('/pillbank/:id', async(req, res)=>{
+    try {
+        const entry = req.body
+        const updateResult = await UpdatePillInfo(req.params.id, entry)
+        res.status(201).send(updateResult)
+        }
+    catch(error) { res.status(500).send(error).json({"message":req.body}) }
+})
 
 //REMOVE DATA ----------------------------------------------------------------------------------------------
-
+// All below should have an addtional query to auditlog with tyoe DELETE
 // delete based on a given id - VC
-app.delete('/pillbank/:id', (req, res)=>{
-    let query = `DELETE FROM primewell_clinic.pillbank WHERE Pill_ID = ?;`;
-    conn.query(query, [req.params.id], (err, result)=>{
-        if(err)
-            throw err;
-        res.send(result);
-        res.end();
-    })
-});
+
+app.delete("/patient/:id", async(req, res) => {
+    const deleteResult = await deletePatient(req.params.id)
+    res.status(204).send(deleteResult)
+})
+
+app.delete("/doctor/:id", async(req, res) => {
+    const deleteResult = await deleteDoctor(req.params.id)
+    res.status(204).send(deleteResult)
+})
+
+app.delete("/pillbank/:id", async(req, res) => {
+    const deleteResult = await deletePill(req.params.id)
+    res.status(204).send(deleteResult)
+})
