@@ -138,7 +138,7 @@ app.post("/patient", async (req, res) => {
     }
 })
 
-// Ensure that Email holds the form of an email address, Phone holds the form of a phone number, and Address holds the form of a Street address } via frontend? - FI 
+// Ensure that Email holds the form of an email address, Phone holds the form of a phone number } via frontend? - FI 
 app.post("/doctor", async (req, res) => {
     const { License_Serial, First_Name, Last_Name, Specialty, Email, Phone, PW, Availability } = req.body
 
@@ -154,6 +154,9 @@ app.post("/doctor", async (req, res) => {
     }
 })
 
+// Ensure that the ZIP code passed in the Zip field of the request body is an INTEGER between 10000 and 99999 TO SATISFY THE DB CONSTRAINT - FI
+// Modify the DB such that the check ensures that Zip codes must be between 88011 and 88019 to match the geographical constraints of the system? ^ - FI
+// Ensure that Email holds the form of an email address, Phone holds the form of a phone number, and Address holds the form of a Street address } via frontend? - FI 
 app.post("/pharmacies", async (req, res) => {
     const { Company_Name, Address, Zip, Work_Hours, Email, PW } = req.body
     if (!Company_Name || !Address || !Zip || !Work_Hours || !Email || !PW) {
