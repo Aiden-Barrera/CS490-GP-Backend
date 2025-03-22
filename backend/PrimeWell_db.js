@@ -60,31 +60,31 @@ export async function getReviews() {
     return resultRows
 }
 
-export async function getReviewsTop() { //top 3 revies for splash page - VC
+export async function getReviewsTop() { //top 3 reviews for splash page - VC
     const [resultRows] = await pool.query(`SELECT * FROM reviews ORDER BY Rating DESC LIMIT 3`)
     return resultRows
 }
 
 // 3 below are for pass word authentication, check what was entered compared to what is stored, could add post for attempts - VC
-export async function getPatientAuth(email) {
-    const [resultRows] = await pool.query(`SELECT PW FROM patientbase WHERE Email = ?`,
-        [email]
+export async function getPatientAuth(email, pw) {
+    const [resultRows] = await pool.query(`SELECT * FROM PatientBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
+        [email, pw]
     )
-    return resultRows
+    return resultRows[0]
 }
 
-export async function getDoctorAuth(email) {
-    const [resultRows] = await pool.query(`SELECT PW FROM doctorbase WHERE Email = ?`,
-        [email]
+export async function getDoctorAuth(email, pw) {
+    const [resultRows] = await pool.query(`SELECT * FROM DoctorBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
+        [email, pw]
     )
-    return resultRows
+    return resultRows[0]
 }
 
-export async function getPharmAuth(email) {
-    const [resultRows] = await pool.query(`SELECT PW FROM pharmacies WHERE Email = ?`,
-        [email]
+export async function getPharmAuth(email, pw) {
+    const [resultRows] = await pool.query(`SELECT * FROM Pharmacies WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
+        [email, pw]
     )
-    return resultRows
+    return resultRows[0]
 }
 
 //ADD DATA ----------------------------------------------------------------------------------------------

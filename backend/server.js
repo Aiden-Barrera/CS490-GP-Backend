@@ -71,19 +71,46 @@ app.get("/reviews/top", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/passAuthPatient/:email", async (req, res) => {
-    const rows = await getPatientAuth(req.params.email)
-    res.send(rows)
+app.post("/passAuthPatient", async (req, res) => {
+    const { email, pw } = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    try {
+        const rows = await getPatientAuth(email, pw);
+        res.send(rows);
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+app.post("/passAuthDoctor", async (req, res) => {
+    const { email, pw } = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    try {
+        const rows = await getDoctorAuth(email, pw);
+        res.send(rows);
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error" });
+    }
 })
 
-app.get("/passAuthDoctor/:email", async (req, res) => {
-    const rows = await getDoctorAuth(req.params.email)
-    res.send(rows)
-})
+app.post("/passAuthPharm", async (req, res) => {
+    const { email, pw } = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
 
-app.get("/passAuthPharm/:email", async (req, res) => {
-    const rows = await getPharmAuth(req.params.email)
-    res.send(rows)
+    try {
+        const rows = await getPharmAuth(email, pw);
+        res.send(rows);
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error" });
+    }
 })
 
 //ADD DATA ----------------------------------------------------------------------------------------------
