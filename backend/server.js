@@ -118,22 +118,54 @@ app.post("/passAuthPharm", async (req, res) => {
 // Add to db via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM primewell_clinic.table);
 // - VC
 
+// Ensure that the ZIP code passed in the Zip field of the request body is an INTEGER between 10000 and 99999 TO SATISFY THE DB CONSTRAINT - FI
+// Modify the DB such that the check ensures that Zip codes must be between 88011 and 88019 to match the geographical constraints of the system? ^ - FI
+// Ensure that the Pharm_ID passed in the Pharm_ID field of the request body is an EXISTING Pharm_ID in the Pharmacies table } via frontend? - FI
+// Ensure that Email holds the form of an email address, Phone holds the form of a phone number, and Address holds the form of a Street address } via frontend? - FI 
 app.post("/patient", async (req, res) => {
-    const entry = req.body
-    const newPatient = await createPatient(entry)
+    const { Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, Doctor_ID } = req.body
+    const docId = Doctor_ID !== undefined ? Doctor_ID : null; // Inserts null if Doctor_ID is not provided
+
+    if (!Pharm_ID || !First_Name || !Last_Name || !Email || !Phone || !PW || !Address || !Zip) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+
+    try {
+    const newPatient = await createPatient(Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, docId)
     res.status(201).send(newPatient)
+    } catch (error) {
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
 })
 
+// Ensure that Email holds the form of an email address, Phone holds the form of a phone number, and Address holds the form of a Street address } via frontend? - FI 
 app.post("/doctor", async (req, res) => {
-    const entry = req.body
-    const newDoctor = await createDoctor(entry)
-    res.status(201).send(newDoctor)
+    const { License_Serial, First_Name, Last_Name, Specialty, Email, Phone, PW, Availability } = req.body
+
+    if (!License_Serial || !First_Name || !Last_Name || !Specialty || !Email || !Phone || !PW || Availability === undefined) { // JS checks for falsy values, since Availability can be 0, we check for undefined rather than falsy
+        return res.status(400).json({ error: "Missing required information" });
+    }
+
+    try {
+        const newDoctor = await createDoctor(License_Serial, First_Name, Last_Name, Specialty, Email, Phone, PW, Availability)
+        res.status(201).send(newDoctor)
+    } catch (error) {
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
 })
 
 app.post("/pharmacies", async (req, res) => {
-    const entry = req.body
-    const newPharm = await createPharmacy(entry)
-    res.status(201).send(newPharm)
+    const { Company_Name, Address, Zip, Work_Hours, Email, PW } = req.body
+    if (!Company_Name || !Address || !Zip || !Work_Hours || !Email || !PW) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+
+    try {
+        const newPharm = await createPharmacy(Company_Name, Address, Zip, Work_Hours, Email, PW)
+        res.status(201).send(newPharm)
+    } catch (error) {  
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
 })
 
 app.post("/pillbank", async (req, res) => {
