@@ -20,6 +20,11 @@ export async function getPatients() {
     return resultRows
 }
 
+export async function getPatientsByDoc(id) {
+    const [resultRows] = await pool.query(`SELECT * FROM primewell_clinic.patientbase WHERE Doctor_id = ?`, [id])
+    return resultRows
+}
+
 export async function getDoctors() {
     const [resultRows] = await pool.query(`SELECT * FROM primewell_clinic.doctorbase`)
     return resultRows
@@ -61,7 +66,7 @@ export async function getReviews() {
 }
 
 export async function getReviewsTop() { //top 3 revies for splash page - VC
-    const [resultRows] = await pool.query(`SELECT * FROM primewell_clinic.reviews WHERE Rating = 10 ORDER BY DESC LIMIT 3`)
+    const [resultRows] = await pool.query(`SELECT * FROM primewell_clinic.reviews ORDER BY Rating DESC LIMIT 3`)
     return resultRows
 }
 
@@ -92,21 +97,30 @@ export async function getPharmAuth(email) {
 // Add to db via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM primewell_clinic.table);
 // - VC
 
-export async function createPatient(entry) {
+export async function createPatient(entry, pharm) {
     let timeStamp = new Date();
     const [resultPatientCreate] = await pool.query(`
         SET @valI = (SELECT COUNT(*) FROM primewell_clinic.patientbase);
-        INSERT INTO primewell_clinic.patientbase SET \`Patient_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
+        SET @valP = (SELECT Pharm_ID FROM primewell_clinic.pharmacies WHERE Company_Name = '`+pharm+`');
+        INSERT INTO primewell_clinic.patientbase SET \`Patient_ID\` = @valI+1, \`Pharm_ID\` = @valP, ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
     , [entry, timeStamp, timeStamp])
     return resultPatientCreate
 }
 
-export async function createDoctor(entry) { //add tiers with doc? - VC
+export async function createDoctor(entry, schedule) { //tiers and schedule too - VC
     let timeStamp = new Date();
     const [resultDoctorCreate] = await pool.query(`
         SET @valI = (SELECT COUNT(*) FROM primewell_clinic.doctorbase);
-        INSERT INTO primewell_clinic.patientbase SET \`Doctor_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
-    , [entry, timeStamp, timeStamp])
+        INSERT INTO primewell_clinic.doctorbase SET \`Doctor_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;
+        INSERT INTO primewell_clinic.doctorschedules SET \`Doctor_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;
+        SET @valT = (SELECT COUNT(*) FROM primewell_clinic.tiers);
+        INSERT INTO primewell_clinic.tiers SET \`Tier_ID\` = @valT+1 \`Doctor_ID\` = @valI+1, Tier = 'Basic', 
+        Service = 'General Consultation', Cost = 98.04 \`Last_update\` = ?, \`Create_Date\` = ?;
+        INSERT INTO primewell_clinic.tiers SET \`Tier_ID\` = @valT+2 \`Doctor_ID\` = @valI+1, Tier = 'Plus', 
+        Service = 'Elevated Servicing', Cost = 397.20 \`Last_update\` = ?, \`Create_Date\` = ?;
+        INSERT INTO primewell_clinic.tiers SET \`Tier_ID\` = @valT+3 \`Doctor_ID\` = @valI+1, Tier = 'Premium', 
+        Service = 'Premium Doctor-Patient Facilities', Cost = 566.20 \`Last_update\` = ?, \`Create_Date\` = ?;`
+    , [entry, timeStamp, timeStamp, schedule, timeStamp, timeStamp, timeStamp, timeStamp, timeStamp, timeStamp, timeStamp, timeStamp])
     return resultDoctorCreate
 }
 
@@ -128,12 +142,12 @@ export async function createPill(entry) {
     return resultPilltCreate
 }
 
-export async function createExercise(entry) {
+export async function createExercise(entry, filename) {
     let timeStamp = new Date();
     const [resultExerciseCreate] = await pool.query(`
         SET @valI = (SELECT COUNT(*) FROM primewell_clinic.exercisebank);
-        INSERT INTO primewell_clinic.exercisebank SET \`Exercise_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
-    , [entry, timeStamp, timeStamp])
+        INSERT INTO primewell_clinic.exercisebank SET \`Exercise_ID\` = @valI+1, ?, Image = ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
+    , [entry, filename, timeStamp, timeStamp])
     return resultExerciseCreate
 }
 

@@ -1,13 +1,27 @@
 import express from 'express'
 import { addPatientDoc, createComment, createDoctor, createExercise, createForumPost, createPatient, createPharmacy, 
     createPill, createReveiw, deleteDoctor, deletePatient, deletePill, getComments_id, getDoctorAuth, getDoctors, 
-    getExercises, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getReviews, 
+    getExercises, getForumPosts, getPatientAuth, getPatients, getPatientsByDoc, getPharmacies, getPharmAuth, getPills, getReviews, 
     getReviewsTop, getTiers, rmPatientDoc, UpdateDoctorInfo, UpdatePatientInfo, UpdatePillInfo} from './PrimeWell_db.js'
 import cors from 'cors'
+import multer from 'multer'
 
 const app = express()
 app.use(express.json())
 app.use(cors())
+
+const store = multer.diskStorage({
+    destination: (req, file, cb) => { //where to store (folder name ExerciseBankImages)
+        cb(null, './ExerciseBankImages') //cb = call back function
+    }, 
+
+    filename: (req, file, cb) => { //file name
+        console.log(file);
+        cb(null, path.extname(file.originalname))
+
+    }
+})
+const upload = multer({storage: store})
 
 app.use((err, req, res, next) => {
     console.error(err.stack)
@@ -21,8 +35,15 @@ app.listen(3000, () => {
 
 //GET DATA ----------------------------------------------------------------------------------------------
 
+/*appointments, perscription, preliminaries, survey, regiments, chat rooms<-messages, audit logs*/
+
 app.get("/patient", async (req, res) => {
     const rows = await getPatients()
+    res.send(rows)
+})
+
+app.get("/patient/:doc_id", async (req, res) => {
+    const rows = await getPatientsByDoc(req.params.doc_id)
     res.send(rows)
 })
 
@@ -91,20 +112,48 @@ app.get("/passAuthPharm/:email", async (req, res) => {
 // Add to db via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM primewell_clinic.table);
 // - VC
 
+/*appointments, perscription, preliminaries, survey, regiments, chat rooms<-messages, authattempts, payments, audit logs*/
+
 app.post("/patient", async (req, res) => {
-    const entry = req.body
-    const newPatient = await createPatient(entry)
+    const entry = {
+        First_Name: req.body.First_Name,
+        Last_Name: req.body.Last_Name,
+        Email: req.body.Email,
+        Phone: req.body.Phone,
+        PW: 'SHA2(CONCAT(\''+req.body.PW+'\'), 256)',
+        Address: req.body.Address,
+        Zip: req.body.Zip
+    };
+    const newPatient = await createPatient(entry, req.body.Pharm_Name)
     res.status(201).send(newPatient)
 })
 
 app.post("/doctor", async (req, res) => {
-    const entry = req.body
-    const newDoctor = await createDoctor(entry)
+    const entry = {
+        License_Serial: req.body.License_Serial,
+        First_Name: req.body.First_Name,
+        Last_Name: req.body.Last_Name,
+        Specialty: req.body.Specialty,
+        Email: req.body.Email,
+        Phone: req.body.Phone,
+        PW: 'SHA2(CONCAT(\''+req.body.PW+'\'), 256)',
+        Avalibility: req.body.Avalibility
+
+    };
+    const newDoctor = await createDoctor(entry, req.body.Doctor_Schedule)
     res.status(201).send(newDoctor)
 })
 
 app.post("/pharmacies", async (req, res) => {
-    const entry = req.body
+    const entry = {
+        Company_Name: req.body.Company_Name,
+        Address: req.body.Address,
+        Phone: req.body.Phone,
+        Zip: req.body.Zip,
+        Work_Hours: req.body.Work_Hours,
+        Email: req.body.Email,
+        PW: 'SHA2(CONCAT(\''+req.body.PW+'\'), 256)',
+    };
     const newPharm = await createPharmacy(entry)
     res.status(201).send(newPharm)
 })
@@ -115,9 +164,10 @@ app.post("/pillbank", async (req, res) => {
     res.status(201).send(newPill)
 })
 
-app.post("/exercisebank", async (req, res) => {
+app.post("/exercisebank", upload.single('image'), async (req, res) => {
     const entry = req.body
-    const newExercise = await createExercise(entry)
+    const filename = './ExerciseBank/'+req.file.originalname
+    const newExercise = await createExercise(entry, filename)
     res.status(201).send(newExercise)
 })
 
@@ -149,6 +199,8 @@ app.post("/reviews", async (req, res) => {
 // All below should have an addtional query to auditlog with tyoe PATCH
 //update based on a given id - VC
 
+/*appointments, perscription regiments, audit logs*/
+
 app.patch('/patient/:id', async(req, res)=>{
     try {
         const entry = req.body
@@ -174,7 +226,7 @@ app.patch('/patient/removeDoc/:id', async(req, res)=>{ //Remove patient doctor -
     catch(error) { res.status(500).send(error).json({"message":req.params.id}) }
 })
 
-app.patch('/doctor/:id', async(req, res)=>{
+app.patch('/doctor/:id', async(req, res)=>{ /*tiers and scedule*/
     try {
         const entry = req.body
         const updateResult = await UpdateDoctorInfo(req.params.id, entry)
@@ -196,12 +248,14 @@ app.patch('/pillbank/:id', async(req, res)=>{
 // All below should have an addtional query to auditlog with tyoe DELETE
 // delete based on a given id - VC
 
+/*appointments, perscription, preliminaries, survey, regiments, posts<-comments, chat rooms<-messages, audit logs*/
+
 app.delete("/patient/:id", async(req, res) => {
     const deleteResult = await deletePatient(req.params.id)
     res.status(204).send(deleteResult)
 })
 
-app.delete("/doctor/:id", async(req, res) => {
+app.delete("/doctor/:id", async(req, res) => { /*tiers and scedule*/
     const deleteResult = await deleteDoctor(req.params.id)
     res.status(204).send(deleteResult)
 })
