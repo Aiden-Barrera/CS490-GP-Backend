@@ -60,31 +60,31 @@ export async function getReviews() {
     return resultRows
 }
 
-export async function getReviewsTop() { //top 3 revies for splash page - VC
+export async function getReviewsTop() { //top 3 reviews for splash page - VC
     const [resultRows] = await pool.query(`SELECT * FROM reviews ORDER BY Rating DESC LIMIT 3`)
     return resultRows
 }
 
 // 3 below are for pass word authentication, check what was entered compared to what is stored, could add post for attempts - VC
-export async function getPatientAuth(email) {
-    const [resultRows] = await pool.query(`SELECT PW FROM patientbase WHERE Email = ?`,
-        [email]
+export async function getPatientAuth(email, pw) {
+    const [resultRows] = await pool.query(`SELECT * FROM PatientBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
+        [email, pw]
     )
-    return resultRows
+    return resultRows[0]
 }
 
-export async function getDoctorAuth(email) {
-    const [resultRows] = await pool.query(`SELECT PW FROM doctorbase WHERE Email = ?`,
-        [email]
+export async function getDoctorAuth(email, pw) {
+    const [resultRows] = await pool.query(`SELECT * FROM DoctorBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
+        [email, pw]
     )
-    return resultRows
+    return resultRows[0]
 }
 
-export async function getPharmAuth(email) {
-    const [resultRows] = await pool.query(`SELECT PW FROM pharmacies WHERE Email = ?`,
-        [email]
+export async function getPharmAuth(email, pw) {
+    const [resultRows] = await pool.query(`SELECT * FROM Pharmacies WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
+        [email, pw]
     )
-    return resultRows
+    return resultRows[0]
 }
 
 //ADD DATA ----------------------------------------------------------------------------------------------
@@ -92,30 +92,25 @@ export async function getPharmAuth(email) {
 // Add to db via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM table);
 // - VC
 
-export async function createPatient(entry) {
-    let timeStamp = new Date();
+export async function createPatient(Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, Doctor_ID) {
     const [resultPatientCreate] = await pool.query(`
-        SET @valI = (SELECT COUNT(*) FROM patientbase);
-        INSERT INTO patientbase SET \`Patient_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
-    , [entry, timeStamp, timeStamp])
+        INSERT INTO PatientBase (Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, Doctor_ID) VALUES (?, ?, ?, ?, ?, SHA2(CONCAT(?),256), ?, ?, ?);`
+    , [Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, Doctor_ID])
     return resultPatientCreate
 }
 
-export async function createDoctor(entry) { //add tiers with doc? - VC
-    let timeStamp = new Date();
+export async function createDoctor(License_Serial,First_Name,Last_Name,Specialty,Email,Phone,PW,Availability) { //add tiers with doc? - VC
     const [resultDoctorCreate] = await pool.query(`
-        SET @valI = (SELECT COUNT(*) FROM doctorbase);
-        INSERT INTO patientbase SET \`Doctor_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
-    , [entry, timeStamp, timeStamp])
+        INSERT INTO DoctorBase (License_Serial, First_Name, Last_Name, Specialty, Email, Phone, PW, Availability) VALUES (?,?,?,?,?,?,SHA2(CONCAT(?),256),?);`
+    , [License_Serial,First_Name,Last_Name,Specialty,Email,Phone,PW,Availability])
     return resultDoctorCreate
 }
 
-export async function createPharmacy(entry) { //Work_Hours: req.body.Work_Hours, //json? -VC
-    let timeStamp = new Date();
+export async function createPharmacy(Company_Name,Address,Zip,Work_Hours,Email,PW) { //Work_Hours: req.body.Work_Hours, //json? -VC
+    const workHoursString = JSON.stringify(Work_Hours); // Convert JSON object to string
     const [resultPharmacyCreate] = await pool.query(`
-        SET @valI = (SELECT COUNT(*) FROM pharmacies);
-        INSERT INTO pharmacies SET \`Pharm_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
-    , [entry, timeStamp, timeStamp])
+        INSERT INTO pharmacies (Company_Name, Address, Zip, Work_Hours, Email, PW) VALUES (?,?,?,?,?,SHA2(CONCAT(?),256));`
+    , [Company_Name,Address,Zip,workHoursString,Email,PW])
     return resultPharmacyCreate
 }
 
