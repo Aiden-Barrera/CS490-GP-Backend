@@ -199,16 +199,35 @@ app.post("/exercisebank", async (req, res) => {
     }
 })
 
+// Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
 app.post("/forumPosts", async (req, res) => {
-    const entry = req.body
-    const newFPost = await createForumPost(entry)
-    res.status(201).send(newFPost)
+    const { Patient_ID, Forum_Text } = req.body
+    if (!Patient_ID || !Forum_Text) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+
+    try {
+        const newFPost = await createForumPost(Patient_ID, Forum_Text)
+        res.status(201).send(newFPost)
+    } catch (error) {
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
 })
 
+// Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
+// Ensure that the Forum_ID passed into the Forum_ID field is an existing Forum ID in the ForumPosts table } via frontend? - FI
 app.post("/comments", async (req, res) => {
-    const entry = req.body
-    const newComment = await createComment(entry)
-    res.status(201).send(newComment)
+    const { Patient_ID, Forum_ID, Comment_Text } = req.body
+    if (!Patient_ID || !Forum_ID || !Comment_Text) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+
+    try {
+        const newComment = await createComment(Patient_ID, Forum_ID, Comment_Text)
+        res.status(201).send(newComment)
+    } catch (error) {
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
 })
 
 app.post("/comments", async (req, res) => {

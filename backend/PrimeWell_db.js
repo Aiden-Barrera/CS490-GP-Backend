@@ -130,21 +130,17 @@ export async function createExercise(Exercise_Name, Muscle_Group, Image, Exercis
     return resultExerciseCreate
 }
 
-export async function createForumPost(entry) {
-    let timeStamp = new Date();
+export async function createForumPost(Patient_ID, Forum_Text) {
     const [resultFPostCreate] = await pool.query(`
-        SET @valI = (SELECT COUNT(*) FROM forum_posts);
-        INSERT INTO forum_posts SET \`Forum_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
-    , [entry, timeStamp, timeStamp])
+        INSERT INTO forum_posts (Patient_ID, Forum_Text, Date_Posted) VALUES (?,?,CURRENT_DATE);`
+    , [Patient_ID, Forum_Text])
     return resultFPostCreate
 }
 
-export async function createComment(entry) { //for forums above -VC
-    let timeStamp = new Date();
+export async function createComment(Patient_ID, Forum_ID, Comment_Text) { //for forums above -VC
     const [resultCommentCreate] = await pool.query(`
-        SET @valI = (SELECT COUNT(*) FROM comments);
-        INSERT INTO comments SET \`Comment_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
-    , [entry, timeStamp, timeStamp])
+        INSERT INTO comments (Patient_ID, Forum_ID, Comment_Text, Date_Posted) VALUES (?, ?, ?, CURRENT_DATE);`
+    , [Patient_ID, Forum_ID, Comment_Text])
     return resultCommentCreate
 }
 //same idea for chatroom and messages should apply for above - VC
