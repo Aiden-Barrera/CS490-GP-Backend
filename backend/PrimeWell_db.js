@@ -116,39 +116,31 @@ export async function createPharmacy(Company_Name,Address,Zip,Work_Hours,Email,P
     return resultPharmacyCreate
 }
 
-export async function createPill(entry) {
-    let timeStamp = new Date();
+export async function createPill(Cost, Pill_Name, Pharm_ID, Dosage) {
     const [resultPillCreate] = await pool.query(`
-        SET @valI = (SELECT COUNT(*) FROM pillbank);
-        INSERT INTO pillbank SET \`Pill_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
-    , [entry, timeStamp, timeStamp])
-    return resultPilltCreate
+        INSERT INTO pillbank (Cost, Pill_Name, Pharm_ID, Dosage) VALUES (?,?,?,?);`
+    , [Cost, Pill_Name, Pharm_ID, Dosage])
+    return resultPillCreate
 }
 
-export async function createExercise(entry) {
-    let timeStamp = new Date();
+export async function createExercise(Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps) {
     const [resultExerciseCreate] = await pool.query(`
-        SET @valI = (SELECT COUNT(*) FROM exercisebank);
-        INSERT INTO exercisebank SET \`Exercise_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
-    , [entry, timeStamp, timeStamp])
+        INSERT INTO exercisebank (Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps) VALUES (?,?,?,?,?,?);`
+    , [Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps])
     return resultExerciseCreate
 }
 
-export async function createForumPost(entry) {
-    let timeStamp = new Date();
+export async function createForumPost(Patient_ID, Forum_Text) {
     const [resultFPostCreate] = await pool.query(`
-        SET @valI = (SELECT COUNT(*) FROM forum_posts);
-        INSERT INTO forum_posts SET \`Forum_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
-    , [entry, timeStamp, timeStamp])
+        INSERT INTO forum_posts (Patient_ID, Forum_Text, Date_Posted) VALUES (?,?,CURRENT_DATE);`
+    , [Patient_ID, Forum_Text])
     return resultFPostCreate
 }
 
-export async function createComment(entry) { //for forums above -VC
-    let timeStamp = new Date();
+export async function createComment(Patient_ID, Forum_ID, Comment_Text) { //for forums above -VC
     const [resultCommentCreate] = await pool.query(`
-        SET @valI = (SELECT COUNT(*) FROM comments);
-        INSERT INTO comments SET \`Comment_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
-    , [entry, timeStamp, timeStamp])
+        INSERT INTO comments (Patient_ID, Forum_ID, Comment_Text, Date_Posted) VALUES (?, ?, ?, CURRENT_DATE);`
+    , [Patient_ID, Forum_ID, Comment_Text])
     return resultCommentCreate
 }
 //same idea for chatroom and messages should apply for above - VC
