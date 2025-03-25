@@ -21,7 +21,7 @@ export async function getPatients() {
 }
 
 export async function getDoctors() {
-    const [resultRows] = await pool.query(`SELECT * FROM DoctorBase`)
+    const [resultRows] = await pool.query(`select doctor_id, first_name, last_name, specialty, availability from doctorbase`)
     return resultRows
 }
 
