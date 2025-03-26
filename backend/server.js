@@ -429,12 +429,20 @@ app.post("/perscription", async (req, res) => {
     }
 })
 
-app.post("/reviews/:id", async (req, res) => {
-    const entry = req.body
-    const newReview = await createReveiw(entry)
-    const event_Details = 'Created new review'
-    const audit = await genereateAudit(req.params.id, 'Patient', 'POST', event_Details)
-    res.status(201).send(newReview)
+// Ensure that Patient_ID and Doctor_ID are existing IDs in the PatientBase and DoctorBase tables, respectively } via frontend? - FI
+app.post("/reviews", async (req, res) => {
+    const { Patient_ID, Doctor_ID, Review_Text, Rating } = req.body
+    if (!Patient_ID || !Doctor_ID || !Review_Text || !Rating) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+    try {
+        const newReview = await createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating)
+        // const audit = await genereateAudit(req.params.id, 'Patient', 'POST', event_Details) // FIX THIS TO LOG THE REVIEW
+        res.status(201).send(newReview)
+    } catch (error) {
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+
 })
 
 app.post("/survey", async (req, res) => {

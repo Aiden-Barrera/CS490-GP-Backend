@@ -217,8 +217,10 @@ export async function createPerscription(entry) {
     return resultReviewCreate
 }
 
-export async function createReveiw(entry) {
-    const [resultReviewCreate] = await pool.query(`INSERT INTO reviews SET ?;`, [entry])
+export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
+    const [resultReviewCreate] = await pool.query(`
+        INSERT INTO reviews (Patient_ID, Doctor_ID, Review_Text, Date_Posted, Rating) VALUES (?,?,?,CURRENT_DATE,?);`
+    , [Patient_ID, Doctor_ID, Review_Text, Rating])
     return resultReviewCreate
 }
 
