@@ -486,6 +486,7 @@ app.post("/perscription", async (req, res) => {
     }
 })
 
+// Ensure that Patient_ID and Doctor_ID are existing IDs in the PatientBase and DoctorBase tables, respectively } via frontend? - FI
 app.post("/reviews", async (req, res) => {
     const {Patient_ID, Doctor_ID, Review_Text, Rating} = req.body
     if(!Patient_ID | !Doctor_ID | !Review_Text | !Rating){

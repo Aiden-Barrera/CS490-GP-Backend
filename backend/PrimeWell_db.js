@@ -244,8 +244,15 @@ export async function createPreliminary(Patient_ID, Symptoms) {
 }
 
 export async function createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity) {
-    const [resultReviewCreate] = await pool.query(`INSERT INTO perscription (Patient_ID, Doctor_ID, Pill_ID, Quantity) 
+    const [resultPrescriptionCreate] = await pool.query(`INSERT INTO perscription (Patient_ID, Doctor_ID, Pill_ID, Quantity) 
         VALUES (?, ?, ?, ?);`, [Patient_ID, Doctor_ID, Pill_ID, Quantity])
+    return resultPrescriptionCreate
+}
+
+export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
+    const [resultReviewCreate] = await pool.query(`
+        INSERT INTO reviews (Patient_ID, Doctor_ID, Review_Text, Date_Posted, Rating) VALUES (?,?,?,CURRENT_DATE,?);`
+    , [Patient_ID, Doctor_ID, Review_Text, Rating])
     return resultReviewCreate
 }
 
