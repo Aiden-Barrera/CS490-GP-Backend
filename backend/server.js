@@ -3,7 +3,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     createPill, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePerscription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getAppointmentsPatient, getChatMesseges, getComments_id, getDoctorAuth, getDoctors, 
     getDoctorSchedule, 
     getExercises, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
-    getReviewsTop, getSurvey, getTiers, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
+    getReviewsTop, getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
     UpdateRegiment} from './PrimeWell_db.js'
 import cors from 'cors'
 import multer from 'multer'
@@ -167,6 +167,10 @@ app.post("/passAuthPatient", async (req, res) => {
 
     try {
         const rows = await getPatientAuth(email, pw);
+        if(rows)
+            attempt = await LogAttempt(email, 'Patient', 1);
+        else
+        attempt = await LogAttempt(email, 'Patient', 0);
         res.send(rows);
     } catch (error) {
         res.status(500).json({ error: "Internal server error" });
@@ -348,6 +352,8 @@ app.post("/forumPosts", async (req, res) => {
 app.post("/comments", async (req, res) => {
     const { Patient_ID, Forum_ID, Comment_Text } = req.body
     if (!Patient_ID || !Forum_ID || !Comment_Text) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
     const newComment = createNewComment(Patient_ID, Forum_ID, Comment_Text)  
     const event_Details = 'Created new comment'
     const audit = await genereateAudit(req.params.id, 'Patient', 'POST', event_Details)

@@ -134,6 +134,13 @@ export async function getPharmAuth(email, pw) {
 // Add to db via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM table);
 // - VC
 
+export async function LogAttempt(User_ID, User_type, Success_Status){
+    const [login] = await pool.query(`
+        INSERT INTO auditlog (UserEmail, UserType, Success_Status) VALUES (?, ?, ?);`
+    , [User_ID, User_type, Success_Status])
+    return login
+}
+
 export async function genereateAudit(User_ID, User_type, Event_Type, Event_Details){
     const [resultPatientCreate] = await pool.query(`
         INSERT INTO auditlog (UserID, UserType, Event_Type, Event_Details) VALUES (?, ?, ?, ?);`
