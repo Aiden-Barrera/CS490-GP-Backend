@@ -236,10 +236,18 @@ app.post("/comments", async (req, res) => {
     res.status(201).send(newComment)
 })
 
+// Ensure that Patient_ID and Doctor_ID are existing IDs in the PatientBase and DoctorBase tables, respectively } via frontend? - FI
 app.post("/reviews", async (req, res) => {
-    const entry = req.body
-    const newReview = await createReveiw(entry)
-    res.status(201).send(newReview)
+    const { Patient_ID, Doctor_ID, Review_Text, Rating } = req.body
+    if (!Patient_ID || !Doctor_ID || !Review_Text || !Rating) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+    try {
+        const newReview = await createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating)
+        res.status(201).send(newReview)
+    } catch (error) {
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
 })
 
 //UPDATE DATA ----------------------------------------------------------------------------------------------

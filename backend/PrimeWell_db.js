@@ -145,12 +145,10 @@ export async function createComment(Patient_ID, Forum_ID, Comment_Text) { //for 
 }
 //same idea for chatroom and messages should apply for above - VC
 
-export async function createReveiw(entry) {
-    let timeStamp = new Date();
+export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
     const [resultReviewCreate] = await pool.query(`
-        SET @valI = (SELECT COUNT(*) FROM reviews);
-        INSERT INTO reviews SET \`Review_ID\` = @valI+1, ?, \`Last_update\` = ?, \`Create_Date\` = ?;`
-    , [entry, timeStamp, timeStamp])
+        INSERT INTO reviews (Patient_ID, Doctor_ID, Review_Text, Date_Posted, Rating) VALUES (?,?,?,CURRENT_DATE,?);`
+    , [Patient_ID, Doctor_ID, Review_Text, Rating])
     return resultReviewCreate
 }
 
