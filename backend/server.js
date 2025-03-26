@@ -287,12 +287,19 @@ app.post("/pharmacies", async (req, res) => {
     }
 })
 
+// Ensure that Pharm_ID passed into Pharm_ID field is an existing Pharmacy ID in the Pharmacies table } via frontend? - FI
 app.post("/pillbank", async (req, res) => {
-    const entry = req.body
-    const newPill = await createPill(entry)
-    const event_Details = 'Created new Pill'
-    const audit = await genereateAudit(0, 'Pharmacist', 'POST', event_Details)
-    res.status(201).send(newPill)
+    const { Cost, Pill_Name, Pharm_ID, Dosage } = req.body
+    if (!Cost || !Pill_Name || !Pharm_ID || !Dosage) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+
+    try {
+        const newPill = await createPill(Cost, Pill_Name, Pharm_ID, Dosage)
+        res.status(201).send(newPill)
+    } catch (error) {
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
 })
 
 /*
@@ -304,33 +311,21 @@ for this function to work each entry should be labeled as such:
 </form>
 */
 // -VC
-
-app.post("/exercisebank/:id", upload.single('image'), async (req, res) => { //User created exercise from post - VC
-    const entry = req.body
-    const filename = './ExerciseBank/'+req.file.originalname
-    const newExercise = await createExercise(entry, filename)
-    const event_Details = 'Created new exercise'
-    const audit = await genereateAudit(req.params.id, 'Patient', 'POST', event_Details)
-    res.status(201).send(newExercise)
+app.post("/exercisebank", upload.single('image'), async (req, res) => { //User created exercise from post - VC
+    const { Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps } = req.body
+    if (!Exercise_Name || !Muscle_Group || !Exercise_Description || !Sets || !Reps) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+    try {
+        const newExercise = await createExercise(Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps)
+        const event_Details = 'Created new exercise'
+        const audit = await genereateAudit(req.body.id, 'Patient', 'POST', event_Details) //Needs to be fixed
+        res.status(201).send(newExercise)
+    } catch (error) {
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
 })
 
-app.post("/regiment", async (req, res) => {
-    const entry = req.body
-    const newPill = await createRegiment(entry)
-    const event_Details = 'Created new Regiment'
-    const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'POST', event_Details)
-    res.status(201).send(newPill)
-})
-
-app.post("/forumPosts/:id", async (req, res) => { //user has posted -VC
-    const entry = req.body
-    const newFPost = await createForumPost(entry)
-    const event_Details = 'Created new post'
-    const audit = await genereateAudit(req.body.id, 'Patient', 'POST', event_Details)
-    res.status(201).send(newFPost)
-})
-
-/*
 // Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
 app.post("/forumPosts", async (req, res) => {
     const { Patient_ID, Forum_Text } = req.body
@@ -341,26 +336,37 @@ app.post("/forumPosts", async (req, res) => {
     try {
         const newFPost = await createForumPost(Patient_ID, Forum_Text)
         const event_Details = 'Created new post'
-        const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
+        const audit = await genereateAudit(req.body.id, 'Patient', 'POST', event_Details)
         res.status(201).send(newFPost)
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
-*/
 
-app.post("/comments/:id", async (req, res) => {
-    const entry = req.body
-    const newComment = await createComment(entry)
+// Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
+// Ensure that the Forum_ID passed into the Forum_ID field is an existing Forum ID in the ForumPosts table } via frontend? - FI
+app.post("/comments", async (req, res) => {
+    const { Patient_ID, Forum_ID, Comment_Text } = req.body
+    if (!Patient_ID || !Forum_ID || !Comment_Text) {
+    const newComment = createNewComment(Patient_ID, Forum_ID, Comment_Text)  
     const event_Details = 'Created new comment'
     const audit = await genereateAudit(req.params.id, 'Patient', 'POST', event_Details)
-    res.status(201).send(newComment)
+    res.status(201).send(newPill)
+})
+
+
+app.post("/regiment", async (req, res) => {
+    const entry = req.body
+    const newPill = await createRegiment(entry)
+    const event_Details = 'Created new Regiment'
+    const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'POST', event_Details)
+    res.status(201).send(newPill)
 })
 
 app.post("/chatrooms", async (req, res) => { //Who makes the chatroom? -VC
     const entry = req.body
     const newChatroom = await createChatroom(entry)
-    //const event_Details = 'Created new post'
+    //const event_Details = 'Created new chatroom'
     //const audit = await genereateAudit(req.body.SenderID, req.body.SenderType, 'POST', event_Details)
     res.status(201).send(newChatroom)
 })

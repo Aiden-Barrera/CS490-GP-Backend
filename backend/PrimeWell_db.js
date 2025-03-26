@@ -21,7 +21,7 @@ export async function getPatients(id) {
 }
 
 export async function getDoctors(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM DoctorBase WHERE Doctor_ID = ?`, [id])
+    const [resultRows] = await pool.query(`SELECT doctor_id, first_name, last_name, specialty, availability FROM DoctorBase WHERE Doctor_ID = ?`, [id])
     return resultRows
 }
 
@@ -71,7 +71,9 @@ export async function getReviews() {
 }
 
 export async function getReviewsTop() { //top 3 reviews for splash page - VC
-    const [resultRows] = await pool.query(`SELECT * FROM reviews ORDER BY Rating DESC LIMIT 3`)
+    const [resultRows] = await pool.query(`with topDoctors as (SELECT doctor_id FROM reviews group by doctor_id ORDER BY avg(rating) DESC LIMIT 3)
+                            select DB.first_name, DB.last_name, DB.specialty from 
+                            DoctorBase as DB, topDoctors as TD where DB.doctor_id = TD.doctor_id`)
     return resultRows
 }
 
@@ -166,29 +168,31 @@ export async function createPharmacy(Company_Name,Address,Zip,Work_Hours,Email,P
     return resultPharmacyCreate
 }
 
-export async function createPill(entry) {
-    const [resultPillCreate] = await pool.query(`INSERT INTO pillbank SET ?;`, [entry])
+export async function createPill(Cost, Pill_Name, Pharm_ID, Dosage) {
+    const [resultPillCreate] = await pool.query(`
+        INSERT INTO pillbank (Cost, Pill_Name, Pharm_ID, Dosage) VALUES (?,?,?,?);`
+    , [Cost, Pill_Name, Pharm_ID, Dosage])
     return resultPillCreate
 }
 
-export async function createExercise(entry, filename) {
-    const [resultExerciseCreate] = await pool.query(`INSERT INTO primewell_clinic.exercisebank SET ?, Image = ?;`
-    , [entry, filename])
+export async function createExercise(Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps) {
+    const [resultExerciseCreate] = await pool.query(`
+        INSERT INTO exercisebank (Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps) VALUES (?,?,?,?,?,?);`
+    , [Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps])
     return resultExerciseCreate
 }
 
-export async function createRegiment(entry) {
-    const [resultReviewCreate] = await pool.query(`INSERT INTO regiments SET ?;`, [entry])
-    return resultReviewCreate
-}
-
-export async function createForumPost(entry) {
-    const [resultFPostCreate] = await pool.query(`INSERT INTO forum_posts SET ?;`, [entry])
+export async function createForumPost(Patient_ID, Forum_Text) {
+    const [resultFPostCreate] = await pool.query(`
+        INSERT INTO forum_posts (Patient_ID, Forum_Text, Date_Posted) VALUES (?,?,CURRENT_DATE);`
+    , [Patient_ID, Forum_Text])
     return resultFPostCreate
 }
 
-export async function createComment(entry) { //for forums above -VC
-    const [resultCommentCreate] = await pool.query(`INSERT INTO comments SET ?;`, [entry])
+export async function createComment(Patient_ID, Forum_ID, Comment_Text) { //for forums above -VC
+    const [resultCommentCreate] = await pool.query(`
+        INSERT INTO comments (Patient_ID, Forum_ID, Comment_Text, Date_Posted) VALUES (?, ?, ?, CURRENT_DATE);`
+    , [Patient_ID, Forum_ID, Comment_Text])
     return resultCommentCreate
 }
 
