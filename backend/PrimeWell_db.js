@@ -134,6 +134,13 @@ export async function getPharmAuth(email, pw) {
 // Add to db via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM table);
 // - VC
 
+export async function LogAttempt(User_ID, User_type, Success_Status){
+    const [login] = await pool.query(`
+        INSERT INTO auditlog (UserEmail, UserType, Success_Status) VALUES (?, ?, ?);`
+    , [User_ID, User_type, Success_Status])
+    return login
+}
+
 export async function genereateAudit(User_ID, User_type, Event_Type, Event_Details){
     const [resultPatientCreate] = await pool.query(`
         INSERT INTO auditlog (UserID, UserType, Event_Type, Event_Details) VALUES (?, ?, ?, ?);`
@@ -155,8 +162,17 @@ export async function createDoctor(License_Serial,First_Name,Last_Name,Specialty
     return resultDoctorCreate
 }
 
-export async function createDoctorSchedule(entry) {
-    const [resultPillCreate] = await pool.query(`INSERT INTO doctorschedules SET ?;`, [entry])
+export async function createDoctorTiers(Doctor_ID, Cost) {
+    const [resultPillCreate] = await pool.query(`
+        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Basic', 'General Consulatation', ?);
+        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Plus', 'Elevated Servicing', ?);
+        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Premium', 'Premium Doctor-Patient Facilities', ?);`, 
+        [Doctor_ID, Cost, Doctor_ID, Cost * 1.25, Doctor_ID, Cost * 1.50])
+    return resultPillCreate
+}
+
+export async function createDoctorSchedule(Doctor_ID, Doctor_Schedule) {
+    const [resultPillCreate] = await pool.query(`INSERT INTO doctorschedules (Doctor_ID, Doctor_Schedule) VALUES (?, ?);`, [Doctor_ID, Doctor_Schedule])
     return resultPillCreate
 }
 
@@ -182,6 +198,13 @@ export async function createExercise(Exercise_Name, Muscle_Group, Image, Exercis
     return resultExerciseCreate
 }
 
+export async function createRegiment(Patient_ID, Regiment) {
+    const [resultExerciseCreate] = await pool.query(`
+        INSERT INTO exercisebank (Patient_ID, Regiment) VALUES (?,?);`
+    , [Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps])
+    return resultExerciseCreate
+}
+
 export async function createForumPost(Patient_ID, Forum_Text) {
     const [resultFPostCreate] = await pool.query(`
         INSERT INTO forum_posts (Patient_ID, Forum_Text, Date_Posted) VALUES (?,?,CURRENT_DATE);`
@@ -197,24 +220,33 @@ export async function createComment(Patient_ID, Forum_ID, Comment_Text) { //for 
 }
 
 //same idea for chatroom and messages should apply for above - VC
-export async function createChatroom(entry) {
-    const [resultChatCreate] = await pool.query(`INSERT INTO chatrooms SET ?;`, [entry])
+export async function createChatroom(Chatroom_Name) {
+    const [resultChatCreate] = await pool.query(`INSERT INTO chatrooms (Chatroom_Name), VALUES(?);`, [Chatroom_Name])
     return resultChatCreate
 }
 
-export async function createChatMsg(entry) { //for chatroom above -VC
-    const [resultMsgCreate] = await pool.query(`INSERT INTO messages SET ?;`, [entry])
+export async function createChatMsg(Chatroom_ID, SenderID, SenderType, Message) { //for chatroom above -VC
+    const [resultMsgCreate] = await pool.query(`INSERT INTO messages (Chatroom_ID, SenderID, SenderType, Message) 
+        VALUES (?, ?, ?, ?);`, [Chatroom_ID, SenderID, SenderType, Message])
     return resultMsgCreate
 }
 
-export async function createAppointment(entry) {
-    const [resultReviewCreate] = await pool.query(`INSERT INTO appointments SET ?;`, [entry])
+export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Doctors_Feedback, Tier_ID) {
+    const [resultReviewCreate] = await pool.query(`INSERT INTO appointments (Patient_ID, Doctor_ID, Date_Scheduled,
+        Appt_Date, Doctors_Feedback, Tier_ID) VALUES (?, ?, CURRENT_DATE, ?, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Doctors_Feedback, Tier_ID])
     return resultReviewCreate
 }
 
-export async function createPerscription(entry) {
-    const [resultReviewCreate] = await pool.query(`INSERT INTO perscription SET ?;`, [entry])
+export async function createPreliminary(Patient_ID, Symptoms) {
+    const [resultReviewCreate] = await pool.query(`INSERT INTO preliminaries (Patient_ID, Symptoms) 
+        VALUES (?, ?, CURRENT_DATE, ?, ?, ?);`, [Patient_ID, Symptoms])
     return resultReviewCreate
+}
+
+export async function createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity) {
+    const [resultPrescriptionCreate] = await pool.query(`INSERT INTO perscription (Patient_ID, Doctor_ID, Pill_ID, Quantity) 
+        VALUES (?, ?, ?, ?);`, [Patient_ID, Doctor_ID, Pill_ID, Quantity])
+    return resultPrescriptionCreate
 }
 
 export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
@@ -224,13 +256,21 @@ export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
     return resultReviewCreate
 }
 
-export async function createSurvey(entry) {
-    const [resultReviewCreate] = await pool.query(`INSERT INTO patientdailysurvey SET ?;`, [entry])
+export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
+    const [resultReviewCreate] = await pool.query(`INSERT INTO reviews (Patient_ID, Doctor_ID, Date_Posted, Review_Text, Rating) 
+        VALUES (?, ?, CURRENT_DATE, ?, ?);`, [Patient_ID, Doctor_ID, Review_Text, Rating])
     return resultReviewCreate
 }
 
-export async function createPayment(entry) {
-    const [resultChatCreate] = await pool.query(`INSERT INTO payments SET ?;`, [entry])
+export async function createSurvey(Patient_ID, Weight, Caloric_Intake, Water_Intake, Mood) {
+    const [resultReviewCreate] = await pool.query(`INSERT INTO patientdailysurvey (Patient_ID, Weight, Caloric_Intake, Water_Intake, Mood)
+        VALUES (?, ?, ?, ?, ?);`, [Patient_ID, Weight, Caloric_Intake, Water_Intake, Mood])
+    return resultReviewCreate
+}
+
+export async function createPayment(Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status) {
+    const [resultChatCreate] = await pool.query(`INSERT INTO payments (Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status)
+        VALUES (?, ?, ?, ?, ?);`, [Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status])
     return resultChatCreate
 }
 
@@ -263,55 +303,49 @@ export async function rmPatientDoc(id) {
 }
 
 export async function UpdateDoctorInfo(id, entry) {
-    let timeStamp = new Date();
     const [returnResult] = await pool.query(`
-        UPDATE doctorbase SET ?, \`Last_Update\` = ? Where Doctor_ID = ?;`
-    , [entry, timeStamp, id])
+        UPDATE doctorbase SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
+    , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
 }
 
 export async function UpdateDoctorSchedule(id, entry) {
-    let timeStamp = new Date();
     const [returnResult] = await pool.query(`
-        UPDATE doctorschedules SET ?, \`Last_Update\` = ? Where Doctor_ID = ?;`
-    , [entry, timeStamp, id])
+        UPDATE doctorschedules SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
+    , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
 }
 
 export async function UpdateApptInfo(id, entry) {
-    let timeStamp = new Date();
     const [returnResult] = await pool.query(`
-        UPDATE appointments SET ?, \`Last_Update\` = ? Where Appointment_ID = ?;`
-    , [entry, timeStamp, id])
+        UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
+    , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
 }
 
 export async function UpdatePerscriptionInfo(id, entry) {
-    let timeStamp = new Date();
     const [returnResult] = await pool.query(`
-        UPDATE perscription SET ?, \`Last_Update\` = ? Where Perscription_ID = ?;`
-    , [entry, timeStamp, id])
+        UPDATE perscription SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Perscription_ID = ?;`
+    , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
 }
 
 export async function UpdatePillInfo(id, entry) {
-    let timeStamp = new Date();
     const [returnResult] = await pool.query(`
-        UPDATE pillbank SET ?, \`Last_Update\` = ? Where Pill_ID = ?;`
-    , [entry, timeStamp, id])
+        UPDATE pillbank SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Pill_ID = ?;`
+    , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
 }
 
 export async function UpdateRegiment(id, entry) {
-    let timeStamp = new Date();
     const [returnResult] = await pool.query(`
-        UPDATE regiments SET ?, \`Last_Update\` = ? Where Patient_ID = ?;`
-    , [entry, timeStamp, id])
+        UPDATE regiments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
+    , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
 }
@@ -343,6 +377,13 @@ export async function deleteRegiment(id) {
 
 export async function deleteDoctor(id) {
     const [deleteResult] = await pool.query(`DELETE FROM doctorbase WHERE Doctor_ID = ?;`
+    , [id])
+    console.log("Database delete result:", deleteResult);
+    return deleteResult
+}
+
+export async function deleteDoctorTiers(id) {
+    const [deleteResult] = await pool.query(`DELETE FROM tiers WHERE Doctor_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
