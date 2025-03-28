@@ -16,116 +16,123 @@ const pool = mysql.createPool({
 
 //the 5 request below return data from our only populated tables so far - VC
 export async function getPatients(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM PatientBase WHERE Patient_ID = ?`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
+    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name FROM PatientBase WHERE Patient_ID = ?;`, [id])
     return resultRows
 }
 
 export async function getDoctors(id) {
-    const [resultRows] = await pool.query(`SELECT doctor_id, first_name, last_name, specialty, availability FROM DoctorBase WHERE Doctor_ID = ?`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
+    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase WHERE Doctor_ID = ?;`, [id]) 
     return resultRows
 }
 
+// Make the below a POST because it is sensitive? - FI
 export async function getDoctorSchedule(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM doctorschedule WHERE Doctor_ID = ?`, [id]) 
+    const [resultRows] = await pool.query(`SELECT Doctor_Schedule FROM DoctorSchedules WHERE Doctor_ID = ?;`, [id]) 
     return resultRows
 }
 
 export async function getPharmacies() {
-    const [resultRows] = await pool.query(`SELECT * FROM Pharmacies`) // Modify column data to return back bare minimum, don't include sensitive info
+    const [resultRows] = await pool.query(`SELECT Pharm_ID, Company_Name, Address, Zip, Work_Hours FROM Pharmacies;`)
     return resultRows
 }
 
 export async function getPills() {
-    const [resultRows] = await pool.query(`SELECT * FROM PillBank`)
+    const [resultRows] = await pool.query(`SELECT Pill_ID, Pill_Name, Cost, Dosage, Pharm_ID FROM PillBank;`)
     return resultRows
 }
 
 export async function getTiers(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM Tiers WHERE Doctor_ID = ?`) 
+    const [resultRows] = await pool.query(`SELECT Tier, Service, Cost FROM Tiers WHERE Doctor_ID = ?;`, [id]) 
     return resultRows
 }
 
 export async function getExercises() {
-    const [resultRows] = await pool.query(`SELECT * FROM ExerciseBank`)
+    const [resultRows] = await pool.query(`SELECT Exercise_ID, Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps FROM ExerciseBank;`)
     return resultRows
 }
 
 export async function getRegiment(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM appointments WHERE Patient_ID = ?`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
+    const [resultRows] = await pool.query(`SELECT Regiment FROM Regiments WHERE Patient_ID = ?;`, [id]) 
     return resultRows
 }
 
 export async function getForumPosts() {
-    const [resultRows] = await pool.query(`SELECT * FROM Forum_Posts`)
+    const [resultRows] = await pool.query(`SELECT Forum_ID, Forum_Text, Patient_ID, Date_Posted FROM Forum_Posts;`)
     return resultRows
 }
 
 export async function getComments_id(id) { //comments for specific forum post -VC
-    const [resultRows] = await pool.query(`SELECT * FROM Comments WHERE Forum_ID = ?`, [id])
+    const [resultRows] = await pool.query(`SELECT Comment_ID, Comment_Text, Patient_ID, Date_Posted FROM Comments WHERE Forum_ID = ?;`, [id])
     return resultRows
 }
 
 export async function getReviews() {
     const [resultRows] = await pool.query(`with numReviews as (select count(doctor_id) as cnt, doctor_id from reviews group by doctor_id)
                 select db.first_name, db.last_name, db.specialty, avg(r.rating) as rating, nr.cnt from reviews as r, 
-                doctorbase as db, numReviews as nr where r.doctor_id = db.doctor_id and nr.doctor_id = db.doctor_id group by r.doctor_id`)
+                doctorbase as db, numReviews as nr where r.doctor_id = db.doctor_id and nr.doctor_id = db.doctor_id group by r.doctor_id;`)
     return resultRows
 }
 
 export async function getReviewsTop() { //top 3 reviews for splash page - VC
     const [resultRows] = await pool.query(`with topDoctors as (SELECT doctor_id FROM reviews group by doctor_id ORDER BY avg(rating) DESC LIMIT 3)
                             select DB.first_name, DB.last_name, DB.specialty from 
-                            DoctorBase as DB, topDoctors as TD where DB.doctor_id = TD.doctor_id`)
+                            DoctorBase as DB, topDoctors as TD where DB.doctor_id = TD.doctor_id;`)
     return resultRows
 }
 
+// Make the below a POST because it is sensitive? - FI
 export async function getSurvey(id) { // get patient's recent surveys by recent date
-    const [resultRows] = await pool.query(`SELECT * FROM patientdailysurvey WHERE Patient_ID = ? ORDER BY Survey_Date DESC`) // Modify column data to return back bare minimum, don't include sensitive info
+    const [resultRows] = await pool.query(`SELECT Weight, Caloric_Intake, Water_Intake, Mood, Survey_Date FROM PatientDailySurvey WHERE Patient_ID = ? ORDER BY Survey_Date DESC;`, [id]) 
     return resultRows
 }
 
+// Make the below a POST because it is sensitive? - FI
 export async function getAppointmentsPatient(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM appointments WHERE Patient_ID = ?`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
+    const [resultRows] = await pool.query(`SELECT Appointment_ID, Date_Scheduled, Appt_Date, Tier_ID, Doctor_ID, Doctors_Feedback FROM Appointments WHERE Patient_ID = ?;`, [id]) 
     return resultRows
 }
 
+// Make the below a POST because it is sensitive? - FI
 export async function getAppointmentsDoctor(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM appointments WHERE Doctor_ID = ?`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
+    const [resultRows] = await pool.query(`SELECT Appointment_ID, Date_Scheduled, Appt_Date, Tier_ID, Doctor_ID, Doctors_Feedback FROM Appointments FROM Appointments WHERE Doctor_ID = ?;`, [id]) 
     return resultRows
 }
 
+// Make the below a POST because it is sensitive? - FI
 export async function getPrescription(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM prescription WHERE Patient_ID = ?`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
+    const [resultRows] = await pool.query(`SELECT Prescription_ID, Pill_ID, Quantity, Doctor_ID FROM Prescription WHERE Patient_ID = ?;`, [id]) 
     return resultRows
 }
 
+// Make the below a POST because it is sensitive? - FI
 export async function getPreliminaries(id) { //order by for most recent
-    const [resultRows] = await pool.query(`SELECT * FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
+    const [resultRows] = await pool.query(`SELECT Preliminary_ID, Symptoms FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
     return resultRows
 }
 
+// Make the below a POST because it is sensitive? - FI
 export async function getChatMesseges(id) { //order by for most recent
-    const [resultRows] = await pool.query(`SELECT * FROM messages WHERE Chatroom_ID = ? ORDER BY Sent_At DESC`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
+    const [resultRows] = await pool.query(`SELECT Message_ID, Message, SenderID, SenderType, Sent_At FROM messages WHERE Chatroom_ID = ? ORDER BY Sent_At DESC;`, [id])
     return resultRows
 }
 
 // 3 below are for pass word authentication, check what was entered compared to what is stored, could add post for attempts - VC
 export async function getPatientAuth(email, pw) {
-    const [resultRows] = await pool.query(`SELECT * FROM PatientBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
+    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Email, Phone, Address, Zip, Doctor_ID FROM PatientBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
         [email, pw]
     )
     return resultRows[0]
 }
 
 export async function getDoctorAuth(email, pw) {
-    const [resultRows] = await pool.query(`SELECT * FROM DoctorBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
+    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial, Email, Phone,  FROM DoctorBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
         [email, pw]
     )
     return resultRows[0]
 }
 
 export async function getPharmAuth(email, pw) {
-    const [resultRows] = await pool.query(`SELECT * FROM Pharmacies WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
+    const [resultRows] = await pool.query(`SELECT Company_Name, Address, Zip, Work_Hours, Email FROM Pharmacies WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
         [email, pw]
     )
     return resultRows[0]
