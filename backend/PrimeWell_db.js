@@ -330,7 +330,7 @@ export async function UpdateApptInfo(id, entry) {
 
 export async function UpdatePerscriptionInfo(id, entry) {
     const [returnResult] = await pool.query(`
-        UPDATE perscription SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Perscription_ID = ?;`
+        UPDATE prescription SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Prescription_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
@@ -399,7 +399,7 @@ export async function deleteDoctorSchedule(id) {
 }
 
 export async function deletePerscription(id) {
-    const [deleteResult] = await pool.query(`DELETE FROM perscription WHERE Perscription_ID = ?;`
+    const [deleteResult] = await pool.query(`DELETE FROM prescription WHERE Prescription_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
