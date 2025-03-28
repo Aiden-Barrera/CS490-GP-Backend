@@ -142,6 +142,7 @@ app.get("/preliminaries/:id/:doc_id", async (req, res) => { //based on patient, 
     res.send(rows)
 })
 
+// Change this to a post because it is senstitive
 app.get("/chatroomMsgs/:id", async (req, res) => { //by chatroom_id - VC
     const rows = await getChatMesseges(req.params.id)
     res.send(rows)
@@ -152,6 +153,7 @@ app.get("/reviews/top", async (req, res) => {
     res.send(rows)
 })
 
+// Make post because it is sensitive
 app.get("/patientsurvey/:id", async (req, res) => {
     const rows = await getSurvey(req.params.id)
     const event_Details = 'retrieval of Patient data for graph'

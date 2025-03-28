@@ -16,22 +16,22 @@ const pool = mysql.createPool({
 
 //the 5 request below return data from our only populated tables so far - VC
 export async function getPatients(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM PatientBase WHERE Patient_ID = ?`, [id])
+    const [resultRows] = await pool.query(`SELECT * FROM PatientBase WHERE Patient_ID = ?`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
     return resultRows
 }
 
 export async function getDoctors(id) {
-    const [resultRows] = await pool.query(`SELECT doctor_id, first_name, last_name, specialty, availability FROM DoctorBase WHERE Doctor_ID = ?`, [id])
+    const [resultRows] = await pool.query(`SELECT doctor_id, first_name, last_name, specialty, availability FROM DoctorBase WHERE Doctor_ID = ?`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
     return resultRows
 }
 
 export async function getDoctorSchedule(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM doctorschedule WHERE Doctor_ID = ?`, [id])
+    const [resultRows] = await pool.query(`SELECT * FROM doctorschedule WHERE Doctor_ID = ?`, [id]) 
     return resultRows
 }
 
 export async function getPharmacies() {
-    const [resultRows] = await pool.query(`SELECT * FROM Pharmacies`)
+    const [resultRows] = await pool.query(`SELECT * FROM Pharmacies`) // Modify column data to return back bare minimum, don't include sensitive info
     return resultRows
 }
 
@@ -41,7 +41,7 @@ export async function getPills() {
 }
 
 export async function getTiers(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM Tiers WHERE Doctor_ID = ?`)
+    const [resultRows] = await pool.query(`SELECT * FROM Tiers WHERE Doctor_ID = ?`) 
     return resultRows
 }
 
@@ -51,7 +51,7 @@ export async function getExercises() {
 }
 
 export async function getRegiment(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM appointments WHERE Patient_ID = ?`, [id])
+    const [resultRows] = await pool.query(`SELECT * FROM appointments WHERE Patient_ID = ?`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
     return resultRows
 }
 
@@ -78,32 +78,32 @@ export async function getReviewsTop() { //top 3 reviews for splash page - VC
 }
 
 export async function getSurvey(id) { // get patient's recent surveys by recent date
-    const [resultRows] = await pool.query(`SELECT * FROM patientdailysurvey WHERE Patient_ID = ? ORDER BY Survey_Date DESC`)
+    const [resultRows] = await pool.query(`SELECT * FROM patientdailysurvey WHERE Patient_ID = ? ORDER BY Survey_Date DESC`) // Modify column data to return back bare minimum, don't include sensitive info
     return resultRows
 }
 
 export async function getAppointmentsPatient(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM appointments WHERE Patient_ID = ?`, [id])
+    const [resultRows] = await pool.query(`SELECT * FROM appointments WHERE Patient_ID = ?`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
     return resultRows
 }
 
 export async function getAppointmentsDoctor(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM appointments WHERE Doctor_ID = ?`, [id])
+    const [resultRows] = await pool.query(`SELECT * FROM appointments WHERE Doctor_ID = ?`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
     return resultRows
 }
 
 export async function getPrescription(id) {
-    const [resultRows] = await pool.query(`SELECT * FROM prescription WHERE Patient_ID = ?`, [id])
+    const [resultRows] = await pool.query(`SELECT * FROM prescription WHERE Patient_ID = ?`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
     return resultRows
 }
 
 export async function getPreliminaries(id) { //order by for most recent
-    const [resultRows] = await pool.query(`SELECT * FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC`, [id])
+    const [resultRows] = await pool.query(`SELECT * FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
     return resultRows
 }
 
 export async function getChatMesseges(id) { //order by for most recent
-    const [resultRows] = await pool.query(`SELECT * FROM messages WHERE Chatroom_ID = ? ORDER BY Sent_At DESC`, [id])
+    const [resultRows] = await pool.query(`SELECT * FROM messages WHERE Chatroom_ID = ? ORDER BY Sent_At DESC`, [id]) // Modify column data to return back bare minimum, don't include sensitive info
     return resultRows
 }
 
