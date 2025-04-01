@@ -84,7 +84,7 @@ export async function getReviewsByID(id) {
 
 export async function getReviewsComments(id) {
     const [resultRows] = await pool.query(`select r.patient_id, r.review_text, r.doctor_id, pb.first_name, pb.last_name, 
-        db.first_name as doctor_fname, db.last_name as doctor_lname, r.rating from reviews as r, patientbase as pb, doctorbase as db where 
+        db.first_name as doctor_fname, db.last_name as doctor_lname, r.rating, r.date_posted from reviews as r, patientbase as pb, doctorbase as db where 
         r.patient_id = pb.patient_id and r.doctor_id = db.doctor_id and r.doctor_id = ?`, [id])
     return resultRows
 }
