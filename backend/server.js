@@ -8,6 +8,12 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
 import cors from 'cors'
 import multer from 'multer'
 
+//import socket from 'socket.io'
+/*
+const server = http.createServer(app);
+const io = new socket(server);
+*/
+
 const app = express()
 app.use(express.json())
 app.use(cors())
@@ -39,6 +45,17 @@ app.use((err, req, res, next) => {
     console.error(err.stack)
     res.status(500).send('Something broke!')
   })
+
+/*
+io.on('connection', (socket) => {
+  console.log('a user connected');
+});
+
+//<script src="/socket.io/socket.io.js"></script>
+//<script>
+  //var socket = io();
+//</script>
+*/
 
 //GET DATA ----------------------------------------------------------------------------------------------
 
