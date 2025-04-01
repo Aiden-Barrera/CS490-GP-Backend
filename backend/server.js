@@ -156,7 +156,7 @@ app.get("/chatroomMsgs/:id", async (req, res) => { //by chatroom_id - VC
     res.send(rows)
 })
 
-app.get("/reviews/top", async (req, res) => {
+app.get("/reviewsTop", async (req, res) => {
     const rows = await getReviewsTop()
     res.send(rows)
 })
