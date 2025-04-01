@@ -3,8 +3,10 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePerscription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getAppointmentsPatient, getChatMesseges, getComments_id, getDoctorAuth, getDoctors, 
     getDoctorSchedule, 
     getExercises, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
-    getReviewsTop, getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
+    getReviewsTop, getReviewsByID, 
+    getReviewsComments,  getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
     UpdateRegiment} from './PrimeWell_db.js'
+
 import cors from 'cors'
 import multer from 'multer'
 
@@ -114,6 +116,11 @@ app.get("/reviews", async (req, res) => {
     res.send(rows)
 })
 
+app.get("/reviews/:id", async (req, res) => {
+    const rows = await getReviewsByID(req.params.id)
+    res.send(rows)
+})
+    
 app.get("/appointment/patient/:id", async (req, res) => {
     const rows = await getAppointmentsPatient(req.params.id)
     const event_Details = 'retrieval of appointment data'
@@ -150,6 +157,11 @@ app.get("/chatroomMsgs/:id", async (req, res) => { //by chatroom_id - VC
 
 app.get("/reviews/top", async (req, res) => {
     const rows = await getReviewsTop()
+    res.send(rows)
+})
+
+app.get("/reviews/comments/:id", async (req, res) => {
+    const rows = await getReviewsComments(req.params.id)
     res.send(rows)
 })
 
