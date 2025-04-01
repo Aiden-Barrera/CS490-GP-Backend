@@ -280,6 +280,7 @@ export async function createPayment(Patient_ID, Card_Number, Related_ID, Payment
 // All below should have an addtional query to auditlog with tyoe PATCH
 //update based on a given id - VC
 
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
 export async function UpdatePatientInfo(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE patientbase SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
@@ -288,6 +289,7 @@ export async function UpdatePatientInfo(id, entry) {
     return returnResult
 }
 
+// VERIFY THIS WORKS - FI
 export async function addPatientDoc(id, doc_id) {
     const [returnResult] = await pool.query(`
         UPDATE patientbase SET \`Doctor_ID\` = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
@@ -296,6 +298,7 @@ export async function addPatientDoc(id, doc_id) {
     return returnResult
 }
 
+// VERIFY THIS WORKS - FI
 export async function rmPatientDoc(id) {
     const [returnResult] = await pool.query(`
         UPDATE patientbase SET \`Doctor_ID\` = NULL, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
@@ -304,6 +307,7 @@ export async function rmPatientDoc(id) {
     return returnResult
 }
 
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY THE PASSWORD
 export async function UpdateDoctorInfo(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE doctorbase SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
@@ -312,6 +316,7 @@ export async function UpdateDoctorInfo(id, entry) {
     return returnResult
 }
 
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
 export async function UpdateDoctorSchedule(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE doctorschedules SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
@@ -320,6 +325,7 @@ export async function UpdateDoctorSchedule(id, entry) {
     return returnResult
 }
 
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
 export async function UpdateApptInfo(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
@@ -328,6 +334,7 @@ export async function UpdateApptInfo(id, entry) {
     return returnResult
 }
 
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
 export async function UpdatePerscriptionInfo(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE prescription SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Prescription_ID = ?;`
@@ -336,6 +343,7 @@ export async function UpdatePerscriptionInfo(id, entry) {
     return returnResult
 }
 
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
 export async function UpdatePillInfo(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE pillbank SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Pill_ID = ?;`
@@ -344,6 +352,7 @@ export async function UpdatePillInfo(id, entry) {
     return returnResult
 }
 
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
 export async function UpdateRegiment(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE regiments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
@@ -363,6 +372,7 @@ export async function deletePatient(id) {
     return deleteResult
 }
 
+// Add Patient info to this to make secure?
 export async function deleteAppointment(id) {
     const [deleteResult] = await pool.query(`DELETE FROM appointments WHERE Appointment_ID = ?;`
     , [id])

@@ -135,6 +135,7 @@ app.get("/prescription/:id", async (req, res) => { //based on patient -VC
     res.send(rows)
 })
 
+// Why are the params weird?
 app.get("/preliminaries/:id/:doc_id", async (req, res) => { //based on patient, but doctor accesses it -VC
     const rows = await getPreliminaries(req.params.id)
     const event_Details = 'retrieval of Preliminary data'
@@ -169,10 +170,12 @@ app.post("/passAuthPatient", async (req, res) => {
 
     try {
         const rows = await getPatientAuth(email, pw);
+        /* THIS BELOW IS BROKEN
         if(rows)
             attempt = await LogAttempt(email, 'Patient', 1);
         else
         attempt = await LogAttempt(email, 'Patient', 0);
+        */
         res.send(rows);
     } catch (error) {
         res.status(500).json({ error: "Internal server error" });
@@ -187,10 +190,12 @@ app.post("/passAuthDoctor", async (req, res) => {
 
     try {
         const rows = await getDoctorAuth(email, pw);
+        /* THIS BELOW IS BROKEN
         if(rows)
             attempt = await LogAttempt(email, 'Doctor', 1);
         else
         attempt = await LogAttempt(email, 'Doctor', 0);
+        */
         res.send(rows);
     } catch (error) {
         res.status(500).json({ error: "Internal server error" });
@@ -205,10 +210,12 @@ app.post("/passAuthPharm", async (req, res) => {
 
     try {
         const rows = await getPharmAuth(email, pw);
+        /* THIS BELOW IS BROKEN
         if(rows)
             attempt = await LogAttempt(email, 'Pharmacist', 1);
         else
         attempt = await LogAttempt(email, 'Pharmacist', 0);
+        */
         res.send(rows);
     } catch (error) {
         res.status(500).json({ error: "Internal server error" });
@@ -472,7 +479,7 @@ app.post("/preliminaries", async (req, res) => {
     }
 })
 
-app.post("/perscription", async (req, res) => {
+app.post("/prescription", async (req, res) => {
     const {Patient_ID, Doctor_ID, Pill_ID, Quantity} = req.body
     if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity) {
         return res.status(400).json({ error: "Missing required information" });
@@ -543,13 +550,15 @@ app.post("/payment", async (req, res) => {
 
 /*ADDED: regiment, appointments, perscription, audit logs*/
 
-app.patch('/patient', async(req, res)=>{
+app.patch('/patient/:id', async(req, res)=>{
     try {
         //We wouldn't techincally change the id since the user has no access to it, but we could use it in req.body
         const entry = req.body
-        const updateResult = await UpdatePatientInfo(req.body.Patient_ID, entry)
+        const id = req.params.id
+        const updateResult = await UpdatePatientInfo(id, entry)
         const event_Details = 'Edited Patient info'
-        const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'PATCH', event_Details)
+        const audit = await genereateAudit(id, 'Patient', 'PATCH', event_Details)
+        console.log(audit)
         res.status(201).send(updateResult)
         }
     catch(error) { res.status(500).send(error).json({"message":req.body}) }
