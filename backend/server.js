@@ -550,19 +550,37 @@ app.post("/payment", async (req, res) => {
 
 /*ADDED: regiment, appointments, perscription, audit logs*/
 
-app.patch('/patient/:id', async(req, res)=>{
+
+// FIX ALL USAGES OF req.body AND req.params BELOW - FI
+
+// BELOW IS CORRECTED
+app.patch('/patient/:id', async (req, res) => {
     try {
-        //We wouldn't techincally change the id since the user has no access to it, but we could use it in req.body
-        const entry = req.body
-        const id = req.params.id
-        const updateResult = await UpdatePatientInfo(id, entry)
-        const event_Details = 'Edited Patient info'
-        const audit = await genereateAudit(id, 'Patient', 'PATCH', event_Details)
-        console.log(audit)
-        res.status(201).send(updateResult)
+        const id = req.params.id;
+        let entry = req.body;
+
+        // Fields that are NOT allowed to be updated
+        const restrictedFields = ['PW', 'Patient_ID'];
+
+        // Remove restricted fields from the entry object
+        entry = Object.fromEntries(
+            Object.entries(entry).filter(([key]) => !restrictedFields.includes(key))
+        );
+
+        if (Object.keys(entry).length === 0) {
+            return res.status(400).json({ error: "No valid fields to update." });
         }
-    catch(error) { res.status(500).send(error).json({"message":req.body}) }
-})
+
+        const updateResult = await UpdatePatientInfo(id, entry);
+        const event_Details = 'Edited Patient info';
+        const audit = await genereateAudit(id, 'Patient', 'PATCH', event_Details);
+        
+        console.log(audit);
+        res.status(200).json(updateResult);
+    } catch (error) { 
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+});
 
 app.patch('/patient/addDoc', async(req, res)=>{ //Give patient a doctor -VC
     try {
@@ -657,7 +675,8 @@ app.patch('/regiment', async(req, res)=>{
 /*ADDED: appointments, Doctorschedules, perscription, regiments, posts<-comments, audit logs*/
 
 app.delete("/patient", async(req, res) => {
-    const deleteResult = await deletePatient(req.body.Patient_ID)
+    const { Patient_ID } = req.body
+    const deleteResult = await deletePatient(Patient_ID)
     const event_Details = 'Patient has been deleted'
     const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'DELETE', event_Details)
     res.status(204).send(deleteResult)
