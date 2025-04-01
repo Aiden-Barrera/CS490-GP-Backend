@@ -560,7 +560,7 @@ app.patch('/patient/:id', async (req, res) => {
         let entry = req.body;
 
         // Fields that are NOT allowed to be updated
-        const restrictedFields = ['PW', 'Patient_ID'];
+        const restrictedFields = ['PW', 'Patient_ID, Doctor_ID'];
 
         // Remove restricted fields from the entry object
         entry = Object.fromEntries(
@@ -584,7 +584,8 @@ app.patch('/patient/:id', async (req, res) => {
 
 app.patch('/patient/addDoc', async(req, res)=>{ //Give patient a doctor -VC
     try {
-        const updateResult = await addPatientDoc(req.body.Patient_ID, req.body.Doctor_ID)
+        const {Patient_ID, Doctor_ID} = req.body
+        const updateResult = await addPatientDoc(Patient_ID, Doctor_ID)
         const event_Details = 'Added Doctor to Patient info'
         const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'PATCH', event_Details)
         res.status(201).send(updateResult)
@@ -602,17 +603,35 @@ app.patch('/patient/removeDoc', async(req, res)=>{ //Remove patient doctor -VC
     catch(error) { res.status(500).send(error).json({"message":req.params.id}) }
 })
 
-app.patch('/doctor', async(req, res)=>{
+app.patch('/doctor/:id', async (req, res) => {
     try {
-        const entry = req.body
-        const updateResult = await UpdateDoctorInfo(req.body.Doctor_ID, entry)
-        const event_Details = 'Edited Doctor info'
-        const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'PATCH', event_Details)
-        res.status(201).send(updateResult)
-        }
-    catch(error) { res.status(500).send(error).json({"message":req.body}) }
-})
+        const id = req.params.id;
+        let entry = req.body;
 
+        // Fields that are NOT allowed to be updated
+        const restrictedFields = ['PW', 'Doctor_ID', 'License_Serial', 'Specialty'];
+
+        // Remove restricted fields from the entry object
+        entry = Object.fromEntries(
+            Object.entries(entry).filter(([key]) => !restrictedFields.includes(key))
+        );
+
+        if (Object.keys(entry).length === 0) {
+            return res.status(400).json({ error: "No valid fields to update." });
+        }
+
+        const updateResult = await UpdateDoctorInfo(id, entry);
+        const event_Details = 'Edited Doctor info';
+        const audit = await genereateAudit(id, 'Doctor', 'PATCH', event_Details);
+        
+        console.log(audit);
+        res.status(200).json(updateResult);
+    } catch (error) { 
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+});
+
+// MAKE ONLY AVAILABLE TO A DOCTOR FROM THEIR OWN PORTAL VIA FRONTEND - FI
 app.patch('/doctorSchedule', async(req, res)=>{
     try {
         const entry = req.body

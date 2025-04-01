@@ -125,7 +125,7 @@ export async function getPatientAuth(email, pw) {
 }
 
 export async function getDoctorAuth(email, pw) {
-    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial, Email, Phone,  FROM DoctorBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
+    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial, Email, Phone  FROM DoctorBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
         [email, pw]
     )
     return resultRows[0]
@@ -280,7 +280,6 @@ export async function createPayment(Patient_ID, Card_Number, Related_ID, Payment
 // All below should have an addtional query to auditlog with tyoe PATCH
 //update based on a given id - VC
 
-// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
 export async function UpdatePatientInfo(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE patientbase SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
@@ -307,7 +306,6 @@ export async function rmPatientDoc(id) {
     return returnResult
 }
 
-// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY THE PASSWORD
 export async function UpdateDoctorInfo(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE doctorbase SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
