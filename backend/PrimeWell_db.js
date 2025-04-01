@@ -57,8 +57,23 @@ export async function getComments_id(id) { //comments for specific forum post -V
 
 export async function getReviews() {
     const [resultRows] = await pool.query(`with numReviews as (select count(doctor_id) as cnt, doctor_id from reviews group by doctor_id)
-                select db.first_name, db.last_name, db.specialty, avg(r.rating) as rating, nr.cnt from reviews as r, 
+                select db.doctor_id, db.first_name, db.last_name, db.specialty, avg(r.rating) as rating, nr.cnt from reviews as r, 
                 doctorbase as db, numReviews as nr where r.doctor_id = db.doctor_id and nr.doctor_id = db.doctor_id group by r.doctor_id`)
+    return resultRows
+}
+
+export async function getReviewsByID(id) {
+    const [resultRows] = await pool.query(`with numReviews as (select count(doctor_id) as cnt, doctor_id from reviews group by doctor_id)
+                select db.doctor_id, db.first_name, db.last_name, db.specialty, avg(r.rating) as rating, nr.cnt from reviews as r, 
+                doctorbase as db, numReviews as nr where r.doctor_id = db.doctor_id and nr.doctor_id = db.doctor_id and db.doctor_id = ? group by r.doctor_id`, 
+            [id])
+    return resultRows
+}
+
+export async function getReviewsComments(id) {
+    const [resultRows] = await pool.query(`select r.patient_id, r.review_text, r.doctor_id, pb.first_name, pb.last_name, 
+        db.first_name as doctor_fname, db.last_name as doctor_lname from reviews as r, patientbase as pb, doctorbase as db where 
+        r.patient_id = pb.patient_id and r.doctor_id = db.doctor_id and r.doctor_id = ?`, [id])
     return resultRows
 }
 

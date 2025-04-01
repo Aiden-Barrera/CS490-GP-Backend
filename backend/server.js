@@ -2,6 +2,8 @@ import express from 'express'
 import { addPatientDoc, createComment, createDoctor, createExercise, createForumPost, createPatient, createPharmacy, 
     createPill, createReveiw, deleteDoctor, deletePatient, deletePill, getComments_id, getDoctorAuth, getDoctors, 
     getExercises, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getReviews, 
+    getReviewsByID, 
+    getReviewsComments, 
     getReviewsTop, getTiers, rmPatientDoc, UpdateDoctorInfo, UpdatePatientInfo, UpdatePillInfo} from './PrimeWell_db.js'
 import cors from 'cors'
 
@@ -66,8 +68,18 @@ app.get("/reviews", async (req, res) => {
     res.send(rows)
 })
 
+app.get("/reviews/:id", async (req, res) => {
+    const rows = await getReviewsByID(req.params.id)
+    res.send(rows)
+})
+
 app.get("/reviews/top", async (req, res) => {
     const rows = await getReviewsTop()
+    res.send(rows)
+})
+
+app.get("/reviews/comments/:id", async (req, res) => {
+    const rows = await getReviewsComments(req.params.id)
     res.send(rows)
 })
 
