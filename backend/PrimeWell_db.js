@@ -134,21 +134,21 @@ export async function getChatMesseges(id) { //order by for most recent
 
 // 3 below are for pass word authentication, check what was entered compared to what is stored, could add post for attempts - VC
 export async function getPatientAuth(email, pw) {
-    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Email, Phone, Address, Zip, Doctor_ID FROM PatientBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
+    const [resultRows] = await pool.query(`SELECT patient_id, First_Name, Last_Name, Email, Phone, Address, Zip, Doctor_ID FROM PatientBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
         [email, pw]
     )
     return resultRows[0]
 }
 
 export async function getDoctorAuth(email, pw) {
-    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial, Email, Phone  FROM DoctorBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
+    const [resultRows] = await pool.query(`SELECT doctor_id, First_Name, Last_Name, Specialty, Availability, License_Serial, Email, Phone  FROM DoctorBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
         [email, pw]
     )
     return resultRows[0]
 }
 
 export async function getPharmAuth(email, pw) {
-    const [resultRows] = await pool.query(`SELECT Company_Name, Address, Zip, Work_Hours, Email FROM Pharmacies WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
+    const [resultRows] = await pool.query(`SELECT pharm_id, Company_Name, Address, Zip, Work_Hours, Email FROM Pharmacies WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
         [email, pw]
     )
     return resultRows[0]
