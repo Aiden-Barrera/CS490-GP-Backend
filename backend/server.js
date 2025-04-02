@@ -5,7 +5,8 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getExercises, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
     getReviewsTop, getReviewsByID, 
     getReviewsComments,  getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
-    UpdateRegiment} from './PrimeWell_db.js'
+    UpdateRegiment,
+    getPatientDoc} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -67,6 +68,13 @@ and their (1st draft of) audit log entries*/
 app.get("/patient/:id", async (req, res) => {
     const rows = await getPatients(req.params.id)
     const event_Details = 'retrieval of patient data'
+    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details) 
+    res.send(rows)
+})
+
+app.get("/patientDoc/:id", async (req, res) => {
+    const rows = await getPatientDoc(req.params.id)
+    const event_Details = 'retrieval of patient\'s doctor'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details) 
     res.send(rows)
 })

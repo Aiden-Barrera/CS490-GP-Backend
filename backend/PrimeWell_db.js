@@ -20,6 +20,11 @@ export async function getPatients(id) {
     return resultRows
 }
 
+export async function getPatientDoc(id) {
+    const [resultRows] = await pool.query(`SELECT Doctor_ID FROM PatientBase WHERE Patient_ID = ?;`, [id])
+    return resultRows
+}
+
 export async function getDoctors(id) {
     const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase WHERE Doctor_ID = ?;`, [id]) 
     return resultRows
