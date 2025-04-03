@@ -6,7 +6,13 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getReviewsTop, getReviewsByID, 
     getReviewsComments,  getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
     UpdateRegiment,
-    getPatientDoc} from './PrimeWell_db.js'
+    getPatientDoc,
+    createApptRequest,
+    getApptRequest,
+    UpdateApptStat,
+    getDocPatients,
+    getPrescriptionDoc,
+    getAuthSurvey} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -86,6 +92,12 @@ app.get("/doctor/:id", async (req, res) => {
     res.send(rows)
 })
 
+app.get("/doctorPatients/:id", async (req, res) => {
+    const rows = await getDocPatients(req.params.id)
+    const event_Details = 'retrieval of doctor\'s patients'
+    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
+    res.send(rows)
+})
 
 app.get("/doctorSchedule/:id", async (req, res) => {
     const rows = await getDoctorSchedule(req.params.id)
@@ -160,10 +172,24 @@ app.get("/appointment/doctor/:id", async (req, res) => {
     res.send(rows)
 })
 
+app.get("/appointment/request/:id", async (req, res) => {
+    const rows = await getApptRequest(req.params.id)
+    const event_Details = 'retrieval of appointment requests'
+    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
+    res.send(rows)
+})
+
 app.get("/prescription/:id", async (req, res) => { //based on patient -VC
     const rows = await getPrescription(req.params.id)
     const event_Details = 'retrieval of perscription'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+    res.send(rows)
+})
+
+app.get("/prescriptionDoc/:id", async (req, res) => { //based on doctor -VC
+    const rows = await getPrescriptionDoc(req.params.id)
+    const event_Details = 'retrieval of perscription'
+    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
     res.send(rows)
 })
 
@@ -197,6 +223,16 @@ app.get("/patientsurvey/:id", async (req, res) => {
     const event_Details = 'retrieval of Patient data for graph'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
     res.send(rows)
+})
+
+app.get("/patientsurveyAuth/:id", async (req, res) => {
+    const rows = await getAuthSurvey(req.params.id)
+    const event_Details = 'check to see if patient can post survey'
+    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+    const tday = new Date();
+    if (tday.toISOString().substring(0, 10) != rows[0].Survey_Date.toISOString().substring(0, 10)) res.send(tday)
+    else res.send('false')
+    //res.send(rows)
 })
 
 app.post("/passAuthPatient", async (req, res) => {
@@ -500,6 +536,22 @@ app.post("/appointment", async (req, res) => {
     }
 })
 
+app.post("/request", async (req, res) => {
+    const {Patient_ID, Doctor_ID} = req.body
+    if (!Patient_ID | !Doctor_ID) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+
+    try {
+        const newAppt = await createApptRequest(Patient_ID, Doctor_ID)
+        const event_Details = 'Created new Request for an appointment'
+        const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
+        res.status(201).send(newAppt)
+    } catch (error) {  
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
 app.post("/preliminaries", async (req, res) => {
     const {Patient_ID, Symptoms} = req.body
     if (!Patient_ID | !Symptoms) {
@@ -549,7 +601,7 @@ app.post("/reviews", async (req, res) => {
     }
 })
 
-app.post("/survey", async (req, res) => {
+app.post("/patientsurvey", async (req, res) => {
     const {Patient_ID, Weight, Caloric_Intake, Water_Intake, Mood} = req.body
     if (!Patient_ID | !Weight | !Caloric_Intake | !Water_Intake| !Mood) {
         return res.status(400).json({ error: "Missing required information" });
@@ -671,7 +723,7 @@ app.patch('/doctor/:id', async (req, res) => {
 // MAKE ONLY AVAILABLE TO A DOCTOR FROM THEIR OWN PORTAL VIA FRONTEND - FI
 app.patch('/doctorSchedule', async(req, res)=>{
     try {
-        const entry = req.body
+        const entry = req.body.Doctor_Schedule
         const updateResult = await UpdateDoctorSchedule(req.body.Doctor_ID, entry)
         const event_Details = 'Edited Doctor Schedule info'
         const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'PATCH', event_Details)
@@ -682,10 +734,35 @@ app.patch('/doctorSchedule', async(req, res)=>{
 
 app.patch('/appointment', async(req, res)=>{ //Doctor's can change this - VC
     try {
+        const id = req.body.Appointment_ID
         const entry = req.body
-        const updateResult = await UpdateApptInfo(req.body.Appointment_ID, entry)
+
+        // Fields that are NOT allowed to be updated
+        const restrictedFields = ['Appoinment_ID', 'Patient_ID', 'Doctor_ID', 'Tier_ID'];
+
+        // Remove restricted fields from the entry object
+        entry = Object.fromEntries(
+            Object.entries(entry).filter(([key]) => !restrictedFields.includes(key))
+        );
+
+        if (Object.keys(entry).length === 0) {
+            return res.status(400).json({ error: "No valid fields to update." });
+        }
+        
+        const updateResult = await UpdateApptInfo(id, entry)
         const event_Details = 'Edited Appointment info'
-        const audit = await genereateAudit(req.params.Doctor_ID, 'Doctor', 'PATCH', event_Details)
+        const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'PATCH', event_Details)
+        res.status(201).send(updateResult)
+        }
+    catch(error) { res.status(500).send(error).json({"message":req.body}) }
+})
+
+app.patch('/request', async(req, res)=>{ //updates to accpted or rejected - VC
+    try {
+        const status = req.body.status
+        const updateResult = await UpdateApptStat(req.body.Request_ID, status)
+        const event_Details = 'Edited Request info'
+        const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'PATCH', event_Details)
         res.status(201).send(updateResult)
         }
     catch(error) { res.status(500).send(error).json({"message":req.body}) }
@@ -693,8 +770,22 @@ app.patch('/appointment', async(req, res)=>{ //Doctor's can change this - VC
 
 app.patch('/perscription', async(req, res)=>{ //Doctor's can change this - VC
     try {
+        const id = req.body.Perscription_ID
         const entry = req.body
-        const updateResult = await UpdatePerscriptionInfo(req.body.Perscription_ID, entry)
+
+        // Fields that are NOT allowed to be updated
+        const restrictedFields = ['Perscription_ID', 'Patient_ID', 'Doctor_ID'];
+
+        // Remove restricted fields from the entry object
+        entry = Object.fromEntries(
+            Object.entries(entry).filter(([key]) => !restrictedFields.includes(key))
+        );
+
+        if (Object.keys(entry).length === 0) {
+            return res.status(400).json({ error: "No valid fields to update." });
+        }
+
+        const updateResult = await UpdatePerscriptionInfo(id, entry)
         const event_Details = 'Edited perscription info'
         const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'PATCH', event_Details)
         res.status(201).send(updateResult)

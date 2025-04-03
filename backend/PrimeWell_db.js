@@ -20,13 +20,24 @@ export async function getPatients(id) {
     return resultRows
 }
 
-export async function getPatientDoc(id) {
-    const [resultRows] = await pool.query(`SELECT Doctor_ID FROM PatientBase WHERE Patient_ID = ?;`, [id])
+export async function getPatientDoc(id) { //changed for doc info
+    const [resultRows] = await pool.query(`SELECT doctorbase.Doctor_ID, doctorbase.First_Name, doctorbase.Last_Name, 
+        doctorbase.specialty, doctorbase.email 
+        FROM PatientBase INNER JOIN doctorbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
+        WHERE Patient_ID = ?;`, [id])
     return resultRows
 }
 
 export async function getDoctors(id) {
     const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase WHERE Doctor_ID = ?;`, [id]) 
+    return resultRows
+}
+
+export async function getDocPatients(id) { //patient info for doc
+    const [resultRows] = await pool.query(`SELECT patientbase.Patient_ID, patientbase.First_Name, patientbase.Last_Name, 
+    patientbase.email, patientbase.phone 
+    FROM DoctorBase INNER JOIN patientbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
+    WHERE doctorbase.Doctor_ID = ?;`, [id])
     return resultRows
 }
 
@@ -107,21 +118,43 @@ export async function getSurvey(id) { // get patient's recent surveys by recent 
     return resultRows
 }
 
+export async function getAuthSurvey(id) { // get patient's recent surveys by recent date
+    const [resultRows] = await pool.query(`SELECT Survey_Date FROM PatientDailySurvey WHERE Patient_ID = ? ORDER BY Survey_Date DESC Limit 1;`, [id]) 
+    return resultRows
+}
+
 // Make the below a POST because it is sensitive? - FI
 export async function getAppointmentsPatient(id) {
-    const [resultRows] = await pool.query(`SELECT Appointment_ID, Date_Scheduled, Appt_Date, Tier_ID, Doctor_ID, Doctors_Feedback FROM Appointments WHERE Patient_ID = ?;`, [id]) 
+    const [resultRows] = await pool.query(`SELECT Appointment_ID, Date_Scheduled, Appt_Date, Appt_Time, Tier_ID, Doctor_ID, Doctors_Feedback FROM Appointments WHERE Patient_ID = ?;`, [id]) 
+    return resultRows
+}
+
+// joins other tables to get data - VC
+export async function getApptRequest(id) {
+    const [resultRows] = await pool.query(`
+        SELECT patientbase.First_name, patientbase.last_name, requests.Request_status, 
+        requests.Doctor_ID, appointments.Appt_Date, appointments.Appt_Time 
+        FROM requests INNER JOIN patientbase ON patientbase.Patient_id = requests.Patient_id
+        INNER JOIN appointments ON Appointments.Patient_id = patientbase.Patient_id
+        WHERE requests.Doctor_ID = ?;`, [id]) 
     return resultRows
 }
 
 // Make the below a POST because it is sensitive? - FI
 export async function getAppointmentsDoctor(id) {
-    const [resultRows] = await pool.query(`SELECT Appointment_ID, Date_Scheduled, Appt_Date, Tier_ID, Doctor_ID, Doctors_Feedback FROM Appointments FROM Appointments WHERE Doctor_ID = ?;`, [id]) 
+    const [resultRows] = await pool.query(`SELECT Appointment_ID, Date_Scheduled, Appt_Date, Appt_Time, Tier_ID FROM Appointments FROM Appointments WHERE Doctor_ID = ?;`, [id]) 
     return resultRows
 }
 
 // Make the below a POST because it is sensitive? - FI
 export async function getPrescription(id) {
     const [resultRows] = await pool.query(`SELECT Prescription_ID, Pill_ID, Quantity, Doctor_ID FROM Prescription WHERE Patient_ID = ?;`, [id]) 
+    return resultRows
+}
+
+// Make the below a POST because it is sensitive? - FI
+export async function getPrescriptionDoc(id) {
+    const [resultRows] = await pool.query(`SELECT Prescription_ID, Pill_ID, Quantity, Patient_ID FROM Prescription WHERE Doctor_ID = ?;`, [id]) 
     return resultRows
 }
 
@@ -267,6 +300,11 @@ export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Doctor
     return resultApptCreate
 }
 
+export async function createApptRequest(Patient_ID, Doctor_ID) {
+    const [resultApptCreate] = await pool.query(`INSERT INTO appointments (Patient_ID, Doctor_ID, Request_Status) VALUES (?, ?, ?);`, [Patient_ID, Doctor_ID, 'Pending'])
+    return resultApptCreate
+}
+
 export async function createPreliminary(Patient_ID, Symptoms) {
     const [resultPrelimCreate] = await pool.query(`INSERT INTO preliminaries (Patient_ID, Symptoms) VALUES (?, ?);`, [Patient_ID, Symptoms])
     return resultPrelimCreate
@@ -335,7 +373,15 @@ export async function UpdateDoctorInfo(id, entry) {
     return returnResult
 }
 
-// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
+export async function UpdateRequest(id, entry) {
+    const [returnResult] = await pool.query(`
+        UPDATE doctorschedules SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
+    , [entry, id])
+    console.log("Database update result:", returnResult);
+    return returnResult
+}
+
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (only doc schedule is extracted)
 export async function UpdateDoctorSchedule(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE doctorschedules SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
@@ -344,7 +390,7 @@ export async function UpdateDoctorSchedule(id, entry) {
     return returnResult
 }
 
-// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (fixed for tiers, and IDs)
 export async function UpdateApptInfo(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
@@ -353,7 +399,16 @@ export async function UpdateApptInfo(id, entry) {
     return returnResult
 }
 
-// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (Fixed for IDs)
+export async function UpdateApptStat(id, status) {
+    const [returnResult] = await pool.query(`
+        UPDATE requests SET Request_Status = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Request_ID = ?;`
+    , [status, id])
+    console.log("Database update result:", returnResult);
+    return returnResult
+}
+
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (fixed for IDs)
 export async function UpdatePerscriptionInfo(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE prescription SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Prescription_ID = ?;`
@@ -362,7 +417,7 @@ export async function UpdatePerscriptionInfo(id, entry) {
     return returnResult
 }
 
-// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (almost evrything besides ID)
 export async function UpdatePillInfo(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE pillbank SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Pill_ID = ?;`
@@ -371,7 +426,7 @@ export async function UpdatePillInfo(id, entry) {
     return returnResult
 }
 
-// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (There's not much you can update - VC)
 export async function UpdateRegiment(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE regiments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
