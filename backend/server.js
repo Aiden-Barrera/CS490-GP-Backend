@@ -12,7 +12,9 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     UpdateApptStat,
     getDocPatients,
     getPrescriptionDoc,
-    getAuthSurvey} from './PrimeWell_db.js'
+    getAuthSurvey,
+    getSurveyLatestDate,
+    getAllDoctors} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -82,6 +84,11 @@ app.get("/patientDoc/:id", async (req, res) => {
     const rows = await getPatientDoc(req.params.id)
     const event_Details = 'retrieval of patient\'s doctor'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details) 
+    res.send(rows)
+})
+
+app.get("/doctor/listAll", async (req, res) => {
+    const rows = await getAllDoctors()
     res.send(rows)
 })
 
@@ -230,7 +237,7 @@ app.get("/patientsurveyAuth/:id", async (req, res) => {
     const event_Details = 'check to see if patient can post survey'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
     const tday = new Date();
-    if (tday.toISOString().substring(0, 10) != rows[0].Survey_Date.toISOString().substring(0, 10)) res.send(tday)
+    if (tday.toISOString().substring(0, 10) != rows[0]?.Survey_Date.toISOString().substring(0, 10)) res.send(tday)
     else res.send('false')
     //res.send(rows)
 })
@@ -615,6 +622,16 @@ app.post("/patientsurvey", async (req, res) => {
     } catch (error) {  
         res.status(500).json({ error: error.message || "Internal server error" });
     }
+})
+
+app.post("/patientsurvey/date/", async (req, res) => {
+    const {patient_id} = req.body
+    const rows = await getSurveyLatestDate(patient_id)
+    const today = new Date().toISOString().split('T')[0]
+    if (rows[0]?.survey_date.toISOString().split('T')[0] != today) {
+        return res.send('false')
+    } 
+    return res.send('true')
 })
 
 app.post("/payment", async (req, res) => {

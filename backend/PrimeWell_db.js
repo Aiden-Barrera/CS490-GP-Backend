@@ -28,6 +28,11 @@ export async function getPatientDoc(id) { //changed for doc info
     return resultRows
 }
 
+export async function getAllDoctors() {
+    const [resultRows] = await pool.query('select doctor_id, first_name, last_name, specialty, availability from doctorbase')
+    return resultRows
+}
+
 export async function getDoctors(id) {
     const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase WHERE Doctor_ID = ?;`, [id]) 
     return resultRows
@@ -115,6 +120,11 @@ export async function getReviewsTop() { //top 3 reviews for splash page - VC
 // Make the below a POST because it is sensitive? - FI
 export async function getSurvey(id) { // get patient's recent surveys by recent date
     const [resultRows] = await pool.query(`SELECT Weight, Caloric_Intake, Water_Intake, Mood, Survey_Date FROM PatientDailySurvey WHERE Patient_ID = ? ORDER BY Survey_Date DESC;`, [id]) 
+    return resultRows
+}
+
+export async function getSurveyLatestDate(id){
+    const [resultRows] = await pool.query(`select survey_date from patientdailysurvey where patient_id = ? order by survey_date desc limit 1`, [id])
     return resultRows
 }
 
