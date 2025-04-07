@@ -47,8 +47,12 @@ export async function getDocPatients(id) { //patient info for doc
 }
 
 // Make the below a POST because it is sensitive? - FI
-export async function getDoctorSchedule(id) {
-    const [resultRows] = await pool.query(`SELECT Doctor_Schedule FROM DoctorSchedules WHERE Doctor_ID = ?;`, [id]) 
+export async function getDoctorSchedule(id, day) {
+    const validDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    if (!validDays.includes(day)) {
+        throw new Error("Invalid day value.");
+    }
+    const [resultRows] = await pool.query(`select JSON_EXTRACT(doctor_schedule, '$.${day}') as Slots from doctorschedules where doctor_id = ?;`, [id]) 
     return resultRows
 }
 

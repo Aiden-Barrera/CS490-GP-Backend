@@ -106,13 +106,6 @@ app.get("/doctorPatients/:id", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/doctorSchedule/:id", async (req, res) => {
-    const rows = await getDoctorSchedule(req.params.id)
-    const event_Details = 'retrieval of doctor schedule data'
-    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
-    res.send(rows)
-})
-
 
 app.get("/pharmacies", async (req, res) => {
     const rows = await getPharmacies()
@@ -381,6 +374,22 @@ app.post("/doctorSchedule", async (req, res) => {
         res.status(201).send(newDoctor)
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
+app.post("/getDoctorSchedule", async (req, res) => {
+    const {doc_id, day} = req.body
+
+    if (!doc_id |!day) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+    try {
+        const rows = await getDoctorSchedule(doc_id, day)
+        const event_Details = 'retrieval of doctor schedule data'
+        const audit = await genereateAudit(doc_id, 'Doctor', 'POST', event_Details)
+        res.status(200).send(rows)
+    } catch (err) {
+        res.status(500).json({message: "Failed to Fetch Doctor Schedule by Day"})
     }
 })
 
