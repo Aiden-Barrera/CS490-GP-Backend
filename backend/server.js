@@ -810,7 +810,7 @@ app.patch('/prescription/:doctor_id', async(req, res)=>{ //Doctor's can change t
         const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'PATCH', event_Details)
         res.status(201).send(updateResult)
         }
-    catch(error) { res.status(500).send(error).json({"message":req.body}) }
+    catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
 // MAKE ONLY AVAILABLE TO SUPER ADMIN FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
@@ -836,7 +836,7 @@ app.patch('/pillbank/:pill_id', async(req, res)=>{
         const audit = await genereateAudit(0, 'Pharmacist', 'PATCH', event_Details)
         res.status(201).send(updateResult)
         }
-    catch(error) { res.status(500).send(error).json({"message":req.body}) }
+    catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
 app.patch('/regiments/:id', async(req, res)=>{
@@ -861,7 +861,7 @@ app.patch('/regiments/:id', async(req, res)=>{
         const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'PATCH', event_Details)
         res.status(201).send(updateResult)
         }
-    catch(error) { res.status(500).send(error).json({"message":req.body}) }
+    catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
 //REMOVE DATA ----------------------------------------------------------------------------------------------
