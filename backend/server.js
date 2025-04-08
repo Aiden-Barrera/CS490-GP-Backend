@@ -1,13 +1,29 @@
 import express from 'express'
 import { addPatientDoc, createAppointment, createChatMsg, createChatroom, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPerscription, createPharmacy, 
-    createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePerscription, deletePill, deleteRegiment, genereateAudit, 
-    getAppointmentsDoctor, getAppointmentsPatient, getChatMesseges, getComments_id, getDoctorAuth, getDoctors, 
-    getDoctorSchedule, getExercises, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, 
-    getPreliminaries, getPrescription, getRegiment, getReviews, 
-    getReviewsTop, getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
-    UpdateRegiment, createPayment} from './PrimeWell_db.js'
+    createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePerscription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getAppointmentsPatient, getChatMesseges, getComments_id, getDoctorAuth, getDoctors, 
+    getDoctorSchedule, 
+    getExercises, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
+    getReviewsTop, getReviewsByID, 
+    getReviewsComments,  getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
+    UpdateRegiment,
+    getPatientDoc,
+    createApptRequest,
+    getApptRequest,
+    UpdateApptStat,
+    getDocPatients,
+    getPrescriptionDoc,
+    getAuthSurvey,
+    getSurveyLatestDate,
+    getAllDoctors} from './PrimeWell_db.js'
+
 import cors from 'cors'
 import multer from 'multer'
+
+//import socket from 'socket.io'
+/*
+const server = http.createServer(app);
+const io = new socket(server);
+*/
 
 const app = express()
 app.use(express.json())
@@ -41,6 +57,17 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!')
   })
 
+/*
+io.on('connection', (socket) => {
+  console.log('a user connected');
+});
+
+//<script src="/socket.io/socket.io.js"></script>
+//<script>
+  //var socket = io();
+//</script>
+*/
+
 //GET DATA ----------------------------------------------------------------------------------------------
 
 /*ADDED: Gets for appointments, doctor schedule, perscription, preliminaries, survey, regiments, chat rooms<-messages, 
@@ -53,6 +80,18 @@ app.get("/patient/:id", async (req, res) => {
     res.send(rows)
 })
 
+app.get("/patientDoc/:id", async (req, res) => {
+    const rows = await getPatientDoc(req.params.id)
+    const event_Details = 'retrieval of patient\'s doctor'
+    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details) 
+    res.send(rows)
+})
+
+app.get("/doctor/listAll", async (req, res) => {
+    const rows = await getAllDoctors()
+    res.send(rows)
+})
+
 app.get("/doctor/:id", async (req, res) => {
     const rows = await getDoctors(req.params.id)
     const event_Details = 'retrieval of doctor data'
@@ -60,6 +99,12 @@ app.get("/doctor/:id", async (req, res) => {
     res.send(rows)
 })
 
+app.get("/doctorPatients/:id", async (req, res) => {
+    const rows = await getDocPatients(req.params.id)
+    const event_Details = 'retrieval of doctor\'s patients'
+    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
+    res.send(rows)
+})
 
 app.get("/doctorSchedule/:id", async (req, res) => {
     const rows = await getDoctorSchedule(req.params.id)
@@ -115,6 +160,11 @@ app.get("/reviews", async (req, res) => {
     res.send(rows)
 })
 
+app.get("/reviews/:id", async (req, res) => {
+    const rows = await getReviewsByID(req.params.id)
+    res.send(rows)
+})
+    
 app.get("/appointment/patient/:id", async (req, res) => {
     const rows = await getAppointmentsPatient(req.params.id)
     const event_Details = 'retrieval of appointment data'
@@ -129,10 +179,24 @@ app.get("/appointment/doctor/:id", async (req, res) => {
     res.send(rows)
 })
 
+app.get("/appointment/request/:id", async (req, res) => {
+    const rows = await getApptRequest(req.params.id)
+    const event_Details = 'retrieval of appointment requests'
+    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
+    res.send(rows)
+})
+
 app.get("/prescription/:id", async (req, res) => { //based on patient -VC
     const rows = await getPrescription(req.params.id)
     const event_Details = 'retrieval of perscription'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+    res.send(rows)
+})
+
+app.get("/prescriptionDoc/:id", async (req, res) => { //based on doctor -VC
+    const rows = await getPrescriptionDoc(req.params.id)
+    const event_Details = 'retrieval of perscription'
+    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
     res.send(rows)
 })
 
@@ -151,8 +215,13 @@ app.get("/chatroomMsgs/:id", async (req, res) => { //by chatroom_id - VC
     res.send(rows)
 })
 
-app.get("/reviews/top", async (req, res) => {
+app.get("/reviewsTop", async (req, res) => {
     const rows = await getReviewsTop()
+    res.send(rows)
+})
+
+app.get("/reviews/comments/:id", async (req, res) => {
+    const rows = await getReviewsComments(req.params.id)
     res.send(rows)
 })
 
@@ -162,6 +231,16 @@ app.get("/patientsurvey/:id", async (req, res) => {
     const event_Details = 'retrieval of Patient data for graph'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
     res.send(rows)
+})
+
+app.get("/patientsurveyAuth/:id", async (req, res) => {
+    const rows = await getAuthSurvey(req.params.id)
+    const event_Details = 'check to see if patient can post survey'
+    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+    const tday = new Date();
+    if (tday.toISOString().substring(0, 10) != rows[0]?.Survey_Date.toISOString().substring(0, 10)) res.send(tday)
+    else res.send('false')
+    //res.send(rows)
 })
 
 app.post("/passAuthPatient", async (req, res) => {
@@ -465,6 +544,22 @@ app.post("/appointment", async (req, res) => {
     }
 })
 
+app.post("/request", async (req, res) => {
+    const {Patient_ID, Doctor_ID} = req.body
+    if (!Patient_ID | !Doctor_ID) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+
+    try {
+        const newAppt = await createApptRequest(Patient_ID, Doctor_ID)
+        const event_Details = 'Created new Request for an appointment'
+        const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
+        res.status(201).send(newAppt)
+    } catch (error) {  
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
 app.post("/preliminaries", async (req, res) => {
     const {Patient_ID, Symptoms} = req.body
     if (!Patient_ID | !Symptoms) {
@@ -514,7 +609,7 @@ app.post("/reviews", async (req, res) => {
     }
 })
 
-app.post("/survey", async (req, res) => {
+app.post("/patientsurvey", async (req, res) => {
     const {Patient_ID, Weight, Caloric_Intake, Water_Intake, Mood} = req.body
     if (!Patient_ID | !Weight | !Caloric_Intake | !Water_Intake| !Mood) {
         return res.status(400).json({ error: "Missing required information" });
@@ -528,6 +623,16 @@ app.post("/survey", async (req, res) => {
     } catch (error) {  
         res.status(500).json({ error: error.message || "Internal server error" });
     }
+})
+
+app.post("/patientsurvey/date/", async (req, res) => {
+    const {patient_id} = req.body
+    const rows = await getSurveyLatestDate(patient_id)
+    const today = new Date().toISOString().split('T')[0]
+    if (rows[0]?.survey_date.toISOString().split('T')[0] != today) {
+        return res.send('false')
+    } 
+    return res.send('true')
 })
 
 app.post("/payment", async (req, res) => {
@@ -685,8 +790,22 @@ app.patch('/appointment/:patient_id/:appt_id', async (req, res) => {
 // MAKE ONLY AVAILABLE TO A DOCTOR FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
 app.patch('/prescription/:doctor_id', async(req, res)=>{ //Doctor's can change this - VC
     try {
+        const id = req.body.Perscription_ID
         const entry = req.body
-        const updateResult = await UpdatePerscriptionInfo(req.body.Perscription_ID, entry)
+
+        // Fields that are NOT allowed to be updated
+        const restrictedFields = ['Perscription_ID', 'Patient_ID', 'Doctor_ID'];
+
+        // Remove restricted fields from the entry object
+        entry = Object.fromEntries(
+            Object.entries(entry).filter(([key]) => !restrictedFields.includes(key))
+        );
+
+        if (Object.keys(entry).length === 0) {
+            return res.status(400).json({ error: "No valid fields to update." });
+        }
+
+        const updateResult = await UpdatePerscriptionInfo(id, entry)
         const event_Details = 'Edited perscription info'
         const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'PATCH', event_Details)
         res.status(201).send(updateResult)
