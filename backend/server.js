@@ -194,7 +194,7 @@ app.get("/prescriptionDoc/:id", async (req, res) => { //based on doctor -VC
 })
 
 // Why are the params weird?
-app.get("/preliminaries/:id/:doc_id", async (req, res) => { //based on patient, but doctor accesses it -VC
+app.get("/preliminaries/:id/:doc_id", async (req, res) => { //based on patient, but doctor accesses it -VC (CHANGE THIS)
     const rows = await getPreliminaries(req.params.id)
     const event_Details = 'retrieval of Preliminary data'
     const audit = await genereateAudit(req.params.doc_id, 'Doctor', 'GET', event_Details)
@@ -225,13 +225,13 @@ app.get("/patientsurvey/:id", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/patientsurveyAuth/:id", async (req, res) => {
+app.get("/patientsurveyAuth/:id", async (req, res) => {  //returns true (if posting is ok) or false
     const rows = await getAuthSurvey(req.params.id)
     const event_Details = 'check to see if patient can post survey'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
     const tday = new Date();
-    if (tday.toISOString().substring(0, 10) != rows[0].Survey_Date.toISOString().substring(0, 10)) res.send(tday)
-    else res.send('false')
+    if (tday.toISOString().substring(0, 10) != rows[0].Survey_Date.toISOString().substring(0, 10)) res.send(true)
+    else res.send(false)
     //res.send(rows)
 })
 
