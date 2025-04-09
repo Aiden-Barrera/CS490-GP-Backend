@@ -99,7 +99,6 @@ app.get("/doctor/:id", async (req, res) => {
     res.send(rows)
 })
 
-// TURN THIS INTO A POST REQUEST BECAUSE IT IS SENSITIVE - FI
 app.post("/doctorPatients", async (req, res) => {
     const {email, pw} = req.body;
     if (!email || !pw) {
