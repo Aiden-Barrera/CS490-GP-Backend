@@ -14,7 +14,10 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPrescriptionDoc,
     getAuthSurvey,
     getSurveyLatestDate,
-    getAllDoctors, getDocID} from './PrimeWell_db.js'
+    getAllDoctors,
+    getPatientInfo,
+    getDoctorInfo,
+    getPharmInfo, getDocID} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -80,6 +83,27 @@ app.get("/patient/:id", async (req, res) => {
     res.send(rows)
 })
 
+app.get("/patientInfo/:id", async (req, res) => {
+    const rows = await getPatientInfo(req.params.id)
+    const event_Details = 'retrieval of patient profile'
+    const audit = await genereateAudit(req.params.id, 'Patient', 'Get', event_Details)
+    res.send(rows)
+})
+
+app.get("/doctorInfo/:id", async (req, res) => {
+    const rows = await getDoctorInfo(req.params.id)
+    const event_Details = 'retrieval of patient profile'
+    const audit = await genereateAudit(req.params.id, 'Doctor', 'Get', event_Details)
+    res.send(rows)
+})
+
+app.get("/pharmInfo/:id", async (req, res) => {
+    const rows = await getPharmInfo(req.params.id)
+    const event_Details = 'retrieval of patient profile'
+    const audit = await genereateAudit(req.params.id, 'Pharmacist', 'Get', event_Details)
+    res.send(rows)
+})
+
 // MAKE THIS A POST REQUEST BECAUSE IT IS SENSITIVE - FI
 app.get("/patientDoc/:id", async (req, res) => {
     const rows = await getPatientDoc(req.params.id)
@@ -115,13 +139,6 @@ app.post("/doctorPatients", async (req, res) => {
     catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" })
     }
-})
-
-app.get("/doctorSchedule/:id", async (req, res) => {
-    const rows = await getDoctorSchedule(req.params.id)
-    const event_Details = 'retrieval of doctor schedule data'
-    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
-    res.send(rows)
 })
 
 
@@ -393,6 +410,22 @@ app.post("/doctorSchedule", async (req, res) => {
         res.status(201).send(newDoctor)
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
+app.post("/getDoctorSchedule", async (req, res) => {
+    const {doc_id, day} = req.body
+
+    if (!doc_id || !day) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+    try {
+        const rows = await getDoctorSchedule(doc_id, day)
+        const event_Details = 'retrieval of doctor schedule data'
+        const audit = await genereateAudit(doc_id, 'Doctor', 'POST', event_Details)
+        res.status(200).send(rows)
+    } catch (err) {
+        res.status(500).json({message: "Failed to Fetch Doctor Schedule by Day"})
     }
 })
 
