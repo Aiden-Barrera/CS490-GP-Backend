@@ -20,6 +20,24 @@ export async function getPatients(id) {
     return resultRows
 }
 
+// These endpoints are insecure but I need them for allowing user to view their profile
+export async function getPatientInfo(id) {
+    const [resultRows] = await pool.query(`select * from patientbase where patient_id = ?`, [id])
+    return resultRows
+}
+
+// These endpoints are insecure but I need them for allowing user to view their profile
+export async function getDoctorInfo(id) {
+    const [resultRows] = await pool.query(`select * from doctorbase where doctor_id = ?`, [id])
+    return resultRows
+}
+
+// These endpoints are insecure but I need them for allowing user to view their profile
+export async function getPharmInfo(id) {
+    const [resultRows] = await pool.query(`select * from pharmacies where pharm_id = ?`, [id])
+    return resultRows
+}
+
 export async function getPatientDoc(id) { //changed for doc info
     const [resultRows] = await pool.query(`SELECT doctorbase.Doctor_ID, doctorbase.First_Name, doctorbase.Last_Name, 
         doctorbase.specialty, doctorbase.email 
@@ -398,18 +416,17 @@ export async function UpdateRequest(id, entry) {
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (only doc schedule is extracted)
 export async function UpdateDoctorSchedule(id, entry) {
     const [returnResult] = await pool.query(`
-        UPDATE doctorschedules SET Doctor_Schedule=?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
+        UPDATE doctorschedules SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
 }
 
-
-// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
-export async function UpdateApptInfo(patient_id, appointment_id, entry) {
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (fixed for tiers, and IDs)
+export async function UpdateApptInfo(id, entry) {
     const [returnResult] = await pool.query(`
-        UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ? AND Appointment_ID = ?;`
-    , [entry, patient_id, appointment_id])
+        UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
+    , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
 }

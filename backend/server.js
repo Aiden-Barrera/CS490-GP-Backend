@@ -14,7 +14,10 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPrescriptionDoc,
     getAuthSurvey,
     getSurveyLatestDate,
-    getAllDoctors} from './PrimeWell_db.js'
+    getAllDoctors,
+    getPatientInfo,
+    getDoctorInfo,
+    getPharmInfo} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -77,6 +80,27 @@ app.get("/patient/:id", async (req, res) => {
     const rows = await getPatients(req.params.id)
     const event_Details = 'retrieval of patient data'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details) 
+    res.send(rows)
+})
+
+app.get("/patientInfo/:id", async (req, res) => {
+    const rows = await getPatientInfo(req.params.id)
+    const event_Details = 'retrieval of patient profile'
+    const audit = await genereateAudit(req.params.id, 'Patient', 'Get', event_Details)
+    res.send(rows)
+})
+
+app.get("/doctorInfo/:id", async (req, res) => {
+    const rows = await getDoctorInfo(req.params.id)
+    const event_Details = 'retrieval of patient profile'
+    const audit = await genereateAudit(req.params.id, 'Doctor', 'Get', event_Details)
+    res.send(rows)
+})
+
+app.get("/pharmInfo/:id", async (req, res) => {
+    const rows = await getPharmInfo(req.params.id)
+    const event_Details = 'retrieval of patient profile'
+    const audit = await genereateAudit(req.params.id, 'Pharmacist', 'Get', event_Details)
     res.send(rows)
 })
 
