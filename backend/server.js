@@ -405,7 +405,7 @@ app.post("/doctorSchedule", async (req, res) => {
 app.post("/getDoctorSchedule", async (req, res) => {
     const {doc_id, day} = req.body
 
-    if (!doc_id |!day) {
+    if (!doc_id || !day) {
         return res.status(400).json({ error: "Missing required information" });
     }
     try {
