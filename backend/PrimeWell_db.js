@@ -38,12 +38,17 @@ export async function getDoctors(id) {
     return resultRows
 }
 
-export async function getDocPatients(id) { //patient info for doc
-    const [resultRows] = await pool.query(`SELECT patientbase.Patient_ID, patientbase.First_Name, patientbase.Last_Name, 
+export async function getDocPatients(email, pw) { //patient info for doc
+    const [resultRows] = await pool.query(`SELECT patientbase.First_Name, patientbase.Last_Name, 
     patientbase.email, patientbase.phone 
     FROM DoctorBase INNER JOIN patientbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
-    WHERE doctorbase.Doctor_ID = ?;`, [id])
+    WHERE DoctorBase.Email = ? AND DoctorBase.PW = SHA2(CONCAT(?),256);`, [email, pw])
     return resultRows
+}
+
+export async function getDocID(email, pw) {
+    const [resultRows] = await pool.query(`SELECT Doctor_ID FROM doctorbase WHERE Email = ? AND PW = SHA2(CONCAT(?),256);`, [email, pw])
+    return resultRows[0]
 }
 
 // Make the below a POST because it is sensitive? - FI

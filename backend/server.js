@@ -14,7 +14,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPrescriptionDoc,
     getAuthSurvey,
     getSurveyLatestDate,
-    getAllDoctors} from './PrimeWell_db.js'
+    getAllDoctors, getDocID} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -99,11 +99,22 @@ app.get("/doctor/:id", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/doctorPatients/:id", async (req, res) => {
-    const rows = await getDocPatients(req.params.id)
-    const event_Details = 'retrieval of doctor\'s patients'
-    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
-    res.send(rows)
+// TURN THIS INTO A POST REQUEST BECAUSE IT IS SENSITIVE - FI
+app.post("/doctorPatients", async (req, res) => {
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    try {
+        const rows = await getDocPatients(email, pw)
+        const event_Details = 'retrieval of doctor\'s patients'
+        const { Doctor_ID } = await getDocID(email, pw)
+        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
+        res.send(rows)
+    } 
+    catch (error) {
+        res.status(500).json({ error: error.message || "Internal server error" })
+    }
 })
 
 app.get("/doctorSchedule/:id", async (req, res) => {
@@ -259,7 +270,7 @@ app.post("/passAuthPatient", async (req, res) => {
         */
         res.send(rows);
     } catch (error) {
-        res.status(500).json({ error: "Internal server error" });
+        res.status(500).json({ error: error.message || "Internal server error" });
     }
 });
 
@@ -279,7 +290,7 @@ app.post("/passAuthDoctor", async (req, res) => {
         */
         res.send(rows);
     } catch (error) {
-        res.status(500).json({ error: "Internal server error" });
+        res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
 
@@ -299,7 +310,7 @@ app.post("/passAuthPharm", async (req, res) => {
         */
         res.send(rows);
     } catch (error) {
-        res.status(500).json({ error: "Internal server error" });
+        res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
 
