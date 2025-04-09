@@ -394,17 +394,18 @@ export async function UpdateRequest(id, entry) {
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (only doc schedule is extracted)
 export async function UpdateDoctorSchedule(id, entry) {
     const [returnResult] = await pool.query(`
-        UPDATE doctorschedules SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
+        UPDATE doctorschedules SET Doctor_Schedule=?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
 }
 
-// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (fixed for tiers, and IDs)
-export async function UpdateApptInfo(id, entry) {
+
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
+export async function UpdateApptInfo(patient_id, appointment_id, entry) {
     const [returnResult] = await pool.query(`
-        UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
-    , [entry, id])
+        UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ? AND Appointment_ID = ?;`
+    , [entry, patient_id, appointment_id])
     console.log("Database update result:", returnResult);
     return returnResult
 }

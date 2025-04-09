@@ -201,7 +201,8 @@ app.get("/prescriptionDoc/:id", async (req, res) => { //based on doctor -VC
 })
 
 // Why are the params weird?
-app.get("/preliminaries/:id/:doc_id", async (req, res) => { //based on patient, but doctor accesses it -VC (CHANGE THIS)
+// MAKE THIS A POST REQUEST BECAUSE IT IS SENSITIVE - FI
+app.get("/preliminaries/:id/:doc_id", async (req, res) => { //based on patient, but doctor accesses it -VC
     const rows = await getPreliminaries(req.params.id)
     const event_Details = 'retrieval of Preliminary data'
     const audit = await genereateAudit(req.params.doc_id, 'Doctor', 'GET', event_Details)
@@ -660,13 +661,14 @@ app.post("/payment", async (req, res) => {
 // FIX ALL USAGES OF req.body AND req.params BELOW - FI
 
 // BELOW IS CORRECTED
+// ONLY MAKE VISIBLE FROM PATIENT PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
 app.patch('/patient/:id', async (req, res) => {
     try {
         const id = req.params.id;
         let entry = req.body;
 
         // Fields that are NOT allowed to be updated
-        const restrictedFields = ['PW', 'Patient_ID, Doctor_ID'];
+        const restrictedFields = ['PW', 'Patient_ID, Doctor_ID', 'Last_Update', 'Create_Date'];
 
         // Remove restricted fields from the entry object
         entry = Object.fromEntries(
@@ -688,34 +690,39 @@ app.patch('/patient/:id', async (req, res) => {
     }
 });
 
-app.patch('/patient/addDoc', async(req, res)=>{ //Give patient a doctor -VC
+// ONLY MAKE VISIBLE FROM Patient Portal VIA FRONTEND OR ADD AUTHENTICATION - FI
+app.patch('/patient/:id/addDoc', async(req, res)=>{ //Give patient a doctor -VC
     try {
-        const {Patient_ID, Doctor_ID} = req.body
+        const {Doctor_ID} = req.body
+        const Patient_ID = req.params.id
         const updateResult = await addPatientDoc(Patient_ID, Doctor_ID)
         const event_Details = 'Added Doctor to Patient info'
-        const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'PATCH', event_Details)
+        const audit = await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details)
         res.status(201).send(updateResult)
         }
-    catch(error) { res.status(500).send(error).json({"message":req.params.id}) }
+    catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
-app.patch('/patient/removeDoc', async(req, res)=>{ //Remove patient doctor -VC
+// ONLY MAKE VISIBLE FROM PATIENT PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
+app.patch('/patient/:id/removeDoc', async(req, res)=>{ //Remove patient doctor -VC
     try {
-        const updateResult = await rmPatientDoc(req.body.Patient_ID)
+        const Patient_ID = req.params.id
+        const updateResult = await rmPatientDoc(Patient_ID)
         const event_Details = 'removed Doctor to Patient info'
-        const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'PATCH', event_Details)
+        const audit = await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details)
         res.status(201).send(updateResult)
         }
-    catch(error) { res.status(500).send(error).json({"message":req.params.id}) }
+    catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
+// ONLY MAKE VISIBLE FROM DOCTOR PORTAL VIA FRONTEND OR ADD AUTHENTICATION- FI
 app.patch('/doctor/:id', async (req, res) => {
     try {
         const id = req.params.id;
         let entry = req.body;
 
         // Fields that are NOT allowed to be updated
-        const restrictedFields = ['PW', 'Doctor_ID', 'License_Serial', 'Specialty'];
+        const restrictedFields = ['PW', 'Doctor_ID', 'License_Serial', 'Specialty', 'Last_Update', 'Create_Date'];
 
         // Remove restricted fields from the entry object
         entry = Object.fromEntries(
@@ -737,25 +744,28 @@ app.patch('/doctor/:id', async (req, res) => {
     }
 });
 
-// MAKE ONLY AVAILABLE TO A DOCTOR FROM THEIR OWN PORTAL VIA FRONTEND - FI
-app.patch('/doctorSchedule', async(req, res)=>{
+// MAKE ONLY AVAILABLE TO A DOCTOR FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
+app.patch('/doctorSchedule/:id', async(req, res)=>{
     try {
-        const entry = req.body.Doctor_Schedule
-        const updateResult = await UpdateDoctorSchedule(req.body.Doctor_ID, entry)
+        const { Doctor_Schedule } = req.body
+        const Doctor_ID = req.params.id
+        const updateResult = await UpdateDoctorSchedule(Doctor_ID, Doctor_Schedule)
         const event_Details = 'Edited Doctor Schedule info'
-        const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'PATCH', event_Details)
+        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'PATCH', event_Details)
         res.status(201).send(updateResult)
         }
-    catch(error) { res.status(500).send(error).json({"message":req.body}) }
+    catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
-app.patch('/appointment', async(req, res)=>{ //Doctor's can change this - VC
+// MAKE ONLY AVAILABLE TO A PATIENT FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
+app.patch('/appointment/:patient_id/:appt_id', async (req, res) => {
     try {
-        const id = req.body.Appointment_ID
-        const entry = req.body
+        const patient_id = req.params.patient_id;
+        const appt_id = req.params.appt_id;
+        let entry = req.body;
 
         // Fields that are NOT allowed to be updated
-        const restrictedFields = ['Appoinment_ID', 'Patient_ID', 'Doctor_ID', 'Tier_ID'];
+        const restrictedFields = ['Appointment_ID', 'Patient_ID', 'Doctor_ID', 'Date_Scheduled', 'Doctors_Feedback', 'Last_Update', 'Create_Date']; // Allow patient to change Appt_Date and Tier_ID
 
         // Remove restricted fields from the entry object
         entry = Object.fromEntries(
@@ -765,27 +775,20 @@ app.patch('/appointment', async(req, res)=>{ //Doctor's can change this - VC
         if (Object.keys(entry).length === 0) {
             return res.status(400).json({ error: "No valid fields to update." });
         }
+
+        const updateResult = await UpdateApptInfo(patient_id, appt_id, entry);
+        const event_Details = 'Edited Appointment info';
+        const audit = await genereateAudit(id, 'Patient', 'PATCH', event_Details);
         
-        const updateResult = await UpdateApptInfo(id, entry)
-        const event_Details = 'Edited Appointment info'
-        const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'PATCH', event_Details)
-        res.status(201).send(updateResult)
-        }
-    catch(error) { res.status(500).send(error).json({"message":req.body}) }
-})
+        console.log(audit);
+        res.status(200).json(updateResult);
+    } catch (error) { 
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+});
 
-app.patch('/request', async(req, res)=>{ //updates to accpted or rejected - VC
-    try {
-        const status = req.body.status
-        const updateResult = await UpdateApptStat(req.body.Request_ID, status)
-        const event_Details = 'Edited Request info'
-        const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'PATCH', event_Details)
-        res.status(201).send(updateResult)
-        }
-    catch(error) { res.status(500).send(error).json({"message":req.body}) }
-})
-
-app.patch('/perscription', async(req, res)=>{ //Doctor's can change this - VC
+// MAKE ONLY AVAILABLE TO A DOCTOR FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
+app.patch('/prescription/:doctor_id', async(req, res)=>{ //Doctor's can change this - VC
     try {
         const id = req.body.Perscription_ID
         const entry = req.body
@@ -809,6 +812,35 @@ app.patch('/perscription', async(req, res)=>{ //Doctor's can change this - VC
         }
     catch(error) { res.status(500).send(error).json({"message":req.body}) }
 })
+app.patch('/appointment/:patient_id/:appt_id', async (req, res) => {
+    try {
+        const patient_id = req.params.patient_id;
+        const appt_id = req.params.appt_id;
+        let entry = req.body;
+
+        // Fields that are NOT allowed to be updated
+        const restrictedFields = ['Appointment_ID', 'Patient_ID', 'Doctor_ID', 'Date_Scheduled', 'Doctors_Feedback', 'Last_Update', 'Create_Date']; // Allow patient to change Appt_Date and Tier_ID
+
+        // Remove restricted fields from the entry object
+        entry = Object.fromEntries(
+            Object.entries(entry).filter(([key]) => !restrictedFields.includes(key))
+        );
+
+        if (Object.keys(entry).length === 0) {
+            return res.status(400).json({ error: "No valid fields to update." });
+        }
+
+        const updateResult = await UpdateApptInfo(patient_id, appt_id, entry);
+        const event_Details = 'Edited Appointment info';
+        const audit = await genereateAudit(id, 'Patient', 'PATCH', event_Details);
+        
+        console.log(audit);
+        res.status(200).json(updateResult);
+    } catch (error) { 
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+});
+
 
 app.patch('/pillbank', async(req, res)=>{
     try {
