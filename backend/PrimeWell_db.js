@@ -14,17 +14,17 @@ const pool = mysql.createPool({
 //GET DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with type GET
 
-//the 5 request below return data from our only populated tables so far - VC
-export async function getPatients(id) {
-    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name FROM PatientBase WHERE Patient_ID = ?;`, [id])
+export async function getPatients(email, PW) {
+    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name FROM PatientBase 
+        WHERE PatientBase.Email = ? AND patientBase.PW = SHA2(CONCAT(?),256);`, [email, PW])
     return resultRows[0]
 }
 
-export async function getPatientDoc(id) { //changed for doc info
+export async function getPatientDoc(email, PW) { 
     const [resultRows] = await pool.query(`SELECT doctorbase.Doctor_ID, doctorbase.First_Name, doctorbase.Last_Name, 
         doctorbase.specialty, doctorbase.email 
         FROM PatientBase INNER JOIN doctorbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
-        WHERE Patient_ID = ?;`, [id])
+        WHERE PatientBase.Email = ? AND patientBase.PW = SHA2(CONCAT(?),256);`, [email, PW])
     return resultRows[0]
 }
 
@@ -33,8 +33,9 @@ export async function getAllDoctors() {
     return resultRows
 }
 
-export async function getDoctors(id) {
-    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase WHERE Doctor_ID = ?;`, [id]) 
+export async function getDoctors(email, pw) {
+    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase 
+        WHERE Email = ? AND PW = ?;`, [email, pw]) 
     return resultRows
 }
 
@@ -46,14 +47,19 @@ export async function getDocPatients(email, pw) { //patient info for doc
     return resultRows
 }
 
+export async function getPatientID(email, pw) {
+    const [resultRows] = await pool.query(`SELECT Patient_ID FROM patientbase WHERE Email = ? AND PW = SHA2(CONCAT(?),256);`, [email, pw])
+    return resultRows[0]
+}
+
 export async function getDocID(email, pw) {
     const [resultRows] = await pool.query(`SELECT Doctor_ID FROM doctorbase WHERE Email = ? AND PW = SHA2(CONCAT(?),256);`, [email, pw])
     return resultRows[0]
 }
 
 // Make the below a POST because it is sensitive? - FI
-export async function getDoctorSchedule(id) {
-    const [resultRows] = await pool.query(`SELECT Doctor_Schedule FROM DoctorSchedules WHERE Doctor_ID = ?;`, [id]) 
+export async function getDoctorSchedule(email, pw) {
+    const [resultRows] = await pool.query(`SELECT Doctor_Schedule FROM DoctorSchedules WHERE Doctor_ID = ?;`, [email, pw]) 
     return resultRows
 }
 
@@ -73,7 +79,7 @@ export async function getTiers(id) {
 }
 
 export async function getExercises() {
-    const [resultRows] = await pool.query(`SELECT Exercise_ID, Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps FROM ExerciseBank;`)
+    const [resultRows] = await pool.query(`SELECT Exercise_ID, Exercise_Name, Muscle_Group, Image, Exercise_Description, Exercise_Class, Sets, Reps FROM ExerciseBank;`)
     return resultRows
 }
 
@@ -82,8 +88,11 @@ export async function getRegiment(id) {
     return resultRows
 }
 
-export async function getForumPosts() {
-    const [resultRows] = await pool.query(`SELECT Forum_ID, Forum_Text, Patient_ID, Date_Posted FROM Forum_Posts;`)
+export async function getForumPosts() { //changes for exercise info - VC
+    const [resultRows] = await pool.query(`SELECT Forum_Posts.Forum_ID, Forum_Posts.Forum_Text, Forum_Posts.Patient_ID, 
+        Forum_Posts.Date_Posted,ExerciseBank.Exercise_Name, ExerciseBank.Muscle_Group, ExerciseBank.Image, ExerciseBank.Exercise_Description
+        FROM Forum_Posts
+        INNER JOIN ExerciseBank.Exercise_ID = Forum_Posts.Exercise_ID;`)
     return resultRows
 }
 
@@ -174,8 +183,24 @@ export async function getPrescriptionDoc(id) {
 }
 
 // Make the below a POST because it is sensitive? - FI
-export async function getPreliminaries(id) { //order by for most recent
-    const [resultRows] = await pool.query(`SELECT Preliminary_ID, Symptoms FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
+export async function getPreliminaries(id) { //order by for most recent, USE Appointment ID
+    const [resultRows] = await pool.query(`SELECT Preliminary_ID, Symptoms FROM preliminaries 
+        INNER JOIN patientbase on preliminaries.Patient_ID = patientbase.Patient_ID
+        WHERE patientbase.Doctor_ID = ? ORDER BY Create_Date DESC;`, [id])
+    return resultRows
+}
+
+export async function getChatRoomPatient(Patient_ID){
+    const [resultRows] = await pool.query(`SELECT Chatroom_ID FROM chatrooms 
+        INNER JOIN Appointments on chatrooms.Appointment_ID = Appointments.Appointment_ID
+        WHERE Appointments.Patient_ID = ?;`, [Patient_ID])
+    return resultRows
+}
+
+export async function getChatRoomDoctor(Patient_ID){
+    const [resultRows] = await pool.query(`SELECT Chatroom_ID FROM chatrooms 
+        INNER JOIN Appointments on chatrooms.Appointment_ID = Appointments.Appointment_ID
+        WHERE Appointments.Doctor_ID = ?;`, [Patient_ID])
     return resultRows
 }
 
@@ -309,14 +334,14 @@ export async function createChatMsg(Chatroom_ID, SenderID, SenderType, Message) 
     return resultMsgCreate
 }
 
-export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Tier) {
+export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier) {
     const [resultApptCreate] = await pool.query(`INSERT INTO appointments (Patient_ID, Doctor_ID, Date_Scheduled,
-        Appt_Date, Tier) VALUES (?, ?, CURRENT_DATE, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Tier])
+        Appt_Date, Appt_Time, Tier) VALUES (?, ?, CURRENT_DATE, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier])
     return resultApptCreate
 }
 
 export async function createApptRequest(Patient_ID, Doctor_ID) {
-    const [resultApptCreate] = await pool.query(`INSERT INTO appointments (Patient_ID, Doctor_ID, Request_Status) VALUES (?, ?, ?);`, [Patient_ID, Doctor_ID, 'Pending'])
+    const [resultApptCreate] = await pool.query(`INSERT INTO requests (Patient_ID, Doctor_ID, Request_Status) VALUES (?, ?, ?);`, [Patient_ID, Doctor_ID, 'Pending'])
     return resultApptCreate
 }
 

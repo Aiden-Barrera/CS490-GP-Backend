@@ -14,7 +14,10 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPrescriptionDoc,
     getAuthSurvey,
     getSurveyLatestDate,
-    getAllDoctors, getDocID} from './PrimeWell_db.js'
+    getAllDoctors, getDocID,
+    getPatientID,
+    getChatRoomPatient,
+    getChatRoomDoctor} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -73,18 +76,28 @@ io.on('connection', (socket) => {
 /*ADDED: Gets for appointments, doctor schedule, perscription, preliminaries, survey, regiments, chat rooms<-messages, 
 and their (1st draft of) audit log entries*/
 
-app.get("/patient/:id", async (req, res) => {
-    const rows = await getPatients(req.params.id)
+app.get("/patient", async (req, res) => {
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const rows = await getPatients(email, pw)
     const event_Details = 'retrieval of patient data'
-    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details) 
+    const { Patient_ID } = await getPatientID(email, pw)
+    const audit = await genereateAudit(Patient_ID, 'Patient', 'GET', event_Details) 
     res.send(rows)
 })
 
 // MAKE THIS A POST REQUEST BECAUSE IT IS SENSITIVE - FI
-app.get("/patientDoc/:id", async (req, res) => {
-    const rows = await getPatientDoc(req.params.id)
+app.post("/patientDoc", async (req, res) => {
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const rows = await getPatientDoc(email, PW)
+    const { Patient_ID } = await getPatientID(email, pw)
     const event_Details = 'retrieval of patient\'s doctor'
-    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details) 
+    const audit = await genereateAudit(Patient_ID, 'Patient', 'GET', event_Details) 
     res.send(rows)
 })
 
@@ -93,10 +106,15 @@ app.get("/doctor/listAll", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/doctor/:id", async (req, res) => {
-    const rows = await getDoctors(req.params.id)
+app.post("/doctor", async (req, res) => {
+    const {email, pw} = req.body
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const rows = await getDoctors(email, pw)
     const event_Details = 'retrieval of doctor data'
-    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
+    const { Doctor_ID } = await getDocID(email, pw)
+    const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
     res.send(rows)
 })
 
@@ -117,10 +135,15 @@ app.post("/doctorPatients", async (req, res) => {
     }
 })
 
-app.get("/doctorSchedule/:id", async (req, res) => {
-    const rows = await getDoctorSchedule(req.params.id)
+app.post("/doctorSchedule", async (req, res) => {
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const rows = await getDoctorSchedule(email, pw)
     const event_Details = 'retrieval of doctor schedule data'
-    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
+    const { Doctor_ID } = await getDocID(email, pw)
+    const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
     res.send(rows)
 })
 
@@ -139,8 +162,13 @@ app.get("/pillbank", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/tiers/:id", async (req, res) => { //tiers by doctor - VC
-    const rows = await getTiers(req.params.id)
+app.get("/tiers", async (req, res) => { //tiers by doctor - VC
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const { Doctor_ID } = await getDocID(email, pw)
+    const rows = await getTiers(Doctor_ID)
     res.send(rows)
 })
 
@@ -149,10 +177,15 @@ app.get("/exercisebank", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/regiment/:id", async (req, res) => { //based on patient -VC
-    const rows = await getRegiment(req.params.id)
+app.get("/regiment", async (req, res) => { //based on patient -VC
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const { Patient_ID } = await getPatientID(email, pw)
+    const rows = await getRegiment(Patient_ID)
     const event_Details = 'retrieval of patient regiment'
-    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+    const audit = await genereateAudit(Patient_ID, 'Patient', 'GET', event_Details)
     res.send(rows)
 })
 
@@ -176,53 +209,104 @@ app.get("/reviews/:id", async (req, res) => {
     res.send(rows)
 })
     
-app.get("/appointment/patient/:id", async (req, res) => {
-    const rows = await getAppointmentsPatient(req.params.id)
+app.post("/appointment/patient", async (req, res) => {
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const { Patient_ID } = await getPatientID(email, pw)
+    const rows = await getAppointmentsPatient(Patient_ID)
     const event_Details = 'retrieval of appointment data'
-    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+    const audit = await genereateAudit(Patient_ID, 'Patient', 'GET', event_Details)
     res.send(rows)
 })
 
-app.get("/appointment/doctor/:id", async (req, res) => {
-    const rows = await getAppointmentsDoctor(req.params.id)
+app.post("/appointment/doctor", async (req, res) => {
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const { Doctor_ID } = await getDocID(email, pw)
+    const rows = await getAppointmentsDoctor(Doctor_ID)
     const event_Details = 'retrieval of appointment data'
-    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
+    const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
     res.send(rows)
 })
 
-app.get("/request/:id", async (req, res) => {
-    const rows = await getApptRequest(req.params.id)
+app.post("/request", async (req, res) => {
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const { Doctor_ID } = await getDocID(email, pw)
+    const rows = await getApptRequest(Doctor_ID)
     const event_Details = 'retrieval of appointment requests'
-    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
+    const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
     res.send(rows)
 })
 
-app.get("/prescription/:id", async (req, res) => { //based on patient -VC
-    const rows = await getPrescription(req.params.id)
+app.post("/prescription", async (req, res) => { //based on patient -VC
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const { Patient_ID } = await getPatientID(email, pw)
+    const rows = await getPrescription(Patient_ID)
     const event_Details = 'retrieval of perscription'
-    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+    const audit = await genereateAudit(Patient_ID, 'Patient', 'GET', event_Details)
     res.send(rows)
 })
 
-app.get("/prescriptionDoc/:id", async (req, res) => { //based on doctor -VC
-    const rows = await getPrescriptionDoc(req.params.id)
+app.post("/prescriptionDoc", async (req, res) => { //based on doctor -VC
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const { Doctor_ID } = await getDocID(email, pw)
+    const rows = await getPrescriptionDoc(Doctor_ID)
     const event_Details = 'retrieval of perscription'
-    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
+    const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
     res.send(rows)
 })
 
-// Why are the params weird?
+// Why are the params weird? ----CHANGE
 // MAKE THIS A POST REQUEST BECAUSE IT IS SENSITIVE - FI
-app.get("/preliminaries/:id/:doc_id", async (req, res) => { //based on patient, but doctor accesses it -VC
-    const rows = await getPreliminaries(req.params.id)
+app.post("/preliminaries", async (req, res) => { //based on patient, but doctor accesses it -VC
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const { Doctor_ID } = await getDocID(email, pw)
+    const rows = await getPreliminaries(Doctor_ID)
     const event_Details = 'retrieval of Preliminary data'
-    const audit = await genereateAudit(req.params.doc_id, 'Doctor', 'GET', event_Details)
+    const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
+    res.send(rows)
+})
+
+app.post("/chatrooms/Patient", async (req, res) => {
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const { Patient_ID } = await getPatientID(email, pw)
+    const rows = await getChatRoomPatient(Patient_ID)
+    res.send(rows)
+})
+
+app.post("/chatrooms/Doctor", async (req, res) => {
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const { Doctor_ID } = await getDoctorID(email, pw)
+    const rows = await getChatRoomDoctor(Doctor_ID)
     res.send(rows)
 })
 
 // Change this to a post because it is senstitive
-app.get("/chatroomMsgs/:id", async (req, res) => { //by chatroom_id - VC
-    const rows = await getChatMesseges(req.params.id)
+app.post("/chatroomMsgs", async (req, res) => { //by chatroom_id, got from chatroom lists above - VC
+    const {Chatroom_ID} = req.body
+    const rows = await getChatMesseges(Chatroom_ID)
     res.send(rows)
 })
 
@@ -237,17 +321,27 @@ app.get("/reviews/comments/:id", async (req, res) => {
 })
 
 // Make post because it is sensitive
-app.get("/patientsurvey/:id", async (req, res) => {
-    const rows = await getSurvey(req.params.id)
+app.post("/patientsurvey", async (req, res) => {
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const { Patient_ID } = await getPatientID(email, pw)
+    const rows = await getSurvey(Patient_ID)
     const event_Details = 'retrieval of Patient data for graph'
-    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+    const audit = await genereateAudit(Patient_ID, 'Patient', 'GET', event_Details)
     res.send(rows)
 })
 
-app.get("/patientsurveyAuth/:id", async (req, res) => {  //returns true (if posting is ok) or false
-    const rows = await getAuthSurvey(req.params.id)
+app.get("/patientsurveyAuth", async (req, res) => {  //returns true (if posting is ok) or false
+    const {email, pw} = req.body;
+    if (!email || !pw) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+    const { Patient_ID } = await getPatientID(email, pw)
+    const rows = await getAuthSurvey(Patient_ID)
     const event_Details = 'check to see if patient can post survey'
-    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+    const audit = await genereateAudit(Patient_ID, 'Patient', 'GET', event_Details)
     const tday = new Date();
     if (tday.toISOString().substring(0, 10) != rows[0]?.Survey_Date.toISOString().substring(0, 10)) res.send(tday)
         else res.send('false')
@@ -542,8 +636,8 @@ app.post("/messages", async (req, res) => { //chat room id, based on sender type
 // Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
 // Ensure that the Doctor_ID passed into the Doctor_ID field is an existing Doctor ID in the DoctorBase table } via frontend? - FI
 app.post("/appointment", async (req, res) => {
-    const {Patient_ID, Doctor_ID, Appt_Date, Tier} = req.body
-    if (!Patient_ID | !Doctor_ID | !Appt_Date | !Tier) {
+    const {Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier} = req.body
+    if (!Patient_ID | !Doctor_ID | !Appt_Date | !Appt_Time | !Tier) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
@@ -560,7 +654,7 @@ app.post("/appointment", async (req, res) => {
     }
     
     try {
-        const newAppt = await createAppointment(Patient_ID, Doctor_ID, Appt_Date, Tier)
+        const newAppt = await createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier)
         const event_Details = 'Created new Appointment'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
         res.status(201).send(newAppt)
@@ -650,6 +744,7 @@ app.post("/patientsurvey", async (req, res) => {
     }
 })
 
+//do we need this? -VC
 app.post("/patientsurvey/date/", async (req, res) => {
     const {patient_id} = req.body
     const rows = await getSurveyLatestDate(patient_id)
@@ -783,10 +878,10 @@ app.patch('/doctorSchedule/:id', async(req, res)=>{
 })
 
 // MAKE ONLY AVAILABLE TO A PATIENT FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
-app.patch('/appointment/:patient_id/:appt_id', async (req, res) => {
+app.patch('/appointment', async (req, res) => {
     try {
-        const patient_id = req.params.patient_id;
-        const appt_id = req.params.appt_id;
+        const patient_id = req.body.patient_id;
+        const appt_id = req.body.appt_id;
         let entry = req.body;
 
         // Fields that are NOT allowed to be updated
