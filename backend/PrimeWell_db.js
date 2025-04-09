@@ -17,7 +17,7 @@ const pool = mysql.createPool({
 //the 5 request below return data from our only populated tables so far - VC
 export async function getPatients(id) {
     const [resultRows] = await pool.query(`SELECT First_Name, Last_Name FROM PatientBase WHERE Patient_ID = ?;`, [id])
-    return resultRows
+    return resultRows[0]
 }
 
 export async function getPatientDoc(id) { //changed for doc info
@@ -25,7 +25,7 @@ export async function getPatientDoc(id) { //changed for doc info
         doctorbase.specialty, doctorbase.email 
         FROM PatientBase INNER JOIN doctorbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
         WHERE Patient_ID = ?;`, [id])
-    return resultRows
+    return resultRows[0]
 }
 
 export async function getAllDoctors() {
@@ -309,9 +309,9 @@ export async function createChatMsg(Chatroom_ID, SenderID, SenderType, Message) 
     return resultMsgCreate
 }
 
-export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Doctors_Feedback, Tier_ID) {
+export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Tier) {
     const [resultApptCreate] = await pool.query(`INSERT INTO appointments (Patient_ID, Doctor_ID, Date_Scheduled,
-        Appt_Date, Doctors_Feedback, Tier_ID) VALUES (?, ?, CURRENT_DATE, ?, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Doctors_Feedback, Tier_ID])
+        Appt_Date, Tier) VALUES (?, ?, CURRENT_DATE, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Tier])
     return resultApptCreate
 }
 
@@ -367,7 +367,6 @@ export async function addPatientDoc(id, doc_id) {
     const [returnResult] = await pool.query(`
         UPDATE patientbase SET \`Doctor_ID\` = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
     , [doc_id, id])
-    console.log("Database update result:", returnResult);
     return returnResult
 }
 

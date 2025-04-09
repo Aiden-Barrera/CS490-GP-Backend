@@ -80,6 +80,7 @@ app.get("/patient/:id", async (req, res) => {
     res.send(rows)
 })
 
+// MAKE THIS A POST REQUEST BECAUSE IT IS SENSITIVE - FI
 app.get("/patientDoc/:id", async (req, res) => {
     const rows = await getPatientDoc(req.params.id)
     const event_Details = 'retrieval of patient\'s doctor'
@@ -538,14 +539,28 @@ app.post("/messages", async (req, res) => { //chat room id, based on sender type
     }
 })
 
+// Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
+// Ensure that the Doctor_ID passed into the Doctor_ID field is an existing Doctor ID in the DoctorBase table } via frontend? - FI
 app.post("/appointment", async (req, res) => {
-    const {Patient_ID, Doctor_ID, Appt_Date, Doctors_Feedback, Tier_ID} = req.body
-    if (!Patient_ID | !Doctor_ID | !Appt_Date | !Doctors_Feedback | !Tier_ID) {
+    const {Patient_ID, Doctor_ID, Appt_Date, Tier} = req.body
+    if (!Patient_ID | !Doctor_ID | !Appt_Date | !Tier) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
+    const patientsDoctor = await getPatientDoc(Patient_ID)
+    // check if the patient has a doctor, if not - assign them the doctor they've requested in this appointment (Doctor_ID above)
+    if (patientsDoctor === undefined) {
+        const newDoctor = await addPatientDoc(Patient_ID, Doctor_ID) // give them this new doctor
+        // Generate an audit for assigning a doctor to this patient
+        const event_Details = 'Updated Patient Doctor Info'
+        const audit = await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details)
+    }
+    else if (patientsDoctor?.Doctor_ID !== Doctor_ID) {
+        return res.status(400).json({ error: "Patient already has a different doctor"});
+    }
+    
     try {
-        const newAppt = await createAppointment(Patient_ID, Doctor_ID, Appt_Date, Doctors_Feedback, Tier_ID)
+        const newAppt = await createAppointment(Patient_ID, Doctor_ID, Appt_Date, Tier)
         const event_Details = 'Created new Appointment'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
         res.status(201).send(newAppt)
