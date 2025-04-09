@@ -179,7 +179,7 @@ app.get("/appointment/doctor/:id", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/appointment/request/:id", async (req, res) => {
+app.get("/request/:id", async (req, res) => {
     const rows = await getApptRequest(req.params.id)
     const event_Details = 'retrieval of appointment requests'
     const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
@@ -237,13 +237,8 @@ app.get("/patientsurveyAuth/:id", async (req, res) => {  //returns true (if post
     const event_Details = 'check to see if patient can post survey'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
     const tday = new Date();
-<<<<<<< HEAD
-    if (tday.toISOString().substring(0, 10) != rows[0].Survey_Date.toISOString().substring(0, 10)) res.send(true)
-    else res.send(false)
-=======
     if (tday.toISOString().substring(0, 10) != rows[0]?.Survey_Date.toISOString().substring(0, 10)) res.send(tday)
-    else res.send('false')
->>>>>>> da3e59bcf023c9a3e9ee9dad277724e0b603e8e4
+        else res.send('false')
     //res.send(rows)
 })
 
@@ -435,12 +430,12 @@ for this function to work each entry should be labeled as such:
 */
 // -VC
 app.post("/exercisebank", upload.single('image'), async (req, res) => { //User created exercise from post - VC
-    const { Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps } = req.body
-    if (!Exercise_Name || !Muscle_Group || !Exercise_Description || !Sets || !Reps) {
+    const { Exercise_Name, Muscle_Group, Image, Exercise_Description, Muscle_Category, Sets, Reps } = req.body
+    if (!Exercise_Name || !Muscle_Group || !Exercise_Description || !Muscle_Category || !Sets || !Reps) {
         return res.status(400).json({ error: "Missing required information" });
     }
     try {
-        const newExercise = await createExercise(Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps)
+        const newExercise = await createExercise(Exercise_Name, Muscle_Group, Image, Exercise_Description, Muscle_Category, Sets, Reps)
         const event_Details = 'Created new exercise'
         //const audit = await genereateAudit(req.body.id, 'Patient', 'POST', event_Details) //Needs to be fixed
         res.status(201).send(newExercise)

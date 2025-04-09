@@ -143,7 +143,7 @@ export async function getAppointmentsPatient(id) {
 export async function getApptRequest(id) {
     const [resultRows] = await pool.query(`
         SELECT patientbase.First_name, patientbase.last_name, requests.Request_status, 
-        requests.Doctor_ID, appointments.Appt_Date, appointments.Appt_Time 
+        appointments.Appt_Date, appointments.Appt_Time 
         FROM requests INNER JOIN patientbase ON patientbase.Patient_id = requests.Patient_id
         INNER JOIN appointments ON Appointments.Patient_id = patientbase.Patient_id
         WHERE requests.Doctor_ID = ?;`, [id]) 
