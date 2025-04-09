@@ -105,7 +105,9 @@ export async function getRegiment(id) {
 }
 
 export async function getForumPosts() {
-    const [resultRows] = await pool.query(`SELECT Forum_ID, Forum_Text, Patient_ID, Date_Posted FROM Forum_Posts;`)
+    const [resultRows] = await pool.query(`SELECT FP.Forum_ID, FP.Forum_Text, FP.Patient_ID, FP.Exercise_ID, 
+        Date_Posted, EB.Exercise_Name, EB.Muscle_Group, EB.Image, EB.Exercise_Class, EB.Sets, 
+        EB.Reps, EB.Exercise_Description FROM Forum_Posts as FP, ExerciseBank as EB where FP.exercise_id = EB.exercise_id;`)
     return resultRows
 }
 
