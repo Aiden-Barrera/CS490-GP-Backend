@@ -17,7 +17,7 @@ const pool = mysql.createPool({
 //the 5 request below return data from our only populated tables so far - VC
 export async function getPatients(id) {
     const [resultRows] = await pool.query(`SELECT First_Name, Last_Name FROM PatientBase WHERE Patient_ID = ?;`, [id])
-    return resultRows
+    return resultRows[0]
 }
 
 // These endpoints are insecure but I need them for allowing user to view their profile
@@ -43,7 +43,7 @@ export async function getPatientDoc(id) { //changed for doc info
         doctorbase.specialty, doctorbase.email 
         FROM PatientBase INNER JOIN doctorbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
         WHERE Patient_ID = ?;`, [id])
-    return resultRows
+    return resultRows[0]
 }
 
 export async function getAllDoctors() {
@@ -56,12 +56,17 @@ export async function getDoctors(id) {
     return resultRows
 }
 
-export async function getDocPatients(id) { //patient info for doc
-    const [resultRows] = await pool.query(`SELECT patientbase.Patient_ID, patientbase.First_Name, patientbase.Last_Name, 
+export async function getDocPatients(email, pw) { //patient info for doc
+    const [resultRows] = await pool.query(`SELECT patientbase.First_Name, patientbase.Last_Name, 
     patientbase.email, patientbase.phone 
     FROM DoctorBase INNER JOIN patientbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
-    WHERE doctorbase.Doctor_ID = ?;`, [id])
+    WHERE DoctorBase.Email = ? AND DoctorBase.PW = SHA2(CONCAT(?),256);`, [email, pw])
     return resultRows
+}
+
+export async function getDocID(email, pw) {
+    const [resultRows] = await pool.query(`SELECT Doctor_ID FROM doctorbase WHERE Email = ? AND PW = SHA2(CONCAT(?),256);`, [email, pw])
+    return resultRows[0]
 }
 
 // Make the below a POST because it is sensitive? - FI
@@ -165,7 +170,7 @@ export async function getAppointmentsPatient(id) {
 export async function getApptRequest(id) {
     const [resultRows] = await pool.query(`
         SELECT patientbase.First_name, patientbase.last_name, requests.Request_status, 
-        requests.Doctor_ID, appointments.Appt_Date, appointments.Appt_Time 
+        appointments.Appt_Date, appointments.Appt_Time 
         FROM requests INNER JOIN patientbase ON patientbase.Patient_id = requests.Patient_id
         INNER JOIN appointments ON Appointments.Patient_id = patientbase.Patient_id
         WHERE requests.Doctor_ID = ?;`, [id]) 
@@ -326,9 +331,9 @@ export async function createChatMsg(Chatroom_ID, SenderID, SenderType, Message) 
     return resultMsgCreate
 }
 
-export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Doctors_Feedback, Tier_ID) {
+export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Tier) {
     const [resultApptCreate] = await pool.query(`INSERT INTO appointments (Patient_ID, Doctor_ID, Date_Scheduled,
-        Appt_Date, Doctors_Feedback, Tier_ID) VALUES (?, ?, CURRENT_DATE, ?, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Doctors_Feedback, Tier_ID])
+        Appt_Date, Tier) VALUES (?, ?, CURRENT_DATE, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Tier])
     return resultApptCreate
 }
 
@@ -384,7 +389,6 @@ export async function addPatientDoc(id, doc_id) {
     const [returnResult] = await pool.query(`
         UPDATE patientbase SET \`Doctor_ID\` = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
     , [doc_id, id])
-    console.log("Database update result:", returnResult);
     return returnResult
 }
 
