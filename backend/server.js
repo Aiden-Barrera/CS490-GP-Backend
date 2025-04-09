@@ -101,14 +101,13 @@ app.get("/doctor/:id", async (req, res) => {
 })
 
 app.post("/doctorPatients", async (req, res) => {
-    const {email, pw} = req.body;
-    if (!email || !pw) {
-        return res.status(400).json({ error: "Email and password are required" });
+    const {Doctor_ID} = req.body;
+    if (!Doctor_ID) {
+        return res.status(400).json({ error: "Doctor_ID required" });
     }
     try {
-        const rows = await getDocPatients(email, pw)
+        const rows = await getDocPatients(Doctor_ID)
         const event_Details = 'retrieval of doctor\'s patients'
-        const { Doctor_ID } = await getDocID(email, pw)
         const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
         res.send(rows)
     } 

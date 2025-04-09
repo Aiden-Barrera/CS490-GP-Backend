@@ -38,11 +38,11 @@ export async function getDoctors(id) {
     return resultRows
 }
 
-export async function getDocPatients(email, pw) { //patient info for doc
+export async function getDocPatients(Doctor_ID) { //patient info for doc
     const [resultRows] = await pool.query(`SELECT patientbase.First_Name, patientbase.Last_Name, 
     patientbase.email, patientbase.phone 
     FROM DoctorBase INNER JOIN patientbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
-    WHERE DoctorBase.Email = ? AND DoctorBase.PW = SHA2(CONCAT(?),256);`, [email, pw])
+    WHERE DoctorBase.Doctor_ID = ?;`, [Doctor_ID])
     return resultRows
 }
 
