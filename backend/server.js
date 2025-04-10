@@ -312,6 +312,7 @@ app.post("/passAuthDoctor", async (req, res) => {
 
 app.post("/passAuthPharm", async (req, res) => {
     const { email, pw } = req.body;
+    console.log(req.body)
     if (!email || !pw) {
         return res.status(400).json({ error: "Email and password are required" });
     }
@@ -324,6 +325,7 @@ app.post("/passAuthPharm", async (req, res) => {
         else
         attempt = await LogAttempt(email, 'Pharmacist', 0);
         */
+       console.log(rows)
         res.send(rows);
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
@@ -353,7 +355,8 @@ app.post("/patient", async (req, res) => {
     try {
     const newPatient = await createPatient(Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, docId)
     const event_Details = 'Created new Patient'
-    const audit = await genereateAudit(newPatient["insertId"], 'Patient', 'POST', event_Details)
+    const audit = await genereateAudit(newPatient['patient_id'], 'Patient', 'POST', event_Details)
+    console.log(newPatient)
     res.status(201).send(newPatient)
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
@@ -370,8 +373,9 @@ app.post("/doctor", async (req, res) => {
 
     try {
         const newDoctor = await createDoctor(License_Serial, First_Name, Last_Name, Specialty, Email, Phone, PW, Availability)
+        console.log("Doctor Info: ", newDoctor)
         const event_Details = 'Created new Doctor'
-        const audit = await genereateAudit(newDoctor["insertId"], 'Doctor', 'POST', event_Details)
+        const audit = await genereateAudit(newDoctor['doctor_id'], 'Doctor', 'POST', event_Details)
         res.status(201).send(newDoctor)
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
@@ -532,6 +536,7 @@ app.post("/regiment", async (req, res) => {
 
     try{
     const newRegiment = await createRegiment(Patient_ID, Regiment)
+    console.log(newRegiment)
     const event_Details = 'Created new Regiment'
     const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
     res.status(201).send(newRegiment)
