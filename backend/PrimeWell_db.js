@@ -314,7 +314,6 @@ export async function createRegiment(Patient_ID, Regiment) {
     const [resultRegimentCreate] = await pool.query(`
         INSERT INTO regiments (Patient_ID, Regiment) VALUES (?,?);`
     , [Patient_ID, Regiment])
-    console.log(resultRegimentCreate)
     return resultRegimentCreate
 }
 
