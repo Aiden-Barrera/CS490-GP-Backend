@@ -147,10 +147,8 @@ export async function getAppointmentsPatient(id) {
 // joins other tables to get data - VC
 export async function getApptRequest(id) {
     const [resultRows] = await pool.query(`
-        SELECT patientbase.First_name, patientbase.last_name, requests.Request_status, 
-        requests.Doctor_ID, appointments.Appt_Date, appointments.Appt_Time 
-        FROM requests INNER JOIN patientbase ON patientbase.Patient_id = requests.Patient_id
-        INNER JOIN appointments ON Appointments.Patient_id = patientbase.Patient_id
+        SELECT patientbase.First_name, patientbase.last_name
+        FROM requests INNER JOIN patientbase ON patientbase.Patient_ID = requests.Patient_ID
         WHERE requests.Doctor_ID = ?;`, [id]) 
     return resultRows
 }
@@ -309,9 +307,9 @@ export async function createChatMsg(Chatroom_ID, SenderID, SenderType, Message) 
     return resultMsgCreate
 }
 
-export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Tier) {
+export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier) {
     const [resultApptCreate] = await pool.query(`INSERT INTO appointments (Patient_ID, Doctor_ID, Date_Scheduled,
-        Appt_Date, Tier) VALUES (?, ?, CURRENT_DATE, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Tier])
+        Appt_Date, Appt_Time, Tier) VALUES (?, ?, CURRENT_DATE, ?, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier])
     return resultApptCreate
 }
 
