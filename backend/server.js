@@ -579,11 +579,12 @@ app.post("/messages", async (req, res) => { //chat room id, based on sender type
 // Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
 // Ensure that the Doctor_ID passed into the Doctor_ID field is an existing Doctor ID in the DoctorBase table } via frontend? - FI
 app.post("/appointment", async (req, res) => {
-    const {Patient_ID, Doctor_ID, Appt_Date, Tier} = req.body
-    if (!Patient_ID | !Doctor_ID | !Appt_Date | !Tier) {
+    const {Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier} = req.body
+    if (!Patient_ID | !Doctor_ID | !Appt_Date | !Appt_Time | !Tier) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
+    /* MODIFY THE BELOW TO GENERATE REQUESTS INSTEAD OF ASSIGNING DIRECTLY
     const patientsDoctor = await getPatientDoc(Patient_ID)
     // check if the patient has a doctor, if not - assign them the doctor they've requested in this appointment (Doctor_ID above)
     if (patientsDoctor === undefined) {
@@ -595,9 +596,10 @@ app.post("/appointment", async (req, res) => {
     else if (patientsDoctor?.Doctor_ID !== Doctor_ID) {
         return res.status(400).json({ error: "Patient already has a different doctor"});
     }
-    
+    */
+
     try {
-        const newAppt = await createAppointment(Patient_ID, Doctor_ID, Appt_Date, Tier)
+        const newAppt = await createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier)
         const event_Details = 'Created new Appointment'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
         res.status(201).send(newAppt)
