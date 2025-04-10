@@ -791,7 +791,7 @@ app.patch('/appointment/:patient_id/:appt_id', async (req, res) => {
         let entry = req.body;
 
         // Fields that are NOT allowed to be updated
-        const restrictedFields = ['Appointment_ID', 'Patient_ID', 'Doctor_ID', 'Date_Scheduled', 'Doctors_Feedback', 'Last_Update', 'Create_Date']; // Allow patient to change Appt_Date and Tier_ID
+        const restrictedFields = ['Appointment_ID', 'Patient_ID', 'Doctor_ID', 'Date_Scheduled', 'Doctors_Feedback', 'Last_Update', 'Create_Date']; // Allow patient to change Appt_Date, Appt_Time and Tier_ID
 
         // Remove restricted fields from the entry object
         entry = Object.fromEntries(

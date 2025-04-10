@@ -276,7 +276,7 @@ export async function createExercise(Exercise_Name, Muscle_Group, Image, Exercis
 
 export async function createRegiment(Patient_ID, Regiment) {
     const [resultRegimentCreate] = await pool.query(`
-        INSERT INTO exercisebank (Patient_ID, Regiment) VALUES (?,?);`
+        INSERT INTO Regiments (Patient_ID, Regiment) VALUES (?,?);`
     , [Patient_ID, Regiment])
     return resultRegimentCreate
 }
@@ -313,8 +313,9 @@ export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_T
     return resultApptCreate
 }
 
+// FIX THIS!!!!!!!!
 export async function createApptRequest(Patient_ID, Doctor_ID) {
-    const [resultApptCreate] = await pool.query(`INSERT INTO appointments (Patient_ID, Doctor_ID, Request_Status) VALUES (?, ?, ?);`, [Patient_ID, Doctor_ID, 'Pending'])
+    const [resultApptCreate] = await pool.query(`INSERT INTO Requests (Patient_ID, Doctor_ID, Request_Status) VALUES (?, ?, ?);`, [Patient_ID, Doctor_ID, 'Pending'])
     return resultApptCreate
 }
 
