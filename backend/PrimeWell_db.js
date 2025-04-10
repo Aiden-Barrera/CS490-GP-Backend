@@ -99,6 +99,11 @@ export async function getExercises() {
     return resultRows
 }
 
+export async function getExerciseByClass(Muscle_Category) {
+    const [resultRows] = await pool.query(`SELECT Exercise_ID, Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps FROM ExerciseBank WHERE Muscle_Category = ?;`, [Muscle_Category])
+    return resultRows
+}
+
 export async function getRegiment(id) {
     const [resultRows] = await pool.query(`SELECT Regiment FROM Regiments WHERE Patient_ID = ?;`, [id]) 
     return resultRows

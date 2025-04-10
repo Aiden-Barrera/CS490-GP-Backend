@@ -2,7 +2,7 @@ import express from 'express'
 import { addPatientDoc, createAppointment, createChatMsg, createChatroom, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPerscription, createPharmacy, 
     createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePerscription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getAppointmentsPatient, getChatMesseges, getComments_id, getDoctorAuth, getDoctors, 
     getDoctorSchedule, 
-    getExercises, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
+    getExercises, getExerciseByClass, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
     getReviewsTop, getReviewsByID, 
     getReviewsComments,  getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
     UpdateRegiment,
@@ -162,6 +162,12 @@ app.get("/tiers/:id", async (req, res) => { //tiers by doctor - VC
 
 app.get("/exercisebank", async (req, res) => {
     const rows = await getExercises()
+    res.send(rows)
+})
+
+app.post("/exerciseByClass", async (req, res) => {
+    const { Muscle_Category } = req.body
+    const rows = await getExerciseByClass(Muscle_Category)
     res.send(rows)
 })
 
