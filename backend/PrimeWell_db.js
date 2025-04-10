@@ -292,11 +292,26 @@ export async function createDoctorSchedule(Doctor_ID, Doctor_Schedule) {
 }
 
 export async function createPharmacy(Company_Name,Address,Zip,Work_Hours,Email,PW) { //Work_Hours: req.body.Work_Hours, //json? -VC
-    const workHoursString = JSON.stringify(Work_Hours); // Convert JSON object to string
-    const [resultPharmacyCreate] = await pool.query(`
-        INSERT INTO pharmacies (Company_Name, Address, Zip, Work_Hours, Email, PW) VALUES (?,?,?,?,?,SHA2(CONCAT(?),256));`
-    , [Company_Name,Address,Zip,workHoursString,Email,PW])
-    return resultPharmacyCreate
+    try {
+        const workHoursString = JSON.stringify(Work_Hours);
+        const [resultPharmacyCreate] = await pool.query(`
+          INSERT INTO pharmacies (Company_Name, Address, Zip, Work_Hours, Email, PW) 
+          VALUES (?, ?, ?, ?, ?, SHA2(CONCAT(?),256));
+        `, [Company_Name, Address, Zip, workHoursString, Email, PW]);
+    
+        console.log("Insert Result:", resultPharmacyCreate);
+    
+        const [body] = await pool.query(
+          `SELECT pharm_id, Company_name FROM pharmacies WHERE pharm_id = ?`, 
+          [resultPharmacyCreate.insertId]
+        );
+        console.log("Query Result:", body);
+        
+        return body[0];
+      } catch (err) {
+        console.error("Error in createPharmacy:", err);
+        throw err; // Let Express catch it
+      }
 }
 
 export async function createPill(Cost, Pill_Name, Pharm_ID, Dosage) {
