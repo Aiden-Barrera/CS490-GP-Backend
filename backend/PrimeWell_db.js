@@ -157,7 +157,7 @@ export async function getApptRequest(id) {
 
 // Make the below a POST because it is sensitive? - FI
 export async function getAppointmentsDoctor(id) {
-    const [resultRows] = await pool.query(`SELECT Appointment_ID, Date_Scheduled, Appt_Date, Appt_Time, Tier_ID FROM Appointments FROM Appointments WHERE Doctor_ID = ?;`, [id]) 
+    const [resultRows] = await pool.query(`SELECT Appointment_ID, Date_Scheduled, Appt_Date, Appt_Time, Tier FROM Appointments WHERE Doctor_ID = ?;`, [id]) 
     return resultRows
 }
 
