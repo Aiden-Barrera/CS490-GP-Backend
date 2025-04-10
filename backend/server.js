@@ -671,10 +671,14 @@ app.post("/reviews", async (req, res) => {
 
     try {
     const newReview = await createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating)
+    if (!newReview) {
+        return res.status(403).json({message: "Patient isn't assigned that doctor!"})
+    }
     const event_Details = 'Created new review'
     const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
     res.status(201).send(newReview)
-    }catch (error) {  
+    }catch (error) { 
+        console.log(newReview) 
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })

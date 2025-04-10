@@ -385,6 +385,12 @@ export async function createPerscription(Patient_ID, Pill_ID, Quantity, Doctor_I
 }
 
 export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
+    const [check] = await pool.query(`select patient_id from patientBase 
+        where patient_id = ? and doctor_id = ?;`, [Patient_ID, Doctor_ID])
+
+    if (check.length === 0) {
+        return null
+    }
     const [resultReviewCreate] = await pool.query(`
         INSERT INTO reviews (Patient_ID, Doctor_ID, Review_Text, Date_Posted, Rating) VALUES (?,?,?,CURRENT_DATE,?);`
     , [Patient_ID, Doctor_ID, Review_Text, Rating])
