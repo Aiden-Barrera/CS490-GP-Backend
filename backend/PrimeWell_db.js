@@ -99,8 +99,8 @@ export async function getExercises() {
     return resultRows
 }
 
-export async function getExerciseByClass(Muscle_Category) {
-    const [resultRows] = await pool.query(`SELECT Exercise_ID, Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps FROM ExerciseBank WHERE Muscle_Category = ?;`, [Muscle_Category])
+export async function getExerciseByClass(Exercise_Class) {
+    const [resultRows] = await pool.query(`SELECT Exercise_ID, Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps FROM ExerciseBank WHERE Exercise_Class = ?;`, [Exercise_Class])
     return resultRows
 }
 
@@ -238,6 +238,17 @@ export async function getPharmAuth(email, pw) {
     return resultRows[0]
 }
 
+export async function getNearestPharms(zip) {
+    try {
+        const [resultRows] = await pool.query(`SELECT Pharm_ID, Company_Name, Zip, ABS(CAST(Zip AS SIGNED) - ?) AS ZipDistance
+                FROM Pharmacies WHERE ABS(CAST(Zip AS SIGNED) - ?) <= ? ORDER BY ZipDistance ASC LIMIT 3`, [zip, zip, 3])
+        return resultRows
+    } catch (err) {
+        console.log(err)
+        throw err
+    }
+}
+
 //ADD DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with type POST
 // Add to db via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM table);
@@ -292,11 +303,26 @@ export async function createDoctorSchedule(Doctor_ID, Doctor_Schedule) {
 }
 
 export async function createPharmacy(Company_Name,Address,Zip,Work_Hours,Email,PW) { //Work_Hours: req.body.Work_Hours, //json? -VC
-    const workHoursString = JSON.stringify(Work_Hours); // Convert JSON object to string
-    const [resultPharmacyCreate] = await pool.query(`
-        INSERT INTO pharmacies (Company_Name, Address, Zip, Work_Hours, Email, PW) VALUES (?,?,?,?,?,SHA2(CONCAT(?),256));`
-    , [Company_Name,Address,Zip,workHoursString,Email,PW])
-    return resultPharmacyCreate
+    try {
+        const workHoursString = JSON.stringify(Work_Hours);
+        const [resultPharmacyCreate] = await pool.query(`
+          INSERT INTO pharmacies (Company_Name, Address, Zip, Work_Hours, Email, PW) 
+          VALUES (?, ?, ?, ?, ?, SHA2(CONCAT(?),256));
+        `, [Company_Name, Address, Zip, workHoursString, Email, PW]);
+    
+        console.log("Insert Result:", resultPharmacyCreate);
+    
+        const [body] = await pool.query(
+          `SELECT pharm_id, Company_Name FROM pharmacies WHERE pharm_id = ?`, 
+          [resultPharmacyCreate.insertId]
+        );
+        console.log("Query Result:", body);
+        
+        return body[0];
+      } catch (err) {
+        console.error("Error in createPharmacy:", err);
+        throw err; // Let Express catch it
+      }
 }
 
 export async function createPill(Cost, Pill_Name, Pharm_ID, Dosage) {
@@ -370,6 +396,12 @@ export async function createPerscription(Patient_ID, Pill_ID, Quantity, Doctor_I
 }
 
 export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
+    const [check] = await pool.query(`select patient_id from patientBase 
+        where patient_id = ? and doctor_id = ?;`, [Patient_ID, Doctor_ID])
+
+    if (check.length === 0) {
+        return null
+    }
     const [resultReviewCreate] = await pool.query(`
         INSERT INTO reviews (Patient_ID, Doctor_ID, Review_Text, Date_Posted, Rating) VALUES (?,?,?,CURRENT_DATE,?);`
     , [Patient_ID, Doctor_ID, Review_Text, Rating])

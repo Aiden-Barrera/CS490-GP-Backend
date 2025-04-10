@@ -17,7 +17,8 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getAllDoctors,
     getPatientInfo,
     getDoctorInfo,
-    getPharmInfo, getDocID} from './PrimeWell_db.js'
+    getPharmInfo, getDocID,
+    getNearestPharms} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -166,9 +167,8 @@ app.get("/exercisebank", async (req, res) => {
 })
 
 app.post("/exerciseByClass", async (req, res) => {
-    try {
-    const { Muscle_Category } = req.body
-    const rows = await getExerciseByClass(Muscle_Category)
+    const { Exercise_Class } = req.body
+    const rows = await getExerciseByClass(Exercise_Class)
     res.send(rows)
     }
     catch (error) {
@@ -339,6 +339,7 @@ app.post("/passAuthPharm", async (req, res) => {
        console.log(rows)
         res.send(rows);
     } catch (error) {
+        console.log(error)
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
@@ -455,10 +456,24 @@ app.post("/pharmacies", async (req, res) => {
     try {
         const newPharm = await createPharmacy(Company_Name, Address, Zip, Work_Hours, Email, PW)
         const event_Details = 'Created new Pharmacy'
-        const audit = await genereateAudit(newPharm["insertId"], 'Pharmacist', 'POST', event_Details)
+        const audit = await genereateAudit(newPharm["pharm_id"], 'Pharmacist', 'POST', event_Details)
         res.status(201).send(newPharm)
     } catch (error) {  
         res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
+app.post("/getPharmByZip", async (req, res) => {
+    const {Zip} = req.body
+    if (!Zip) {
+        return res.status(400).json({message: "Missing Zip!"})
+    }
+
+    try {
+        const nearestPharms = await getNearestPharms(Zip)
+        res.status(200).send(nearestPharms)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
     }
 })
 
@@ -608,7 +623,7 @@ app.post("/appointment", async (req, res) => {
         return res.status(400).json({ error: "Patient already has a different doctor"});
     }
     */
-
+    
     try {
         const newAppt = await createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier)
         const event_Details = 'Created new Appointment'
@@ -676,10 +691,14 @@ app.post("/reviews", async (req, res) => {
 
     try {
     const newReview = await createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating)
+    if (!newReview) {
+        return res.status(403).json({message: "Patient isn't assigned that doctor!"})
+    }
     const event_Details = 'Created new review'
     const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
     res.status(201).send(newReview)
-    }catch (error) {  
+    }catch (error) { 
+        console.log(newReview) 
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
