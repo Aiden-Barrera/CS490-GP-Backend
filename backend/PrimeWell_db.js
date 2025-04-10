@@ -99,6 +99,11 @@ export async function getExercises() {
     return resultRows
 }
 
+export async function getExerciseByClass(Muscle_Category) {
+    const [resultRows] = await pool.query(`SELECT Exercise_ID, Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps FROM ExerciseBank WHERE Muscle_Category = ?;`, [Muscle_Category])
+    return resultRows
+}
+
 export async function getRegiment(id) {
     const [resultRows] = await pool.query(`SELECT Regiment FROM Regiments WHERE Patient_ID = ?;`, [id]) 
     return resultRows
@@ -310,7 +315,7 @@ export async function createExercise(Exercise_Name, Muscle_Group, Image, Exercis
 
 export async function createRegiment(Patient_ID, Regiment) {
     const [resultRegimentCreate] = await pool.query(`
-        INSERT INTO regiments (Patient_ID, Regiment) VALUES (?,?);`
+        INSERT INTO Regiments (Patient_ID, Regiment) VALUES (?,?);`
     , [Patient_ID, Regiment])
     return resultRegimentCreate
 }
@@ -347,8 +352,9 @@ export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_T
     return resultApptCreate
 }
 
+// FIX THIS!!!!!!!!
 export async function createApptRequest(Patient_ID, Doctor_ID) {
-    const [resultApptCreate] = await pool.query(`INSERT INTO appointments (Patient_ID, Doctor_ID, Request_Status) VALUES (?, ?, ?);`, [Patient_ID, Doctor_ID, 'Pending'])
+    const [resultApptCreate] = await pool.query(`INSERT INTO Requests (Patient_ID, Doctor_ID, Request_Status) VALUES (?, ?, ?);`, [Patient_ID, Doctor_ID, 'Pending'])
     return resultApptCreate
 }
 
