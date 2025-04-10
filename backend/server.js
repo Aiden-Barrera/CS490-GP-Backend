@@ -166,9 +166,14 @@ app.get("/exercisebank", async (req, res) => {
 })
 
 app.post("/exerciseByClass", async (req, res) => {
+    try {
     const { Muscle_Category } = req.body
     const rows = await getExerciseByClass(Muscle_Category)
     res.send(rows)
+    }
+    catch (error) {
+        es.status(500).json({ error: error.message || "Internal server error" });
+    }
 })
 
 app.get("/regiment/:id", async (req, res) => { //based on patient -VC
