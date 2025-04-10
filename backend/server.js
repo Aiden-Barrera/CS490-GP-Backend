@@ -170,6 +170,10 @@ app.post("/exerciseByClass", async (req, res) => {
     const { Exercise_Class } = req.body
     const rows = await getExerciseByClass(Exercise_Class)
     res.send(rows)
+    }
+    catch (error) {
+        es.status(500).json({ error: error.message || "Internal server error" });
+    }
 })
 
 app.get("/regiment/:id", async (req, res) => { //based on patient -VC
