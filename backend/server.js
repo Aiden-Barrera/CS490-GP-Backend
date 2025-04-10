@@ -450,7 +450,7 @@ app.post("/pharmacies", async (req, res) => {
     try {
         const newPharm = await createPharmacy(Company_Name, Address, Zip, Work_Hours, Email, PW)
         const event_Details = 'Created new Pharmacy'
-        const audit = await genereateAudit(newPharm["insertId"], 'Pharmacist', 'POST', event_Details)
+        const audit = await genereateAudit(newPharm["pharm_id"], 'Pharmacist', 'POST', event_Details)
         res.status(201).send(newPharm)
     } catch (error) {  
         res.status(500).json({ error: error.message || "Internal server error" });
