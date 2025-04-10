@@ -164,7 +164,7 @@ export async function getAuthSurvey(id) { // get patient's recent surveys by rec
 
 // Make the below a POST because it is sensitive? - FI
 export async function getAppointmentsPatient(id) {
-    const [resultRows] = await pool.query(`SELECT Appointment_ID, Date_Scheduled, Appt_Date, Appt_Time, Tier_ID, Doctor_ID, Doctors_Feedback FROM Appointments WHERE Patient_ID = ?;`, [id]) 
+    const [resultRows] = await pool.query(`SELECT Appointment_ID, Date_Scheduled, Appt_Date, Appt_Time, Tier, Doctor_ID, Doctors_Feedback FROM Appointments WHERE Patient_ID = ?;`, [id]) 
     return resultRows
 }
 
@@ -179,7 +179,10 @@ export async function getApptRequest(id) {
 
 // Make the below a POST because it is sensitive? - FI
 export async function getAppointmentsDoctor(id) {
-    const [resultRows] = await pool.query(`SELECT Appointment_ID, Date_Scheduled, Appt_Date, Appt_Time, Tier FROM Appointments WHERE Doctor_ID = ?;`, [id]) 
+    const [resultRows] = await pool.query(`SELECT PB.First_Name, PB.Last_Name, A.Appointment_ID, 
+        A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier FROM Appointments as A, PatientBase as PB 
+        WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID;
+    `, [id]) 
     return resultRows
 }
 
@@ -226,6 +229,7 @@ export async function getPharmAuth(email, pw) {
     const [resultRows] = await pool.query(`SELECT pharm_id, Company_Name, Address, Zip, Work_Hours, Email FROM Pharmacies WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
         [email, pw]
     )
+    console.log(resultRows)
     return resultRows[0]
 }
 
@@ -252,14 +256,20 @@ export async function createPatient(Pharm_ID, First_Name, Last_Name, Email, Phon
     const [resultPatientCreate] = await pool.query(`
         INSERT INTO PatientBase (Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, Doctor_ID) VALUES (?, ?, ?, ?, ?, SHA2(CONCAT(?),256), ?, ?, ?);`
     , [Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, Doctor_ID])
-    return resultPatientCreate
+    const [body] = await pool.query(`select patient_id, First_Name, Last_Name from patientbase where patient_id = ?`, [resultPatientCreate.insertId])
+    console.log("Body Info: ", body)
+    return body[0]
 }
 
 export async function createDoctor(License_Serial,First_Name,Last_Name,Specialty,Email,Phone,PW,Availability) { //add tiers with doc? - VC
     const [resultDoctorCreate] = await pool.query(`
         INSERT INTO DoctorBase (License_Serial, First_Name, Last_Name, Specialty, Email, Phone, PW, Availability) VALUES (?,?,?,?,?,?,SHA2(CONCAT(?),256),?);`
     , [License_Serial,First_Name,Last_Name,Specialty,Email,Phone,PW,Availability])
-    return resultDoctorCreate
+    
+    console.log(resultDoctorCreate)
+    const [body] = await pool.query(`select doctor_id, First_Name, Last_Name from doctorbase where doctor_id = ?`, [resultDoctorCreate.insertId])
+    console.log("Doctor Name: ", body)
+    return body[0]
 }
 
 export async function createDoctorTiers(Doctor_ID, Cost) {
