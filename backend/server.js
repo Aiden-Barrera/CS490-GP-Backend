@@ -17,7 +17,8 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getAllDoctors,
     getPatientInfo,
     getDoctorInfo,
-    getPharmInfo, getDocID} from './PrimeWell_db.js'
+    getPharmInfo, getDocID,
+    getNearestPharms} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -334,6 +335,7 @@ app.post("/passAuthPharm", async (req, res) => {
        console.log(rows)
         res.send(rows);
     } catch (error) {
+        console.log(error)
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
@@ -454,6 +456,20 @@ app.post("/pharmacies", async (req, res) => {
         res.status(201).send(newPharm)
     } catch (error) {  
         res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
+app.post("/getPharmByZip", async (req, res) => {
+    const {Zip} = req.body
+    if (!Zip) {
+        return res.status(400).json({message: "Missing Zip!"})
+    }
+
+    try {
+        const nearestPharms = await getNearestPharms(Zip)
+        res.status(200).send(nearestPharms)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
     }
 })
 
