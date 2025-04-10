@@ -238,6 +238,17 @@ export async function getPharmAuth(email, pw) {
     return resultRows[0]
 }
 
+export async function getNearestPharms(zip) {
+    try {
+        const [resultRows] = await pool.query(`SELECT Pharm_ID, Company_Name, Zip, ABS(CAST(Zip AS SIGNED) - ?) AS ZipDistance
+                FROM Pharmacies WHERE ABS(CAST(Zip AS SIGNED) - ?) <= ? ORDER BY ZipDistance ASC LIMIT 3`, [zip, zip, 3])
+        return resultRows
+    } catch (err) {
+        console.log(err)
+        throw err
+    }
+}
+
 //ADD DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with type POST
 // Add to db via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM table);
@@ -302,7 +313,7 @@ export async function createPharmacy(Company_Name,Address,Zip,Work_Hours,Email,P
         console.log("Insert Result:", resultPharmacyCreate);
     
         const [body] = await pool.query(
-          `SELECT pharm_id, Company_name FROM pharmacies WHERE pharm_id = ?`, 
+          `SELECT pharm_id, Company_Name FROM pharmacies WHERE pharm_id = ?`, 
           [resultPharmacyCreate.insertId]
         );
         console.log("Query Result:", body);
@@ -385,6 +396,12 @@ export async function createPerscription(Patient_ID, Pill_ID, Quantity, Doctor_I
 }
 
 export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
+    const [check] = await pool.query(`select patient_id from patientBase 
+        where patient_id = ? and doctor_id = ?;`, [Patient_ID, Doctor_ID])
+
+    if (check.length === 0) {
+        return null
+    }
     const [resultReviewCreate] = await pool.query(`
         INSERT INTO reviews (Patient_ID, Doctor_ID, Review_Text, Date_Posted, Rating) VALUES (?,?,?,CURRENT_DATE,?);`
     , [Patient_ID, Doctor_ID, Review_Text, Rating])
