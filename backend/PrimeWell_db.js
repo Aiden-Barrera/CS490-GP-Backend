@@ -20,6 +20,24 @@ export async function getPatients(id) {
     return resultRows[0]
 }
 
+// These endpoints are insecure but I need them for allowing user to view their profile
+export async function getPatientInfo(id) {
+    const [resultRows] = await pool.query(`select * from patientbase where patient_id = ?`, [id])
+    return resultRows
+}
+
+// These endpoints are insecure but I need them for allowing user to view their profile
+export async function getDoctorInfo(id) {
+    const [resultRows] = await pool.query(`select * from doctorbase where doctor_id = ?`, [id])
+    return resultRows
+}
+
+// These endpoints are insecure but I need them for allowing user to view their profile
+export async function getPharmInfo(id) {
+    const [resultRows] = await pool.query(`select * from pharmacies where pharm_id = ?`, [id])
+    return resultRows
+}
+
 export async function getPatientDoc(id) { //changed for doc info
     const [resultRows] = await pool.query(`SELECT doctorbase.Doctor_ID, doctorbase.First_Name, doctorbase.Last_Name, 
         doctorbase.specialty, doctorbase.email 
@@ -52,8 +70,12 @@ export async function getDocID(email, pw) {
 }
 
 // Make the below a POST because it is sensitive? - FI
-export async function getDoctorSchedule(id) {
-    const [resultRows] = await pool.query(`SELECT Doctor_Schedule FROM DoctorSchedules WHERE Doctor_ID = ?;`, [id]) 
+export async function getDoctorSchedule(id, day) {
+    const validDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    if (!validDays.includes(day)) {
+        throw new Error("Invalid day value.");
+    }
+    const [resultRows] = await pool.query(`select JSON_EXTRACT(doctor_schedule, '$.${day}') as Slots from doctorschedules where doctor_id = ?;`, [id]) 
     return resultRows
 }
 
@@ -83,7 +105,9 @@ export async function getRegiment(id) {
 }
 
 export async function getForumPosts() {
-    const [resultRows] = await pool.query(`SELECT Forum_ID, Forum_Text, Patient_ID, Date_Posted FROM Forum_Posts;`)
+    const [resultRows] = await pool.query(`SELECT FP.Forum_ID, FP.Forum_Text, FP.Patient_ID, FP.Exercise_ID, 
+        Date_Posted, EB.Exercise_Name, EB.Muscle_Group, EB.Image, EB.Exercise_Class, EB.Sets, 
+        EB.Reps, EB.Exercise_Description FROM Forum_Posts as FP, ExerciseBank as EB where FP.exercise_id = EB.exercise_id;`)
     return resultRows
 }
 
@@ -397,18 +421,17 @@ export async function UpdateRequest(id, entry) {
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (only doc schedule is extracted)
 export async function UpdateDoctorSchedule(id, entry) {
     const [returnResult] = await pool.query(`
-        UPDATE doctorschedules SET Doctor_Schedule=?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
+        UPDATE doctorschedules SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
 }
 
-
-// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
-export async function UpdateApptInfo(patient_id, appointment_id, entry) {
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (fixed for tiers, and IDs)
+export async function UpdateApptInfo(id, entry) {
     const [returnResult] = await pool.query(`
-        UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ? AND Appointment_ID = ?;`
-    , [entry, patient_id, appointment_id])
+        UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
+    , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
 }

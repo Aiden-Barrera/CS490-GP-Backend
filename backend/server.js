@@ -14,7 +14,10 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPrescriptionDoc,
     getAuthSurvey,
     getSurveyLatestDate,
-    getAllDoctors, getDocID} from './PrimeWell_db.js'
+    getAllDoctors,
+    getPatientInfo,
+    getDoctorInfo,
+    getPharmInfo, getDocID} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -80,6 +83,27 @@ app.get("/patient/:id", async (req, res) => {
     res.send(rows)
 })
 
+app.get("/patientInfo/:id", async (req, res) => {
+    const rows = await getPatientInfo(req.params.id)
+    const event_Details = 'retrieval of patient profile'
+    const audit = await genereateAudit(req.params.id, 'Patient', 'Get', event_Details)
+    res.send(rows)
+})
+
+app.get("/doctorInfo/:id", async (req, res) => {
+    const rows = await getDoctorInfo(req.params.id)
+    const event_Details = 'retrieval of patient profile'
+    const audit = await genereateAudit(req.params.id, 'Doctor', 'Get', event_Details)
+    res.send(rows)
+})
+
+app.get("/pharmInfo/:id", async (req, res) => {
+    const rows = await getPharmInfo(req.params.id)
+    const event_Details = 'retrieval of patient profile'
+    const audit = await genereateAudit(req.params.id, 'Pharmacist', 'Get', event_Details)
+    res.send(rows)
+})
+
 // MAKE THIS A POST REQUEST BECAUSE IT IS SENSITIVE - FI
 app.get("/patientDoc/:id", async (req, res) => {
     const rows = await getPatientDoc(req.params.id)
@@ -114,13 +138,6 @@ app.post("/doctorPatients", async (req, res) => {
     catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" })
     }
-})
-
-app.get("/doctorSchedule/:id", async (req, res) => {
-    const rows = await getDoctorSchedule(req.params.id)
-    const event_Details = 'retrieval of doctor schedule data'
-    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
-    res.send(rows)
 })
 
 
@@ -189,7 +206,7 @@ app.get("/appointment/doctor/:id", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/appointment/request/:id", async (req, res) => {
+app.get("/request/:id", async (req, res) => {
     const rows = await getApptRequest(req.params.id)
     const event_Details = 'retrieval of appointment requests'
     const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
@@ -243,13 +260,13 @@ app.get("/patientsurvey/:id", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/patientsurveyAuth/:id", async (req, res) => {
+app.get("/patientsurveyAuth/:id", async (req, res) => {  //returns true (if posting is ok) or false
     const rows = await getAuthSurvey(req.params.id)
     const event_Details = 'check to see if patient can post survey'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
     const tday = new Date();
     if (tday.toISOString().substring(0, 10) != rows[0]?.Survey_Date.toISOString().substring(0, 10)) res.send(tday)
-    else res.send('false')
+        else res.send('false')
     //res.send(rows)
 })
 
@@ -395,6 +412,22 @@ app.post("/doctorSchedule", async (req, res) => {
     }
 })
 
+app.post("/getDoctorSchedule", async (req, res) => {
+    const {doc_id, day} = req.body
+
+    if (!doc_id || !day) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+    try {
+        const rows = await getDoctorSchedule(doc_id, day)
+        const event_Details = 'retrieval of doctor schedule data'
+        const audit = await genereateAudit(doc_id, 'Doctor', 'POST', event_Details)
+        res.status(200).send(rows)
+    } catch (err) {
+        res.status(500).json({message: "Failed to Fetch Doctor Schedule by Day"})
+    }
+})
+
 // Ensure that the ZIP code passed in the Zip field of the request body is an INTEGER between 10000 and 99999 TO SATISFY THE DB CONSTRAINT - FI
 // Modify the DB such that the check ensures that Zip codes must be between 88011 and 88019 to match the geographical constraints of the system? ^ - FI
 // Ensure that Email holds the form of an email address, Phone holds the form of a phone number, and Address holds the form of a Street address } via frontend? - FI 
@@ -441,12 +474,12 @@ for this function to work each entry should be labeled as such:
 */
 // -VC
 app.post("/exercisebank", upload.single('image'), async (req, res) => { //User created exercise from post - VC
-    const { Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps } = req.body
-    if (!Exercise_Name || !Muscle_Group || !Exercise_Description || !Sets || !Reps) {
+    const { Exercise_Name, Muscle_Group, Image, Exercise_Description, Muscle_Category, Sets, Reps } = req.body
+    if (!Exercise_Name || !Muscle_Group || !Exercise_Description || !Muscle_Category || !Sets || !Reps) {
         return res.status(400).json({ error: "Missing required information" });
     }
     try {
-        const newExercise = await createExercise(Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps)
+        const newExercise = await createExercise(Exercise_Name, Muscle_Group, Image, Exercise_Description, Muscle_Category, Sets, Reps)
         const event_Details = 'Created new exercise'
         //const audit = await genereateAudit(req.body.id, 'Patient', 'POST', event_Details) //Needs to be fixed
         res.status(201).send(newExercise)
