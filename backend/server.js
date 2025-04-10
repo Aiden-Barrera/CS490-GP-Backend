@@ -166,8 +166,8 @@ app.get("/exercisebank", async (req, res) => {
 })
 
 app.post("/exerciseByClass", async (req, res) => {
-    const { Muscle_Category } = req.body
-    const rows = await getExerciseByClass(Muscle_Category)
+    const { Exercise_Class } = req.body
+    const rows = await getExerciseByClass(Exercise_Class)
     res.send(rows)
 })
 
@@ -603,7 +603,7 @@ app.post("/appointment", async (req, res) => {
         return res.status(400).json({ error: "Patient already has a different doctor"});
     }
     */
-
+    
     try {
         const newAppt = await createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier)
         const event_Details = 'Created new Appointment'
