@@ -14,17 +14,35 @@ const pool = mysql.createPool({
 //GET DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with type GET
 
-export async function getPatients(email, PW) {
+export async function getPatients(id) {
     const [resultRows] = await pool.query(`SELECT First_Name, Last_Name FROM PatientBase 
-        WHERE PatientBase.Email = ? AND patientBase.PW = SHA2(CONCAT(?),256);`, [email, PW])
+        WHERE PatientBase.Patient_ID = ?;`, [id])
     return resultRows[0]
 }
 
-export async function getPatientDoc(email, PW) { 
+// These endpoints are insecure but I need them for allowing user to view their profile
+export async function getPatientInfo(id) {
+    const [resultRows] = await pool.query(`select * from patientbase where patient_id = ?`, [id])
+    return resultRows
+}
+
+// These endpoints are insecure but I need them for allowing user to view their profile
+export async function getDoctorInfo(id) {
+    const [resultRows] = await pool.query(`select * from doctorbase where doctor_id = ?`, [id])
+    return resultRows
+}
+
+// These endpoints are insecure but I need them for allowing user to view their profile
+export async function getPharmInfo(id) {
+    const [resultRows] = await pool.query(`select * from pharmacies where pharm_id = ?`, [id])
+    return resultRows
+}
+
+export async function getPatientDoc(id) { //changed for doc info
     const [resultRows] = await pool.query(`SELECT doctorbase.Doctor_ID, doctorbase.First_Name, doctorbase.Last_Name, 
         doctorbase.specialty, doctorbase.email 
         FROM PatientBase INNER JOIN doctorbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
-        WHERE PatientBase.Email = ? AND patientBase.PW = SHA2(CONCAT(?),256);`, [email, PW])
+        WHERE PatientBase.Patient_ID;`, [id])
     return resultRows[0]
 }
 
@@ -33,17 +51,17 @@ export async function getAllDoctors() {
     return resultRows
 }
 
-export async function getDoctors(email, pw) {
+export async function getDoctors(id) {
     const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase 
-        WHERE Email = ? AND PW = ?;`, [email, pw]) 
+        WHERE Doctor_ID ?;`, [id]) 
     return resultRows
 }
 
-export async function getDocPatients(email, pw) { //patient info for doc
+export async function getDocPatients(Doctor_ID) { //patient info for doc
     const [resultRows] = await pool.query(`SELECT patientbase.First_Name, patientbase.Last_Name, 
     patientbase.email, patientbase.phone 
     FROM DoctorBase INNER JOIN patientbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
-    WHERE DoctorBase.Email = ? AND DoctorBase.PW = SHA2(CONCAT(?),256);`, [email, pw])
+    WHERE DoctorBase.Doctor_ID = ?;`, [Doctor_ID])
     return resultRows
 }
 
@@ -58,8 +76,12 @@ export async function getDocID(email, pw) {
 }
 
 // Make the below a POST because it is sensitive? - FI
-export async function getDoctorSchedule(email, pw) {
-    const [resultRows] = await pool.query(`SELECT Doctor_Schedule FROM DoctorSchedules WHERE Doctor_ID = ?;`, [email, pw]) 
+export async function getDoctorSchedule(id, day) {
+    const validDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    if (!validDays.includes(day)) {
+        throw new Error("Invalid day value.");
+    }
+    const [resultRows] = await pool.query(`select JSON_EXTRACT(doctor_schedule, '$.${day}') as Slots from doctorschedules where doctor_id = ?;`, [id]) 
     return resultRows
 }
 
@@ -83,16 +105,20 @@ export async function getExercises() {
     return resultRows
 }
 
+export async function getExerciseByClass(Exercise_Class) {
+    const [resultRows] = await pool.query(`SELECT Exercise_ID, Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps FROM ExerciseBank WHERE Exercise_Class = ?;`, [Exercise_Class])
+    return resultRows
+}
+
 export async function getRegiment(id) {
     const [resultRows] = await pool.query(`SELECT Regiment FROM Regiments WHERE Patient_ID = ?;`, [id]) 
     return resultRows
 }
 
-export async function getForumPosts() { //changes for exercise info - VC
-    const [resultRows] = await pool.query(`SELECT Forum_Posts.Forum_ID, Forum_Posts.Forum_Text, Forum_Posts.Patient_ID, 
-        Forum_Posts.Date_Posted,ExerciseBank.Exercise_Name, ExerciseBank.Muscle_Group, ExerciseBank.Image, ExerciseBank.Exercise_Description
-        FROM Forum_Posts
-        INNER JOIN ExerciseBank.Exercise_ID = Forum_Posts.Exercise_ID;`)
+export async function getForumPosts() {
+    const [resultRows] = await pool.query(`SELECT FP.Forum_ID, FP.Forum_Text, FP.Patient_ID, FP.Exercise_ID, 
+        Date_Posted, EB.Exercise_Name, EB.Muscle_Group, EB.Image, EB.Exercise_Class, EB.Sets, 
+        EB.Reps, EB.Exercise_Description FROM Forum_Posts as FP, ExerciseBank as EB where FP.exercise_id = EB.exercise_id;`)
     return resultRows
 }
 
@@ -156,17 +182,18 @@ export async function getAppointmentsPatient(id) {
 // joins other tables to get data - VC
 export async function getApptRequest(id) {
     const [resultRows] = await pool.query(`
-        SELECT patientbase.First_name, patientbase.last_name, requests.Request_status, 
-        appointments.Appt_Date, appointments.Appt_Time 
-        FROM requests INNER JOIN patientbase ON patientbase.Patient_id = requests.Patient_id
-        INNER JOIN appointments ON Appointments.Patient_id = patientbase.Patient_id
+        SELECT patientbase.First_name, patientbase.last_name
+        FROM requests INNER JOIN patientbase ON patientbase.Patient_ID = requests.Patient_ID
         WHERE requests.Doctor_ID = ?;`, [id]) 
     return resultRows
 }
 
 // Make the below a POST because it is sensitive? - FI
 export async function getAppointmentsDoctor(id) {
-    const [resultRows] = await pool.query(`SELECT Appointment_ID, Date_Scheduled, Appt_Date, Appt_Time, Tier FROM Appointments FROM Appointments WHERE Doctor_ID = ?;`, [id]) 
+    const [resultRows] = await pool.query(`SELECT PB.First_Name, PB.Last_Name, A.Appointment_ID, 
+        A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier FROM Appointments as A, PatientBase as PB 
+        WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID;
+    `, [id]) 
     return resultRows
 }
 
@@ -229,7 +256,19 @@ export async function getPharmAuth(email, pw) {
     const [resultRows] = await pool.query(`SELECT pharm_id, Company_Name, Address, Zip, Work_Hours, Email FROM Pharmacies WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
         [email, pw]
     )
+    console.log(resultRows)
     return resultRows[0]
+}
+
+export async function getNearestPharms(zip) {
+    try {
+        const [resultRows] = await pool.query(`SELECT Pharm_ID, Company_Name, Zip, ABS(CAST(Zip AS SIGNED) - ?) AS ZipDistance
+                FROM Pharmacies WHERE ABS(CAST(Zip AS SIGNED) - ?) <= ? ORDER BY ZipDistance ASC LIMIT 3`, [zip, zip, 3])
+        return resultRows
+    } catch (err) {
+        console.log(err)
+        throw err
+    }
 }
 
 //ADD DATA ----------------------------------------------------------------------------------------------
@@ -255,14 +294,20 @@ export async function createPatient(Pharm_ID, First_Name, Last_Name, Email, Phon
     const [resultPatientCreate] = await pool.query(`
         INSERT INTO PatientBase (Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, Doctor_ID) VALUES (?, ?, ?, ?, ?, SHA2(CONCAT(?),256), ?, ?, ?);`
     , [Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, Doctor_ID])
-    return resultPatientCreate
+    const [body] = await pool.query(`select patient_id, First_Name, Last_Name from patientbase where patient_id = ?`, [resultPatientCreate.insertId])
+    console.log("Body Info: ", body)
+    return body[0]
 }
 
 export async function createDoctor(License_Serial,First_Name,Last_Name,Specialty,Email,Phone,PW,Availability) { //add tiers with doc? - VC
     const [resultDoctorCreate] = await pool.query(`
         INSERT INTO DoctorBase (License_Serial, First_Name, Last_Name, Specialty, Email, Phone, PW, Availability) VALUES (?,?,?,?,?,?,SHA2(CONCAT(?),256),?);`
     , [License_Serial,First_Name,Last_Name,Specialty,Email,Phone,PW,Availability])
-    return resultDoctorCreate
+    
+    console.log(resultDoctorCreate)
+    const [body] = await pool.query(`select doctor_id, First_Name, Last_Name from doctorbase where doctor_id = ?`, [resultDoctorCreate.insertId])
+    console.log("Doctor Name: ", body)
+    return body[0]
 }
 
 export async function createDoctorTiers(Doctor_ID, Cost) {
@@ -280,11 +325,26 @@ export async function createDoctorSchedule(Doctor_ID, Doctor_Schedule) {
 }
 
 export async function createPharmacy(Company_Name,Address,Zip,Work_Hours,Email,PW) { //Work_Hours: req.body.Work_Hours, //json? -VC
-    const workHoursString = JSON.stringify(Work_Hours); // Convert JSON object to string
-    const [resultPharmacyCreate] = await pool.query(`
-        INSERT INTO pharmacies (Company_Name, Address, Zip, Work_Hours, Email, PW) VALUES (?,?,?,?,?,SHA2(CONCAT(?),256));`
-    , [Company_Name,Address,Zip,workHoursString,Email,PW])
-    return resultPharmacyCreate
+    try {
+        const workHoursString = JSON.stringify(Work_Hours);
+        const [resultPharmacyCreate] = await pool.query(`
+          INSERT INTO pharmacies (Company_Name, Address, Zip, Work_Hours, Email, PW) 
+          VALUES (?, ?, ?, ?, ?, SHA2(CONCAT(?),256));
+        `, [Company_Name, Address, Zip, workHoursString, Email, PW]);
+    
+        console.log("Insert Result:", resultPharmacyCreate);
+    
+        const [body] = await pool.query(
+          `SELECT pharm_id, Company_Name FROM pharmacies WHERE pharm_id = ?`, 
+          [resultPharmacyCreate.insertId]
+        );
+        console.log("Query Result:", body);
+        
+        return body[0];
+      } catch (err) {
+        console.error("Error in createPharmacy:", err);
+        throw err; // Let Express catch it
+      }
 }
 
 export async function createPill(Cost, Pill_Name, Pharm_ID, Dosage) {
@@ -303,7 +363,7 @@ export async function createExercise(Exercise_Name, Muscle_Group, Image, Exercis
 
 export async function createRegiment(Patient_ID, Regiment) {
     const [resultRegimentCreate] = await pool.query(`
-        INSERT INTO exercisebank (Patient_ID, Regiment) VALUES (?,?);`
+        INSERT INTO Regiments (Patient_ID, Regiment) VALUES (?,?);`
     , [Patient_ID, Regiment])
     return resultRegimentCreate
 }
@@ -336,12 +396,13 @@ export async function createChatMsg(Chatroom_ID, SenderID, SenderType, Message) 
 
 export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier) {
     const [resultApptCreate] = await pool.query(`INSERT INTO appointments (Patient_ID, Doctor_ID, Date_Scheduled,
-        Appt_Date, Appt_Time, Tier) VALUES (?, ?, CURRENT_DATE, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier])
+        Appt_Date, Appt_Time, Tier) VALUES (?, ?, CURRENT_DATE, ?, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier])
     return resultApptCreate
 }
 
+// FIX THIS!!!!!!!!
 export async function createApptRequest(Patient_ID, Doctor_ID) {
-    const [resultApptCreate] = await pool.query(`INSERT INTO requests (Patient_ID, Doctor_ID, Request_Status) VALUES (?, ?, ?);`, [Patient_ID, Doctor_ID, 'Pending'])
+    const [resultApptCreate] = await pool.query(`INSERT INTO Requests (Patient_ID, Doctor_ID, Request_Status) VALUES (?, ?, ?);`, [Patient_ID, Doctor_ID, 'Pending'])
     return resultApptCreate
 }
 
@@ -357,6 +418,12 @@ export async function createPerscription(Patient_ID, Pill_ID, Quantity, Doctor_I
 }
 
 export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
+    const [check] = await pool.query(`select patient_id from patientBase 
+        where patient_id = ? and doctor_id = ?;`, [Patient_ID, Doctor_ID])
+
+    if (check.length === 0) {
+        return null
+    }
     const [resultReviewCreate] = await pool.query(`
         INSERT INTO reviews (Patient_ID, Doctor_ID, Review_Text, Date_Posted, Rating) VALUES (?,?,?,CURRENT_DATE,?);`
     , [Patient_ID, Doctor_ID, Review_Text, Rating])
@@ -423,18 +490,17 @@ export async function UpdateRequest(id, entry) {
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (only doc schedule is extracted)
 export async function UpdateDoctorSchedule(id, entry) {
     const [returnResult] = await pool.query(`
-        UPDATE doctorschedules SET Doctor_Schedule=?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
+        UPDATE doctorschedules SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
 }
 
-
-// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING
-export async function UpdateApptInfo(patient_id, appointment_id, entry) {
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (fixed for tiers, and IDs)
+export async function UpdateApptInfo(id, entry) {
     const [returnResult] = await pool.query(`
-        UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ? AND Appointment_ID = ?;`
-    , [entry, patient_id, appointment_id])
+        UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
+    , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
 }
