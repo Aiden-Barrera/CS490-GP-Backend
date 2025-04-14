@@ -373,9 +373,15 @@ export async function createChatMsg(Chatroom_ID, SenderID, SenderType, Message) 
 }
 
 export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier) {
+    try {
     const [resultApptCreate] = await pool.query(`INSERT INTO appointments (Patient_ID, Doctor_ID, Date_Scheduled,
         Appt_Date, Appt_Time, Tier) VALUES (?, ?, CURRENT_DATE, ?, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier])
     return resultApptCreate
+    }
+    catch (error) {
+        console.error("Error in createAppointment:", error);
+        throw error; // Let Express handle the error
+    }
 }
 
 // FIX THIS!!!!!!!!

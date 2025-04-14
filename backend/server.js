@@ -167,9 +167,10 @@ app.get("/exercisebank", async (req, res) => {
 })
 
 app.post("/exerciseByClass", async (req, res) => {
-    const { Exercise_Class } = req.body
-    const rows = await getExerciseByClass(Exercise_Class)
-    res.send(rows)
+    try {
+        const { Exercise_Class } = req.body
+        const rows = await getExerciseByClass(Exercise_Class)
+        res.send(rows)
     }
     catch (error) {
         es.status(500).json({ error: error.message || "Internal server error" });
@@ -610,19 +611,19 @@ app.post("/appointment", async (req, res) => {
         return res.status(400).json({ error: "Missing required information" });
     }
 
-    /* MODIFY THE BELOW TO GENERATE REQUESTS INSTEAD OF ASSIGNING DIRECTLY
-    const patientsDoctor = await getPatientDoc(Patient_ID)
-    // check if the patient has a doctor, if not - assign them the doctor they've requested in this appointment (Doctor_ID above)
-    if (patientsDoctor === undefined) {
-        const newDoctor = await addPatientDoc(Patient_ID, Doctor_ID) // give them this new doctor
-        // Generate an audit for assigning a doctor to this patient
-        const event_Details = 'Updated Patient Doctor Info'
+    const patientsDoctor = await getPatientDoc(Patient_ID) 
+    if (patientsDoctor === undefined) { 
+        // Make a request from a patient to this doctor
+        const apptRequest = await createApptRequest(Patient_ID, Doctor_ID);
+        console.log(apptRequest);
+        const event_Details = 'Made a patient request for a doctor'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details)
+        return res.status(201).send('Appointment request created')
     }
     else if (patientsDoctor?.Doctor_ID !== Doctor_ID) {
         return res.status(400).json({ error: "Patient already has a different doctor"});
     }
-    */
+    // CHECK FOR IF APPOINTMENT IS ALREADY BOOKED else if ()
     
     try {
         const newAppt = await createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier)
