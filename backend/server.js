@@ -425,13 +425,14 @@ app.post("/doctorSchedule", async (req, res) => {
 })
 
 app.post("/getDoctorSchedule", async (req, res) => {
-    const {doc_id, day} = req.body
+    const {doc_id, day, date} = req.body
 
-    if (!doc_id || !day) {
+    if (!doc_id || !day || !date) {
         return res.status(400).json({ error: "Missing required information" });
     }
     try {
-        const rows = await getDoctorSchedule(doc_id, day)
+        console.log(req.body)
+        const rows = await getDoctorSchedule(doc_id, day, date)
         const event_Details = 'retrieval of doctor schedule data'
         const audit = await genereateAudit(doc_id, 'Doctor', 'POST', event_Details)
         res.status(200).send(rows)

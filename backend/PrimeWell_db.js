@@ -70,13 +70,29 @@ export async function getDocID(email, pw) {
 }
 
 // Make the below a POST because it is sensitive? - FI
-export async function getDoctorSchedule(id, day) {
+export async function getDoctorSchedule(id, day, date) {
     const validDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     if (!validDays.includes(day)) {
         throw new Error("Invalid day value.");
     }
-    const [resultRows] = await pool.query(`select JSON_EXTRACT(doctor_schedule, '$.${day}') as Slots from doctorschedules where doctor_id = ?;`, [id]) 
-    return resultRows
+
+    try {
+        const [slotsRow] = await pool.query(`select JSON_UNQUOTE(JSON_EXTRACT(doctor_schedule, '$.${day}')) as Slots from doctorschedules where doctor_id = ?;`, [id]) 
+        const [bookedRows] = await pool.query(`select appt_time from appointments where doctor_id = ? and appt_date = ?`, [id, date])
+        // Parse JSON string from MySQL
+        const fullSlots = JSON.parse(slotsRow[0].Slots);
+        const bookedSlots = bookedRows.map(row => row.appt_time);
+        console.log(bookedSlots)
+        
+        // Filter out booked slots
+        const availableSlots = fullSlots.filter(slot => !bookedSlots.includes(slot));
+        console.log(availableSlots)
+    
+        return availableSlots
+    } catch (err) {
+        console.log("Error Fetching Available Slots: ", err)
+        throw err
+    }
 }
 
 export async function getPharmacies() {
