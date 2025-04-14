@@ -18,7 +18,9 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPatientInfo,
     getDoctorInfo,
     getPharmInfo, getDocID,
-    getNearestPharms} from './PrimeWell_db.js'
+    getNearestPharms,
+    UpdateRequest,
+    getTimeslot} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -790,24 +792,18 @@ app.post("/appointment", async (req, res) => {
     if (!Patient_ID | !Doctor_ID | !Appt_Date | !Appt_Time | !Tier) {
         return res.status(400).json({ error: "Missing required information" });
     }
-
-    /* MODIFY THE BELOW TO GENERATE REQUESTS INSTEAD OF ASSIGNING DIRECTLY
-    const patientsDoctor = await getPatientDoc(Patient_ID)
-    // check if the patient has a doctor, if not - assign them the doctor they've requested in this appointment (Doctor_ID above)
-    if (patientsDoctor === undefined) {
-        const newDoctor = await addPatientDoc(Patient_ID, Doctor_ID) // give them this new doctor
-        // Generate an audit for assigning a doctor to this patient
-        const event_Details = 'Updated Patient Doctor Info'
-        const audit = await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details)
-    }
-    else if (patientsDoctor?.Doctor_ID !== Doctor_ID) {
-        return res.status(400).json({ error: "Patient already has a different doctor"});
-    }
-    */
     
     try {
+        const patientsDoctor = await getPatientDoc(Patient_ID)
+        // check if the patient has a doctor, if not - assign them the doctor they've requested in this appointment (Doctor_ID above)
+        if (patientsDoctor === undefined) {
+            const newDoctor = await addPatientDoc(Patient_ID, Doctor_ID) // give them this new doctor
+            const auditDoc = await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details)
+        }
+
         const newAppt = await createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier)
-        const event_Details = 'Created new Appointment'
+        const accept = await UpdateRequest(Patient_ID, Doctor_ID, 'Accpeted')
+        const event_Details = 'Created new Appointment & accepted request'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
         res.status(201).send(newAppt)
     } catch (error) {  
@@ -815,17 +811,32 @@ app.post("/appointment", async (req, res) => {
     }
 })
 
-app.post("/request", async (req, res) => {
-    const {Patient_ID, Doctor_ID} = req.body
+app.post("/request", async (req, res) => { // We might not need this since it's in appointments - VC
+    const {Patient_ID, Doctor_ID, Appt_Date, Appt_Time} = req.body
     if (!Patient_ID | !Doctor_ID) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
     try {
+        const patientsDoctor = await getPatientDoc(Patient_ID)
+
+        //check if correct doctor
+        if (patientsDoctor !== undefined && patientsDoctor?.Doctor_ID !== Doctor_ID) {
+            return res.status(400).json({ error: "Patient already has a different doctor"});
+        }
+
+        //check to see if appointment time is taken, so sense in giving them the doctor if so
+        const timeTaken =  await getTimeslot(Doctor_ID, Appt_Date, Appt_Time);
+        if(!(timeTaken === undefined)){
+            return res.status(400).json({ error: "Timeslot taken"});    
+        }
+
+        // Generate an audit for assigning a doctor to this patient
         const newAppt = await createApptRequest(Patient_ID, Doctor_ID)
         const event_Details = 'Created new Request for an appointment'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
         res.status(201).send(newAppt)
+
     } catch (error) {  
         res.status(500).json({ error: error.message || "Internal server error" });
     }
@@ -1136,6 +1147,13 @@ app.patch('/regiments', async(req, res)=>{
         res.status(201).send(updateResult)
         }
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
+})
+
+app.patch('/rejectRequest', async(req, res)=>{
+    const {Patient_ID, Doctor_ID} = req.body
+    const accept = await UpdateRequest(Patient_ID, Doctor_ID, 'Rejected')
+    const event_Details = 'Doctor rejected request'
+    const audit = await genereateAudit(Doctor_ID, 'Doctor', 'PATCH', event_Details)
 })
 
 //REMOVE DATA ----------------------------------------------------------------------------------------------

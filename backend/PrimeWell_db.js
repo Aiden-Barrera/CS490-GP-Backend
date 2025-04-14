@@ -179,6 +179,15 @@ export async function getAppointmentsPatient(id) {
     return resultRows
 }
 
+export async function getTimeslot(Doctor_ID, Appt_Date, Appt_Time) {
+    const [resultRows] = await pool.query(`
+        SELECT * FROM Appointments
+        WHERE Doctor_ID = ?
+        AND Appt_Date = ?
+        AND Appt_Time = ?;`, [Doctor_ID, Appt_Date, Appt_Time]) 
+    return resultRows
+}
+
 // joins other tables to get data - VC
 export async function getApptRequest(id) {
     const [resultRows] = await pool.query(`
@@ -402,7 +411,7 @@ export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_T
 
 // FIX THIS!!!!!!!!
 export async function createApptRequest(Patient_ID, Doctor_ID) {
-    const [resultApptCreate] = await pool.query(`INSERT INTO Requests (Patient_ID, Doctor_ID, Request_Status) VALUES (?, ?, ?);`, [Patient_ID, Doctor_ID, 'Pending'])
+    const [resultApptCreate] = await pool.query(`INSERT INTO Requests (Patient_ID, Doctor_ID, Request_Status) VALUES (?, ?, 'Pending');`, [Patient_ID, Doctor_ID])
     return resultApptCreate
 }
 
@@ -443,7 +452,7 @@ export async function createPayment(Patient_ID, Card_Number, Related_ID, Payment
 }
 
 //UPDATE DATA ----------------------------------------------------------------------------------------------
-// All below should have an addtional query to auditlog with tyoe PATCH
+// All below should have an addtional query to auditlog with type PATCH
 //update based on a given id - VC
 
 export async function UpdatePatientInfo(id, entry) {
@@ -479,10 +488,13 @@ export async function UpdateDoctorInfo(id, entry) {
     return returnResult
 }
 
-export async function UpdateRequest(id, entry) {
+export async function UpdateRequest(p_id, d_id, response) {
+    //const [returnResult] = await pool.query(`
+    //    UPDATE doctorschedules SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
+    //, [entry, id])
     const [returnResult] = await pool.query(`
-        UPDATE doctorschedules SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
-    , [entry, id])
+        UPDATE Requests SET Request_Status = '?', \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ? AND Doctor_ID = ?;`
+    , [response, p_id, d_id])
     console.log("Database update result:", returnResult);
     return returnResult
 }
