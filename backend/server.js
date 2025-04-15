@@ -10,6 +10,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     createApptRequest,
     getApptRequest,
     UpdateApptStat,
+    UpdateRequest,
     getDocPatients,
     getPrescriptionDoc,
     getAuthSurvey,
@@ -18,7 +19,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPatientInfo,
     getDoctorInfo,
     getPharmInfo, getDocID,
-    getNearestPharms} from './PrimeWell_db.js'
+    getNearestPharms, getTimeslot } from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -430,13 +431,14 @@ app.post("/doctorSchedule", async (req, res) => {
 })
 
 app.post("/getDoctorSchedule", async (req, res) => {
-    const {doc_id, day} = req.body
+    const {doc_id, day, date} = req.body
 
-    if (!doc_id || !day) {
+    if (!doc_id || !day || !date) {
         return res.status(400).json({ error: "Missing required information" });
     }
     try {
-        const rows = await getDoctorSchedule(doc_id, day)
+        //console.log(req.body)
+        const rows = await getDoctorSchedule(doc_id, day, date)
         const event_Details = 'retrieval of doctor schedule data'
         const audit = await genereateAudit(doc_id, 'Doctor', 'POST', event_Details)
         res.status(200).send(rows)
@@ -603,34 +605,28 @@ app.post("/messages", async (req, res) => { //chat room id, based on sender type
     }
 })
 
+
 // Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
 // Ensure that the Doctor_ID passed into the Doctor_ID field is an existing Doctor ID in the DoctorBase table } via frontend? - FI
+// Doctor Accepts the Patient's Request
 app.post("/appointment", async (req, res) => {
     const {Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier} = req.body
-    if (!Patient_ID | !Doctor_ID | !Appt_Date | !Appt_Time | !Tier) {
+    if (!Patient_ID || !Doctor_ID || !Appt_Date || !Appt_Time || !Tier) {
         return res.status(400).json({ error: "Missing required information" });
-    }
-
-    const patientsDoctor = await getPatientDoc(Patient_ID) 
-    if (patientsDoctor === undefined) { 
-        // Make a request from a patient to this doctor
-        const apptRequest = await createApptRequest(Patient_ID, Doctor_ID);
-        console.log(apptRequest);
-        const event_Details = 'Made a patient request for a doctor'
-        const audit = await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details)
-        return res.status(201).send('Appointment request created')
-    }
-    else if (patientsDoctor?.Doctor_ID !== Doctor_ID) {
-        return res.status(400).json({ error: "Patient already has a different doctor"});
-    }
-    else if (true/*apptAvailability(Patient_ID, Doctor_ID, Appt_Date, Appt_Time)*/) // CHECK IF APPOINTMENT TIME IS AVAILABLE
-    {
-
     }
     
     try {
+        const patientsDoctor = await getPatientDoc(Patient_ID)
+        // check if the patient has a doctor, if not - assign them the doctor they've requested in this appointment (Doctor_ID above)
+        if (patientsDoctor === undefined) {
+            const newDoctor = await addPatientDoc(Patient_ID, Doctor_ID) // give them this new doctor
+            const event_Details = "Assigned Doctor to Patient"
+            const auditDoc = await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details)
+        }
+
         const newAppt = await createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier)
-        const event_Details = 'Created new Appointment'
+        const accept = await UpdateRequest(Patient_ID, Doctor_ID, 'Accepted')
+        const event_Details = 'Created new Appointment & accepted request'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
         res.status(201).send(newAppt)
     } catch (error) {  
@@ -638,17 +634,35 @@ app.post("/appointment", async (req, res) => {
     }
 })
 
-app.post("/request", async (req, res) => {
-    const {Patient_ID, Doctor_ID} = req.body
-    if (!Patient_ID | !Doctor_ID) {
+
+app.post("/request", async (req, res) => { // We might not need this since it's in appointments - VC
+    const {Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier} = req.body
+    if (!Patient_ID || !Doctor_ID) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
+    console.log(req.body)
     try {
-        const newAppt = await createApptRequest(Patient_ID, Doctor_ID)
+        const patientsDoctor = await getPatientDoc(Patient_ID)
+
+        //check if correct doctor
+        if (patientsDoctor !== undefined && patientsDoctor?.Doctor_ID !== Doctor_ID) {
+            return res.status(400).json({ error: "Patient already has a different doctor"});
+        }
+
+        //check to see if appointment time is taken, so sense in giving them the doctor if so
+        const timeTaken =  await getTimeslot(Doctor_ID, Appt_Date, Appt_Time);
+        // console.log("Time Slot Booked: ", timeTaken)
+        if(timeTaken.length > 0){
+            return res.status(400).json({ error: "Timeslot taken"});    
+        }
+
+        // Generate an audit for assigning a doctor to this patient
+        const newAppt = await createApptRequest(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier)
         const event_Details = 'Created new Request for an appointment'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
         res.status(201).send(newAppt)
+
     } catch (error) {  
         res.status(500).json({ error: error.message || "Internal server error" });
     }
