@@ -168,9 +168,10 @@ app.get("/exercisebank", async (req, res) => {
 })
 
 app.post("/exerciseByClass", async (req, res) => {
-    const { Exercise_Class } = req.body
-    const rows = await getExerciseByClass(Exercise_Class)
-    res.send(rows)
+    try {
+        const { Exercise_Class } = req.body
+        const rows = await getExerciseByClass(Exercise_Class)
+        res.send(rows)
     }
     catch (error) {
         es.status(500).json({ error: error.message || "Internal server error" });
