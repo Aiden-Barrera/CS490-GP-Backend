@@ -206,10 +206,14 @@ app.get("/reviews/:id", async (req, res) => {
 })
     
 app.get("/appointment/patient/:id", async (req, res) => {
-    const rows = await getAppointmentsPatient(req.params.id)
-    const event_Details = 'retrieval of appointment data'
-    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
-    res.send(rows)
+    try {
+        const rows = await getAppointmentsPatient(req.params.id)
+        const event_Details = 'retrieval of appointment data'
+        const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+        res.send(rows)
+    } catch (err) {
+        console.log("Failed Fetching Appointments for Patient: ", err)
+    }
 })
 
 app.get("/appointment/doctor/:id", async (req, res) => {
