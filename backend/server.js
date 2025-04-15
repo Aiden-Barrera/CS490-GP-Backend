@@ -623,7 +623,10 @@ app.post("/appointment", async (req, res) => {
     else if (patientsDoctor?.Doctor_ID !== Doctor_ID) {
         return res.status(400).json({ error: "Patient already has a different doctor"});
     }
-    // CHECK FOR IF APPOINTMENT IS ALREADY BOOKED else if ()
+    else if (true/*apptAvailability(Patient_ID, Doctor_ID, Appt_Date, Appt_Time)*/) // CHECK IF APPOINTMENT TIME IS AVAILABLE
+    {
+
+    }
     
     try {
         const newAppt = await createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier)
