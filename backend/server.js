@@ -295,13 +295,14 @@ app.post("/passAuthPatient", async (req, res) => {
 
     try {
         const rows = await getPatientAuth(email, pw);
-        /* THIS BELOW IS BROKEN
-        if(rows)
-            attempt = await LogAttempt(email, 'Patient', 1);
-        else
-        attempt = await LogAttempt(email, 'Patient', 0);
-        */
+       if (rows === undefined) { // If the credentials are not authenticated
+        const log_status = await LogAttempt(email, false)
+        return res.status(401).json({ error: "Invalid credentials" });
+       }
+       else {
+        const log_status = await LogAttempt(email, true)
         res.send(rows);
+       }
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
@@ -315,13 +316,14 @@ app.post("/passAuthDoctor", async (req, res) => {
 
     try {
         const rows = await getDoctorAuth(email, pw);
-        /* THIS BELOW IS BROKEN
-        if(rows)
-            attempt = await LogAttempt(email, 'Doctor', 1);
-        else
-        attempt = await LogAttempt(email, 'Doctor', 0);
-        */
-        res.send(rows);
+        if (rows === undefined) { // If the credentials are not authenticated
+            const log_status = await LogAttempt(email, false)
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+        else {
+            const log_status = await LogAttempt(email, true)
+            res.send(rows);
+        }
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
@@ -336,16 +338,15 @@ app.post("/passAuthPharm", async (req, res) => {
 
     try {
         const rows = await getPharmAuth(email, pw);
-        /* THIS BELOW IS BROKEN
-        if(rows)
-            attempt = await LogAttempt(email, 'Pharmacist', 1);
-        else
-        attempt = await LogAttempt(email, 'Pharmacist', 0);
-        */
-       console.log(rows)
-        res.send(rows);
+        if (rows === undefined) { // If the credentials are not authenticated
+            const log_status = await LogAttempt(email, false)
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+        else {
+            const log_status = await LogAttempt(email, true)
+            res.send(rows);
+        }
     } catch (error) {
-        console.log(error)
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
@@ -536,7 +537,7 @@ app.post("/forumPosts", async (req, res) => {
         const newExercise = await createExercise(Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps)
         const event_Details1 = 'Created new exercise'
         const audit1 = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details1)
-        
+
         const newFPost = await createForumPost(Patient_ID, newExercise.insertId, Forum_Text)
         const event_Details = 'Created new post'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)

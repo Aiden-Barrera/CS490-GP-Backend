@@ -490,6 +490,7 @@ export async function getNearestPharms(zip) {
 // Add to db via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM table);
 // - VC
 
+/*
 export async function LogAttempt(User_ID, User_type, Success_Status){
     try {
     const [login] = await pool.query(`
@@ -499,6 +500,20 @@ export async function LogAttempt(User_ID, User_type, Success_Status){
     }
     catch (err) {
         console.log("Error Logging Attempt: ", err)
+        throw err
+    }
+}
+*/
+
+export async function LogAttempt(UserEmail, Success_Status){
+    try {
+    const [login] = await pool.query(`
+        INSERT INTO AuthAttempts (UserEmail, Success_Status) VALUES (?, ?);`
+    , [UserEmail, Success_Status])
+    return login
+    }
+    catch (err) {
+        console.log("Error Logging Auth Attempt: ", err)
         throw err
     }
 }
