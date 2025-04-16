@@ -39,8 +39,8 @@ export async function getPharmInfo(id) {
 }
 
 export async function getPatientDoc(id) { //changed for doc info
-    const [resultRows] = await pool.query(`SELECT doctorbase.Doctor_ID, doctorbase.First_Name, doctorbase.Last_Name, 
-        doctorbase.specialty, doctorbase.email 
+    const [resultRows] = await pool.query(`SELECT doctorbase.doctor_id, doctorbase.first_name, doctorbase.last_name, 
+        doctorbase.specialty, doctorbase.availability 
         FROM PatientBase INNER JOIN doctorbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
         WHERE Patient_ID = ?;`, [id])
     return resultRows[0]
