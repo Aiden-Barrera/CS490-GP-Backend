@@ -19,7 +19,8 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPatientInfo,
     getDoctorInfo,
     getPharmInfo, getDocID,
-    getNearestPharms, getTimeslot } from './PrimeWell_db.js'
+    getNearestPharms, getTimeslot, 
+    rmPatientAppt} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -815,12 +816,14 @@ app.patch('/patient/:id/addDoc', async(req, res)=>{ //Give patient a doctor -VC
 })
 
 // ONLY MAKE VISIBLE FROM PATIENT PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
-app.patch('/patient/:id/removeDoc', async(req, res)=>{ //Remove patient doctor -VC
+app.patch('/patientDropDoctor/removeDoc', async(req, res)=>{ //Remove patient doctor -VC
     try {
-        const Patient_ID = req.params.id
+        const {Patient_ID, Doctor_ID} = req.body
         const updateResult = await rmPatientDoc(Patient_ID)
         const event_Details = 'removed Doctor to Patient info'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details)
+
+        const removeAppts = await rmPatientAppt(Patient_ID, Doctor_ID)
         res.status(201).send(updateResult)
         }
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }

@@ -495,6 +495,17 @@ export async function rmPatientDoc(id) {
     return returnResult
 }
 
+export async function rmPatientAppt(patient_id, doctor_id) {
+    try {
+        const [returnResult] = await pool.query(`delete from appointments where patient_id = ? and doctor_id = ? 
+            and (Appt_Date > CURDATE() OR (Appt_Date = CURDATE() AND Appt_Time > CURTIME()))`, [patient_id, doctor_id])
+        return returnResult
+    } catch (err) {
+        console.log("Failed Removing Patient Appointments: ", err)
+        throw err
+    }
+}
+
 export async function UpdateDoctorInfo(id, entry) {
     const [returnResult] = await pool.query(`
         UPDATE doctorbase SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
