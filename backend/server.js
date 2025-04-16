@@ -511,14 +511,14 @@ for this function to work each entry should be labeled as such:
 */
 // -VC
 app.post("/exercisebank", upload.single('image'), async (req, res) => { //User created exercise from post - VC
-    const { Exercise_Name, Muscle_Group, Image, Exercise_Description, Muscle_Category, Sets, Reps } = req.body
-    if (!Exercise_Name || !Muscle_Group || !Exercise_Description || !Muscle_Category || !Sets || !Reps) {
+    const { Patient_ID, Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps } = req.body
+    if (!Patient_ID || !Exercise_Name || !Muscle_Group || !Exercise_Description || !Exercise_Class || !Sets || !Reps) {
         return res.status(400).json({ error: "Missing required information" });
     }
     try {
-        const newExercise = await createExercise(Exercise_Name, Muscle_Group, Image, Exercise_Description, Muscle_Category, Sets, Reps)
+        const newExercise = await createExercise(Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps)
         const event_Details = 'Created new exercise'
-        //const audit = await genereateAudit(req.body.id, 'Patient', 'POST', event_Details) //Needs to be fixed
+        const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
         res.status(201).send(newExercise)
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
@@ -527,13 +527,17 @@ app.post("/exercisebank", upload.single('image'), async (req, res) => { //User c
 
 // Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
 app.post("/forumPosts", async (req, res) => {
-    const { Patient_ID, Forum_Text } = req.body
-    if (!Patient_ID || !Forum_Text) {
+    const { Patient_ID, Forum_Text, Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps } = req.body
+    if (!Patient_ID || !Forum_Text || !Exercise_Name || !Muscle_Group || !Exercise_Description || !Exercise_Class || !Sets || !Reps) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
     try {
-        const newFPost = await createForumPost(Patient_ID, Forum_Text)
+        const newExercise = await createExercise(Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps)
+        const event_Details1 = 'Created new exercise'
+        const audit1 = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details1)
+        
+        const newFPost = await createForumPost(Patient_ID, newExercise.insertId, Forum_Text)
         const event_Details = 'Created new post'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
         res.status(201).send(newFPost)
@@ -629,7 +633,7 @@ app.post("/appointment", async (req, res) => {
         }
 
         const newAppt = await createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier)
-        const accept = await UpdateRequest(Patient_ID, Doctor_ID, 'Accepted')
+        const accept = await UpdateRequest(Patient_ID, Doctor_ID, 'Accepted', Appt_Date, Appt_Time)
         const event_Details = 'Created new Appointment & accepted request'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
         res.status(201).send(newAppt)
@@ -978,6 +982,22 @@ app.patch('/regiments/:id', async(req, res)=>{
         res.status(201).send(updateResult)
         }
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
+})
+
+app.patch('/rejectRequest', async(req, res) => {
+    const {Patient_ID, Doctor_ID, Appt_Date, Appt_Time} = req.body
+    if (!Patient_ID || !Doctor_ID || !Appt_Date || !Appt_Time) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+
+    try {
+        const updateResult = await UpdateRequest(Patient_ID, Doctor_ID, 'Rejected', Appt_Date, Appt_Time)
+        const event_Details = 'Rejected appointment request'
+        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'PATCH', event_Details)
+        res.status(201).send(updateResult)
+    } catch (error) { 
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
 })
 
 //REMOVE DATA ----------------------------------------------------------------------------------------------
