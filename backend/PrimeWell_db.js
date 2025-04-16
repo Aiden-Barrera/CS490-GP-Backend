@@ -331,11 +331,11 @@ export async function getAuthSurvey(id) { // get patient's recent surveys by rec
 // Make the below a POST because it is sensitive? - FI
 export async function getAppointmentsPatient(id) {
     try {
-    const [resultRows] = await pool.query(`SELECT Appointment_ID, Date_Scheduled, Appt_Date, Appt_Time, Tier, Doctor_ID, Doctors_Feedback FROM Appointments WHERE Patient_ID = ?;`, [id]) 
-    return resultRows
-    }
-    catch (err) {
-        console.log("Error Fetching Patient Appointments: ", err)
+        const [resultRows] = await pool.query(`SELECT A.Appointment_ID, A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier, DB.first_name, DB.last_name, DB.specialty FROM Appointments as A, doctorbase as DB 
+            WHERE A.Patient_ID = ? and DB.doctor_id = A.doctor_id ORDER BY (Appt_Date >= CURDATE()) DESC, Appt_Date ASC;`, [id]) 
+        return resultRows
+    } catch (err) {
+        console.log("Failed Fetching Appointments for Patient: ", err)
         throw err
     }
 }
