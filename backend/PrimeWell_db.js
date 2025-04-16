@@ -610,11 +610,11 @@ export async function createPill(Cost, Pill_Name, Pharm_ID, Dosage) {
     }
 }
 
-export async function createExercise(Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps) {
+export async function createExercise(Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps) {
     try {
     const [resultExerciseCreate] = await pool.query(`
-        INSERT INTO exercisebank (Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps) VALUES (?,?,?,?,?,?);`
-    , [Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps])
+        INSERT INTO exercisebank (Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps) VALUES (?,?,?,?,?,?);`
+    , [Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps])
     return resultExerciseCreate
     }
     catch (err) {
@@ -636,11 +636,11 @@ export async function createRegiment(Patient_ID, Regiment) {
     }
 }
 
-export async function createForumPost(Patient_ID, Forum_Text) {
+export async function createForumPost(Patient_ID, Exercise_ID, Forum_Text) {
     try {
     const [resultFPostCreate] = await pool.query(`
-        INSERT INTO forum_posts (Patient_ID, Forum_Text, Date_Posted) VALUES (?,?,CURRENT_DATE);`
-    , [Patient_ID, Forum_Text])
+        INSERT INTO forum_posts (Patient_ID, Exercise_ID, Forum_Text, Date_Posted) VALUES (?,?,?,CURRENT_DATE);`
+    , [Patient_ID, Exercise_ID, Forum_Text])
     return resultFPostCreate
     }
     catch (err) {
@@ -834,11 +834,11 @@ export async function UpdateDoctorInfo(id, entry) {
     }
 }
 
-export async function UpdateRequest(p_id, d_id, response) {
+export async function UpdateRequest(p_id, d_id, response, Appt_Date, Appt_Time) {
     try {
         const [returnResult] = await pool.query(`
-            UPDATE Requests SET Request_Status = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ? AND Doctor_ID = ?;`
-        , [response, p_id, d_id])
+            UPDATE Requests SET Request_Status = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ? AND Doctor_ID = ? AND Appt_Date = ? AND Appt_Time = ?;`
+        , [response, p_id, d_id, Appt_Date, Appt_Time])
         console.log("Database update result:", returnResult);
         return returnResult
     } catch (err) {
