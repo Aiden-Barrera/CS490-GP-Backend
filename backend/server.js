@@ -19,13 +19,8 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPatientInfo,
     getDoctorInfo,
     getPharmInfo, getDocID,
-<<<<<<< HEAD
-    getNearestPharms,
-    UpdateRequest,
-    getTimeslot} from './PrimeWell_db.js'
-=======
     getNearestPharms, getTimeslot } from './PrimeWell_db.js'
->>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
+
 
 import cors from 'cors'
 import multer from 'multer'
@@ -243,11 +238,6 @@ app.get("/exercisebank", async (req, res) => {
 
 
 app.post("/exerciseByClass", async (req, res) => {
-<<<<<<< HEAD
-    const { Exercise_Class } = req.body
-    const rows = await getExerciseByClass(Exercise_Class)
-    res.send(rows)
-=======
     try {
         const { Exercise_Class } = req.body
         const rows = await getExerciseByClass(Exercise_Class)
@@ -256,7 +246,6 @@ app.post("/exerciseByClass", async (req, res) => {
     catch (error) {
         es.status(500).json({ error: error.message || "Internal server error" });
     }
->>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
 })
 
 app.post("/regiment", async (req, res) => { //based on patient -VC
@@ -313,7 +302,6 @@ app.get("/reviews/Doctor", async (req, res) => {
     }
 })
     
-<<<<<<< HEAD
 app.post("/appointment/patient", async (req, res) => {
     const {Patient_ID} = req.body;
     if (!Patient_ID) {
@@ -327,16 +315,6 @@ app.post("/appointment/patient", async (req, res) => {
         } 
     catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" })
-=======
-app.get("/appointment/patient/:id", async (req, res) => {
-    try {
-        const rows = await getAppointmentsPatient(req.params.id)
-        const event_Details = 'retrieval of appointment data'
-        const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
-        res.send(rows)
-    } catch (err) {
-        console.log("Failed Fetching Appointments for Patient: ", err)
->>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
     }
 })
 
@@ -517,6 +495,10 @@ app.post("/passAuthPatient", async (req, res) => {
 
     try {
         const rows = await getPatientAuth(email, pw);
+        if (rows === undefined)
+            var logstatus = await LogAttempt(email, false);
+        else
+            var logstatus = await LogAttempt(email, true);
         res.send(rows);
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
@@ -531,6 +513,10 @@ app.post("/passAuthDoctor", async (req, res) => {
 
     try {
         const rows = await getDoctorAuth(email, pw);
+        if (rows === undefined)
+            var logstatus = await LogAttempt(email, false);
+        else
+            var logstatus = await LogAttempt(email, true);
         res.send(rows);
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
@@ -546,7 +532,11 @@ app.post("/passAuthPharm", async (req, res) => {
 
     try {
         const rows = await getPharmAuth(email, pw);
-        console.log(rows)
+        if (rows === undefined)
+            var logstatus = await LogAttempt(email, false);
+        else
+            var logstatus = await LogAttempt(email, true);
+        //console.log(rows)
         res.send(rows);
     } catch (error) {
         console.log(error)
@@ -832,19 +822,12 @@ app.post("/appointment", async (req, res) => {
         // check if the patient has a doctor, if not - assign them the doctor they've requested in this appointment (Doctor_ID above)
         if (patientsDoctor === undefined) {
             const newDoctor = await addPatientDoc(Patient_ID, Doctor_ID) // give them this new doctor
-<<<<<<< HEAD
-=======
             const event_Details = "Assigned Doctor to Patient"
->>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
             const auditDoc = await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details)
         }
 
         const newAppt = await createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier)
-<<<<<<< HEAD
-        const accept = await UpdateRequest(Patient_ID, Doctor_ID, 'Accpeted')
-=======
         const accept = await UpdateRequest(Patient_ID, Doctor_ID, 'Accepted', Appt_Date, Appt_Time)
->>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
         const event_Details = 'Created new Appointment & accepted request'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
         res.status(201).send(newAppt)
@@ -853,16 +836,10 @@ app.post("/appointment", async (req, res) => {
     }
 })
 
-<<<<<<< HEAD
-app.post("/request", async (req, res) => { // We might not need this since it's in appointments - VC
-    const {Patient_ID, Doctor_ID, Appt_Date, Appt_Time} = req.body
-    if (!Patient_ID | !Doctor_ID) {
-=======
 
 app.post("/request", async (req, res) => { // We might not need this since it's in appointments - VC
     const {Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier} = req.body
     if (!Patient_ID || !Doctor_ID) {
->>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
         return res.status(400).json({ error: "Missing required information" });
     }
 
@@ -877,21 +854,13 @@ app.post("/request", async (req, res) => { // We might not need this since it's 
 
         //check to see if appointment time is taken, so sense in giving them the doctor if so
         const timeTaken =  await getTimeslot(Doctor_ID, Appt_Date, Appt_Time);
-<<<<<<< HEAD
-        if(!(timeTaken === undefined)){
-=======
         // console.log("Time Slot Booked: ", timeTaken)
         if(timeTaken.length > 0){
->>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
             return res.status(400).json({ error: "Timeslot taken"});    
         }
 
         // Generate an audit for assigning a doctor to this patient
-<<<<<<< HEAD
-        const newAppt = await createApptRequest(Patient_ID, Doctor_ID)
-=======
         const newAppt = await createApptRequest(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier)
->>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
         const event_Details = 'Created new Request for an appointment'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
         res.status(201).send(newAppt)
@@ -1208,13 +1177,6 @@ app.patch('/regiments', async(req, res)=>{
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
-<<<<<<< HEAD
-app.patch('/rejectRequest', async(req, res)=>{
-    const {Patient_ID, Doctor_ID} = req.body
-    const accept = await UpdateRequest(Patient_ID, Doctor_ID, 'Rejected')
-    const event_Details = 'Doctor rejected request'
-    const audit = await genereateAudit(Doctor_ID, 'Doctor', 'PATCH', event_Details)
-=======
 app.patch('/rejectRequest', async(req, res) => {
     const {Patient_ID, Doctor_ID, Appt_Date, Appt_Time} = req.body
     if (!Patient_ID || !Doctor_ID || !Appt_Date || !Appt_Time) {
@@ -1229,7 +1191,6 @@ app.patch('/rejectRequest', async(req, res) => {
     } catch (error) { 
         res.status(500).json({ error: error.message || "Internal server error" });
     }
->>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
 })
 
 //REMOVE DATA ----------------------------------------------------------------------------------------------
