@@ -15,54 +15,111 @@ const pool = mysql.createPool({
 // All below should have an addtional query to auditlog with type GET
 
 export async function getPatients(id) {
+<<<<<<< HEAD
     const [resultRows] = await pool.query(`SELECT First_Name, Last_Name FROM PatientBase 
         WHERE PatientBase.Patient_ID = ?;`, [id])
+=======
+    
+    try {
+    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name FROM PatientBase WHERE Patient_ID = ?;`, [id])
+>>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
     return resultRows[0]
+    }
+    catch (err) {
+        console.log("Error Fetching Patient Info: ", err)
+        throw err
+    }
 }
 
 // These endpoints are insecure but I need them for allowing user to view their profile
 export async function getPatientInfo(id) {
+    try {
     const [resultRows] = await pool.query(`select * from patientbase where patient_id = ?`, [id])
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Patient Info: ", err)
+        throw err
+    }
 }
 
 // These endpoints are insecure but I need them for allowing user to view their profile
 export async function getDoctorInfo(id) {
+    try {
     const [resultRows] = await pool.query(`select * from doctorbase where doctor_id = ?`, [id])
     return resultRows
+    }
+    catch (err) {  
+        console.log("Error Fetching Doctor Info: ", err)
+        throw err
+    }
 }
 
 // These endpoints are insecure but I need them for allowing user to view their profile
 export async function getPharmInfo(id) {
+    try {
     const [resultRows] = await pool.query(`select * from pharmacies where pharm_id = ?`, [id])
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Pharmacy Info: ", err)
+        throw err
+    }
 }
 
 export async function getPatientDoc(id) { //changed for doc info
+    try {
     const [resultRows] = await pool.query(`SELECT doctorbase.Doctor_ID, doctorbase.First_Name, doctorbase.Last_Name, 
         doctorbase.specialty, doctorbase.email 
         FROM PatientBase INNER JOIN doctorbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
         WHERE PatientBase.Patient_ID;`, [id])
     return resultRows[0]
+    }
+    catch (err) {
+        console.log("Error Fetching Patient Doctor Info: ", err)
+        throw err
+    }
 }
 
 export async function getAllDoctors() {
+    try {
     const [resultRows] = await pool.query('select doctor_id, first_name, last_name, specialty, availability from doctorbase')
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching All Doctors: ", err)
+        throw err
+    }
 }
 
 export async function getDoctors(id) {
+<<<<<<< HEAD
     const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase 
         WHERE Doctor_ID ?;`, [id]) 
+=======
+    try {
+    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase WHERE Doctor_ID = ?;`, [id]) 
+>>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
     return resultRows
+    } 
+    catch (err) {
+        console.log("Error All Fetching Doctor Info: ", err)
+        throw err
+    }
 }
 
 export async function getDocPatients(Doctor_ID) { //patient info for doc
+    try {
     const [resultRows] = await pool.query(`SELECT patientbase.First_Name, patientbase.Last_Name, 
     patientbase.email, patientbase.phone 
     FROM DoctorBase INNER JOIN patientbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
     WHERE DoctorBase.Doctor_ID = ?;`, [Doctor_ID])
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Doctor Patients Info: ", err)
+        throw err
+    }
 }
 
 export async function getPatientID(email, pw) {
@@ -71,112 +128,249 @@ export async function getPatientID(email, pw) {
 }
 
 export async function getDocID(email, pw) {
+    try {
     const [resultRows] = await pool.query(`SELECT Doctor_ID FROM doctorbase WHERE Email = ? AND PW = SHA2(CONCAT(?),256);`, [email, pw])
     return resultRows[0]
+    }
+    catch (err) {
+        console.log("Error Fetching Doctor ID: ", err)
+        throw err
+    }
 }
 
 // Make the below a POST because it is sensitive? - FI
-export async function getDoctorSchedule(id, day) {
+export async function getDoctorSchedule(id, day, date) {
     const validDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     if (!validDays.includes(day)) {
         throw new Error("Invalid day value.");
     }
-    const [resultRows] = await pool.query(`select JSON_EXTRACT(doctor_schedule, '$.${day}') as Slots from doctorschedules where doctor_id = ?;`, [id]) 
-    return resultRows
+
+    try {
+        const [slotsRow] = await pool.query(`select JSON_UNQUOTE(JSON_EXTRACT(doctor_schedule, '$.${day}')) as Slots from doctorschedules where doctor_id = ?;`, [id]) 
+        const [bookedRows] = await pool.query(`select appt_time from appointments where doctor_id = ? and appt_date = ?`, [id, date])
+        // Parse JSON string from MySQL
+        const fullSlots = JSON.parse(slotsRow[0].Slots);
+        const bookedSlots = bookedRows.map(row => row.appt_time);
+        //console.log(bookedSlots)
+        
+        // Filter out booked slots
+        const availableSlots = fullSlots.filter(slot => !bookedSlots.includes(slot));
+        //console.log(availableSlots)
+    
+        return availableSlots
+    } catch (err) {
+        console.log("Error Fetching Available Slots: ", err)
+        throw err
+    }
 }
 
 export async function getPharmacies() {
+    try {
     const [resultRows] = await pool.query(`SELECT Pharm_ID, Company_Name, Address, Zip, Work_Hours FROM Pharmacies;`)
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Pharmacies: ", err)
+        throw err
+    }
 }
 
 export async function getPills() {
+    try {
     const [resultRows] = await pool.query(`SELECT Pill_ID, Pill_Name, Cost, Dosage, Pharm_ID FROM PillBank;`)
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Pills: ", err)
+        throw err
+    }
 }
 
 export async function getTiers(id) {
+    try {
     const [resultRows] = await pool.query(`SELECT Tier, Service, Cost FROM Tiers WHERE Doctor_ID = ?;`, [id]) 
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Tiers: ", err)
+        throw err
+    }
 }
 
 export async function getExercises() {
+<<<<<<< HEAD
     const [resultRows] = await pool.query(`SELECT Exercise_ID, Exercise_Name, Muscle_Group, Image, Exercise_Description, Exercise_Class, Sets, Reps FROM ExerciseBank;`)
+=======
+    try {
+    const [resultRows] = await pool.query(`SELECT Exercise_ID, Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps FROM ExerciseBank;`)
+>>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Exercises: ", err)
+        throw err
+    }
 }
 
 export async function getExerciseByClass(Exercise_Class) {
+    try {
     const [resultRows] = await pool.query(`SELECT Exercise_ID, Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps FROM ExerciseBank WHERE Exercise_Class = ?;`, [Exercise_Class])
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Exercises by Class: ", err)
+        throw err
+    }
 }
 
 export async function getRegiment(id) {
+    try {
     const [resultRows] = await pool.query(`SELECT Regiment FROM Regiments WHERE Patient_ID = ?;`, [id]) 
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Regiment: ", err)
+        throw err
+    }   
 }
 
 export async function getForumPosts() {
+    try {
     const [resultRows] = await pool.query(`SELECT FP.Forum_ID, FP.Forum_Text, FP.Patient_ID, FP.Exercise_ID, 
         Date_Posted, EB.Exercise_Name, EB.Muscle_Group, EB.Image, EB.Exercise_Class, EB.Sets, 
         EB.Reps, EB.Exercise_Description FROM Forum_Posts as FP, ExerciseBank as EB where FP.exercise_id = EB.exercise_id;`)
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Forum Posts: ", err)
+        throw err
+    }
 }
 
 export async function getComments_id(id) { //comments for specific forum post -VC
+    try {
     const [resultRows] = await pool.query(`SELECT Comment_ID, Comment_Text, Patient_ID, Date_Posted FROM Comments WHERE Forum_ID = ?;`, [id])
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Comments: ", err)
+        throw err
+    }
 }
 
 export async function getReviews() {
+    try {
     const [resultRows] = await pool.query(`with numReviews as (select count(doctor_id) as cnt, doctor_id from reviews group by doctor_id)
                 select db.doctor_id, db.first_name, db.last_name, db.specialty, avg(r.rating) as rating, nr.cnt from reviews as r, 
                 doctorbase as db, numReviews as nr where r.doctor_id = db.doctor_id and nr.doctor_id = db.doctor_id group by r.doctor_id`)
 
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Reviews: ", err)
+        throw err
+    }
 }
 
 export async function getReviewsByID(id) {
+    try {
     const [resultRows] = await pool.query(`with numReviews as (select count(doctor_id) as cnt, doctor_id from reviews group by doctor_id)
                 select db.doctor_id, db.first_name, db.last_name, db.specialty, avg(r.rating) as rating, nr.cnt from reviews as r, 
                 doctorbase as db, numReviews as nr where r.doctor_id = db.doctor_id and nr.doctor_id = db.doctor_id and db.doctor_id = ? group by r.doctor_id`, 
             [id])
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Reviews: ", err)
+        throw err
+    }
 }
 
 export async function getReviewsComments(id) {
+    try {
     const [resultRows] = await pool.query(`select r.patient_id, r.review_text, r.doctor_id, pb.first_name, pb.last_name, 
         db.first_name as doctor_fname, db.last_name as doctor_lname, r.rating, r.date_posted from reviews as r, patientbase as pb, doctorbase as db where 
         r.patient_id = pb.patient_id and r.doctor_id = db.doctor_id and r.doctor_id = ?`, [id])
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Reviews Comments: ", err)
+        throw err
+    }
 }
 
 export async function getReviewsTop() { //top 3 reviews for splash page - VC
+    try {
     const [resultRows] = await pool.query(`with topDoctors as (SELECT doctor_id FROM reviews group by doctor_id ORDER BY avg(rating) DESC LIMIT 3)
                             select DB.first_name, DB.last_name, DB.specialty from 
                             DoctorBase as DB, topDoctors as TD where DB.doctor_id = TD.doctor_id;`)
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Top Reviews: ", err)
+        throw err
+    }
 }
 
 // Make the below a POST because it is sensitive? - FI
 export async function getSurvey(id) { // get patient's recent surveys by recent date
+    try {
     const [resultRows] = await pool.query(`SELECT Weight, Caloric_Intake, Water_Intake, Mood, Survey_Date FROM PatientDailySurvey WHERE Patient_ID = ? ORDER BY Survey_Date DESC;`, [id]) 
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Patient Survey: ", err)
+        throw err
+    }
 }
 
 export async function getSurveyLatestDate(id){
+    try {
     const [resultRows] = await pool.query(`select survey_date from patientdailysurvey where patient_id = ? order by survey_date desc limit 1`, [id])
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Patient Survey Latest Date: ", err)
+        throw err
+    }
 }
 
 export async function getAuthSurvey(id) { // get patient's recent surveys by recent date
+    try {
     const [resultRows] = await pool.query(`SELECT Survey_Date FROM PatientDailySurvey WHERE Patient_ID = ? ORDER BY Survey_Date DESC Limit 1;`, [id]) 
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Patient Survey: ", err)
+        throw err
+    }
 }
 
 // Make the below a POST because it is sensitive? - FI
 export async function getAppointmentsPatient(id) {
-    const [resultRows] = await pool.query(`SELECT Appointment_ID, Date_Scheduled, Appt_Date, Appt_Time, Tier, Doctor_ID, Doctors_Feedback FROM Appointments WHERE Patient_ID = ?;`, [id]) 
+    try {
+        const [resultRows] = await pool.query(`SELECT A.Appointment_ID, A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier, DB.first_name, DB.last_name, DB.specialty FROM Appointments as A, doctorbase as DB 
+            WHERE A.Patient_ID = ? and DB.doctor_id = A.doctor_id ORDER BY (Appt_Date >= CURDATE()) DESC, Appt_Date ASC;`, [id]) 
+        return resultRows
+    } catch (err) {
+        console.log("Failed Fetching Appointments for Patient: ", err)
+        throw err
+    }
+}
+
+export async function getTimeslot(Doctor_ID, Appt_Date, Appt_Time) {
+    try {
+    const [resultRows] = await pool.query(`
+        SELECT * FROM Appointments
+        WHERE Doctor_ID = ?
+        AND Appt_Date = ?
+        AND Appt_Time = ?;`, [Doctor_ID, Appt_Date, Appt_Time]) 
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Timeslot: ", err)
+        throw err
+    }
 }
 
 export async function getTimeslot(Doctor_ID, Appt_Date, Appt_Time) {
@@ -190,35 +384,60 @@ export async function getTimeslot(Doctor_ID, Appt_Date, Appt_Time) {
 
 // joins other tables to get data - VC
 export async function getApptRequest(id) {
+    try {
     const [resultRows] = await pool.query(`
         SELECT patientbase.First_name, patientbase.last_name
         FROM requests INNER JOIN patientbase ON patientbase.Patient_ID = requests.Patient_ID
         WHERE requests.Doctor_ID = ?;`, [id]) 
-    return resultRows
+        return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Appointment Requests: ", err)
+        throw err
+    }
 }
 
 // Make the below a POST because it is sensitive? - FI
 export async function getAppointmentsDoctor(id) {
+    try {
     const [resultRows] = await pool.query(`SELECT PB.First_Name, PB.Last_Name, A.Appointment_ID, 
         A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier FROM Appointments as A, PatientBase as PB 
         WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID;
     `, [id]) 
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Doctor Appointments: ", err)
+        throw err
+    }
 }
 
 // Make the below a POST because it is sensitive? - FI
 export async function getPrescription(id) {
+    try {
     const [resultRows] = await pool.query(`SELECT Prescription_ID, Pill_ID, Quantity, Doctor_ID FROM Prescription WHERE Patient_ID = ?;`, [id]) 
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Patient Prescription: ", err)
+        throw err
+    }
 }
 
 // Make the below a POST because it is sensitive? - FI
 export async function getPrescriptionDoc(id) {
+    try {
     const [resultRows] = await pool.query(`SELECT Prescription_ID, Pill_ID, Quantity, Patient_ID FROM Prescription WHERE Doctor_ID = ?;`, [id]) 
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Doctor Prescription: ", err)
+        throw err
+    }
 }
 
 // Make the below a POST because it is sensitive? - FI
+<<<<<<< HEAD
 export async function getPreliminaries(id) { //order by for most recent, USE Appointment ID
     const [resultRows] = await pool.query(`SELECT Preliminary_ID, Symptoms FROM preliminaries 
         INNER JOIN patientbase on preliminaries.Patient_ID = patientbase.Patient_ID
@@ -237,36 +456,70 @@ export async function getChatRoomDoctor(Patient_ID){
     const [resultRows] = await pool.query(`SELECT Chatroom_ID FROM chatrooms 
         INNER JOIN Appointments on chatrooms.Appointment_ID = Appointments.Appointment_ID
         WHERE Appointments.Doctor_ID = ?;`, [Patient_ID])
+=======
+export async function getPreliminaries(id) { //order by for most recent
+    try {
+    const [resultRows] = await pool.query(`SELECT Preliminary_ID, Symptoms FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
+>>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Patient Preliminaries: ", err)
+        throw err
+    }   
 }
 
 // Make the below a POST because it is sensitive? - FI
 export async function getChatMesseges(id) { //order by for most recent
+    try {
     const [resultRows] = await pool.query(`SELECT Message_ID, Message, SenderID, SenderType, Sent_At FROM messages WHERE Chatroom_ID = ? ORDER BY Sent_At DESC;`, [id])
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Chat Messages: ", err)
+        throw err
+    }
 }
 
 // 3 below are for pass word authentication, check what was entered compared to what is stored, could add post for attempts - VC
 export async function getPatientAuth(email, pw) {
+    try {
     const [resultRows] = await pool.query(`SELECT patient_id, First_Name, Last_Name, Email, Phone, Address, Zip, Doctor_ID FROM PatientBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
         [email, pw]
     )
     return resultRows[0]
+    }
+    catch (err) {
+        console.log("Error Fetching Patient Auth: ", err)
+        throw err
+    }
 }
 
 export async function getDoctorAuth(email, pw) {
+    try {
     const [resultRows] = await pool.query(`SELECT doctor_id, First_Name, Last_Name, Specialty, Availability, License_Serial, Email, Phone  FROM DoctorBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
         [email, pw]
     )
     return resultRows[0]
+    }
+    catch (err) {
+        console.log("Error Fetching Doctor Auth: ", err)
+        throw err
+    }
 }
 
 export async function getPharmAuth(email, pw) {
+    try {
     const [resultRows] = await pool.query(`SELECT pharm_id, Company_Name, Address, Zip, Work_Hours, Email FROM Pharmacies WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
         [email, pw]
     )
     console.log(resultRows)
     return resultRows[0]
+    }
+    catch (err) {
+        console.log("Error Fetching Pharmacy Auth: ", err)
+        throw err
+    }
 }
 
 export async function getNearestPharms(zip) {
@@ -286,29 +539,48 @@ export async function getNearestPharms(zip) {
 // - VC
 
 export async function LogAttempt(User_ID, User_type, Success_Status){
+    try {
     const [login] = await pool.query(`
         INSERT INTO auditlog (UserEmail, UserType, Success_Status) VALUES (?, ?, ?);`
     , [User_ID, User_type, Success_Status])
     return login
+    }
+    catch (err) {
+        console.log("Error Logging Attempt: ", err)
+        throw err
+    }
 }
 
 export async function genereateAudit(User_ID, User_type, Event_Type, Event_Details){
+    try {
     const [resultGenerateAudit] = await pool.query(`
         INSERT INTO auditlog (UserID, UserType, Event_Type, Event_Details) VALUES (?, ?, ?, ?);`
     , [User_ID, User_type, Event_Type, Event_Details])
     return resultGenerateAudit
+    }
+    catch (err) {
+        console.log("Error Generating Audit: ", err)
+        throw err
+    }
 }
 
 export async function createPatient(Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, Doctor_ID) {
+    try {
     const [resultPatientCreate] = await pool.query(`
         INSERT INTO PatientBase (Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, Doctor_ID) VALUES (?, ?, ?, ?, ?, SHA2(CONCAT(?),256), ?, ?, ?);`
     , [Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, Doctor_ID])
     const [body] = await pool.query(`select patient_id, First_Name, Last_Name from patientbase where patient_id = ?`, [resultPatientCreate.insertId])
     console.log("Body Info: ", body)
     return body[0]
+    }
+    catch (err) {
+        console.log("Error Creating Patient: ", err)
+        throw err
+    }
 }
 
 export async function createDoctor(License_Serial,First_Name,Last_Name,Specialty,Email,Phone,PW,Availability) { //add tiers with doc? - VC
+    try {
     const [resultDoctorCreate] = await pool.query(`
         INSERT INTO DoctorBase (License_Serial, First_Name, Last_Name, Specialty, Email, Phone, PW, Availability) VALUES (?,?,?,?,?,?,SHA2(CONCAT(?),256),?);`
     , [License_Serial,First_Name,Last_Name,Specialty,Email,Phone,PW,Availability])
@@ -317,20 +589,37 @@ export async function createDoctor(License_Serial,First_Name,Last_Name,Specialty
     const [body] = await pool.query(`select doctor_id, First_Name, Last_Name from doctorbase where doctor_id = ?`, [resultDoctorCreate.insertId])
     console.log("Doctor Name: ", body)
     return body[0]
+    }
+    catch (err) {
+        console.log("Error Creating Doctor: ", err)
+        throw err
+    }
 }
 
 export async function createDoctorTiers(Doctor_ID, Cost) {
+    try {
     const [resultDoctorTiersCreate] = await pool.query(`
         INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Basic', 'General Consulatation', ?);
         INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Plus', 'Elevated Servicing', ?);
         INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Premium', 'Premium Doctor-Patient Facilities', ?);`, 
         [Doctor_ID, Cost, Doctor_ID, Cost * 1.25, Doctor_ID, Cost * 1.50])
     return resultDoctorTiersCreate
+    } 
+    catch (err) {
+        console.log("Error Creating Doctor Tiers: ", err)
+        throw err
+    }
 }
 
 export async function createDoctorSchedule(Doctor_ID, Doctor_Schedule) {
+    try {
     const [resultDocScheduleCreate] = await pool.query(`INSERT INTO doctorschedules (Doctor_ID, Doctor_Schedule) VALUES (?, ?);`, [Doctor_ID, Doctor_Schedule])
     return resultDocScheduleCreate
+    }
+    catch (err) {
+        console.log("Error Creating Doctor Schedule: ", err)
+        throw err
+    }
 }
 
 export async function createPharmacy(Company_Name,Address,Zip,Work_Hours,Email,PW) { //Work_Hours: req.body.Work_Hours, //json? -VC
@@ -357,73 +646,144 @@ export async function createPharmacy(Company_Name,Address,Zip,Work_Hours,Email,P
 }
 
 export async function createPill(Cost, Pill_Name, Pharm_ID, Dosage) {
+    try {
     const [resultPillCreate] = await pool.query(`
         INSERT INTO pillbank (Cost, Pill_Name, Pharm_ID, Dosage) VALUES (?,?,?,?);`
     , [Cost, Pill_Name, Pharm_ID, Dosage])
     return resultPillCreate
+    }
+    catch (err) {
+        console.log("Error Creating Pill: ", err)
+        throw err
+    }
 }
 
-export async function createExercise(Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps) {
+export async function createExercise(Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps) {
+    try {
     const [resultExerciseCreate] = await pool.query(`
-        INSERT INTO exercisebank (Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps) VALUES (?,?,?,?,?,?);`
-    , [Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps])
+        INSERT INTO exercisebank (Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps) VALUES (?,?,?,?,?,?);`
+    , [Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps])
     return resultExerciseCreate
+    }
+    catch (err) {
+        console.log("Error Creating Exercise: ", err)
+        throw err
+    }
 }
 
 export async function createRegiment(Patient_ID, Regiment) {
+    try {
     const [resultRegimentCreate] = await pool.query(`
         INSERT INTO Regiments (Patient_ID, Regiment) VALUES (?,?);`
     , [Patient_ID, Regiment])
     return resultRegimentCreate
+    }
+    catch (err) {
+        console.log("Error Creating Regiment: ", err)
+        throw err
+    }
 }
 
-export async function createForumPost(Patient_ID, Forum_Text) {
+export async function createForumPost(Patient_ID, Exercise_ID, Forum_Text) {
+    try {
     const [resultFPostCreate] = await pool.query(`
-        INSERT INTO forum_posts (Patient_ID, Forum_Text, Date_Posted) VALUES (?,?,CURRENT_DATE);`
-    , [Patient_ID, Forum_Text])
+        INSERT INTO forum_posts (Patient_ID, Exercise_ID, Forum_Text, Date_Posted) VALUES (?,?,?,CURRENT_DATE);`
+    , [Patient_ID, Exercise_ID, Forum_Text])
     return resultFPostCreate
+    }
+    catch (err) {
+        console.log("Error Creating Forum Post: ", err)
+        throw err
+    }
 }
 
 export async function createComment(Patient_ID, Forum_ID, Comment_Text) { //for forums above -VC
+    try {
     const [resultCommentCreate] = await pool.query(`
         INSERT INTO comments (Patient_ID, Forum_ID, Comment_Text, Date_Posted) VALUES (?, ?, ?, CURRENT_DATE);`
     , [Patient_ID, Forum_ID, Comment_Text])
     return resultCommentCreate
+    }
+    catch (err) {
+        console.log("Error Creating Comment: ", err)
+        throw err
+    }
 }
 
 //same idea for chatroom and messages should apply for above - VC
 export async function createChatroom(Chatroom_Name) {
+    try {
     const [resultChatCreate] = await pool.query(`INSERT INTO chatrooms (Chatroom_Name) VALUES (?);`, [Chatroom_Name])
     return resultChatCreate
+    }
+    catch (err) {
+        console.log("Error Creating Chatroom: ", err)
+        throw err
+    }
 }
 
 export async function createChatMsg(Chatroom_ID, SenderID, SenderType, Message) { //for chatroom above -VC
+    try {
     const [resultMsgCreate] = await pool.query(`INSERT INTO messages (Chatroom_ID, SenderID, SenderType, Message) 
         VALUES (?, ?, ?, ?);`, [Chatroom_ID, SenderID, SenderType, Message])
     return resultMsgCreate
+    }
+    catch (err) {
+        console.log("Error Creating Message: ", err)
+        throw err
+    }
 }
 
 export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier) {
-    const [resultApptCreate] = await pool.query(`INSERT INTO appointments (Patient_ID, Doctor_ID, Date_Scheduled,
-        Appt_Date, Appt_Time, Tier) VALUES (?, ?, CURRENT_DATE, ?, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier])
-    return resultApptCreate
+    try {        
+        const [resultApptCreate] = await pool.query(`INSERT INTO appointments (Patient_ID, Doctor_ID, Date_Scheduled,
+            Appt_Date, Appt_Time, Tier) VALUES (?, ?, CURRENT_DATE, ?, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier])
+        return resultApptCreate
+    } catch (err) {
+        console.log("Failed Creating Appointment: ", err)
+        throw err
+    }
 }
 
+<<<<<<< HEAD
 // FIX THIS!!!!!!!!
 export async function createApptRequest(Patient_ID, Doctor_ID) {
     const [resultApptCreate] = await pool.query(`INSERT INTO Requests (Patient_ID, Doctor_ID, Request_Status) VALUES (?, ?, 'Pending');`, [Patient_ID, Doctor_ID])
     return resultApptCreate
+=======
+
+export async function createApptRequest(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier) {
+    try {
+        const [resultApptCreate] = await pool.query(`INSERT INTO Requests (Patient_ID, Doctor_ID, Request_Status, Appt_Date, Appt_Time, Tier) VALUES (?, ?, 'Pending', ?, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier])
+        return resultApptCreate
+    } catch (err) {
+        console.log("Failed Creating Appt Request: ", err)
+        throw err
+    }
+>>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
 }
 
 export async function createPreliminary(Patient_ID, Symptoms) {
+    try {
     const [resultPrelimCreate] = await pool.query(`INSERT INTO preliminaries (Patient_ID, Symptoms) VALUES (?, ?);`, [Patient_ID, Symptoms])
     return resultPrelimCreate
+    }
+    catch (err) {
+        console.log("Error Creating Preliminary: ", err)
+        throw err
+    }
 }
 
 export async function createPerscription(Patient_ID, Pill_ID, Quantity, Doctor_ID) {
+    try {
     const [resultPrescriptionCreate] = await pool.query(`INSERT INTO perscription (Patient_ID, Pill_ID, Quantity, Doctor_ID) 
         VALUES (?, ?, ?, ?);`, [Patient_ID, Pill_ID, Quantity, Doctor_ID])
     return resultPrescriptionCreate
+    }
+    catch (err) {
+        console.log("Error Creating Prescription: ", err)
+        throw err
+    }
 }
 
 export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
@@ -433,22 +793,40 @@ export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
     if (check.length === 0) {
         return null
     }
+    try {
     const [resultReviewCreate] = await pool.query(`
         INSERT INTO reviews (Patient_ID, Doctor_ID, Review_Text, Date_Posted, Rating) VALUES (?,?,?,CURRENT_DATE,?);`
     , [Patient_ID, Doctor_ID, Review_Text, Rating])
     return resultReviewCreate
+    }
+    catch (err) {
+        console.log("Error Creating Review: ", err)
+        throw err
+    }
 }
 
 export async function createSurvey(Patient_ID, Weight, Caloric_Intake, Water_Intake, Mood) {
+    try {
     const [resultSurveyCreate] = await pool.query(`INSERT INTO patientdailysurvey (Patient_ID, Survey_Date, Weight, Caloric_Intake, Water_Intake, Mood)
         VALUES (?, CURRENT_DATE, ?, ?, ?, ?);`, [Patient_ID, Weight, Caloric_Intake, Water_Intake, Mood])
     return resultSurveyCreate
+    }
+    catch (err) {
+        console.log("Error Creating Survey: ", err)
+        throw err
+    }
 }
 
 export async function createPayment(Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status) {
+    try {
     const [resultPaymentCreate] = await pool.query(`INSERT INTO payments (Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status)
         VALUES (?, ?, ?, ?, ?);`, [Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status])
     return resultPaymentCreate
+    }
+    catch (err) {
+        console.log("Error Creating Payment: ", err)
+        throw err
+    }
 }
 
 //UPDATE DATA ----------------------------------------------------------------------------------------------
@@ -456,38 +834,62 @@ export async function createPayment(Patient_ID, Card_Number, Related_ID, Payment
 //update based on a given id - VC
 
 export async function UpdatePatientInfo(id, entry) {
+    try{
     const [returnResult] = await pool.query(`
         UPDATE patientbase SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
+    }
+    catch (err) {
+        console.log("Failed Updating Patient Info: ", err)
+        throw err
+    }
 }
 
 // VERIFY THIS WORKS - FI
 export async function addPatientDoc(id, doc_id) {
-    const [returnResult] = await pool.query(`
-        UPDATE patientbase SET \`Doctor_ID\` = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
-    , [doc_id, id])
-    return returnResult
+    try {
+        const [returnResult] = await pool.query(`
+            UPDATE patientbase SET \`Doctor_ID\` = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
+        , [doc_id, id])
+        return returnResult
+    } catch (err) {
+        console.log("Failed to Assign doctor to patient: ", err)
+        throw err
+    }
 }
 
 // VERIFY THIS WORKS - FI
 export async function rmPatientDoc(id) {
+    try {
     const [returnResult] = await pool.query(`
         UPDATE patientbase SET \`Doctor_ID\` = NULL, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
     , [id])
     console.log("Database update result:", returnResult);
     return returnResult
+    }
+    catch (err) {
+        console.log("Failed Updating Patient Info: ", err)
+        throw err
+    }
 }
 
 export async function UpdateDoctorInfo(id, entry) {
+    try {
     const [returnResult] = await pool.query(`
         UPDATE doctorbase SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
+    }
+    catch (err) {
+        console.log("Failed Updating Doctor Info: ", err)
+        throw err
+    }
 }
 
+<<<<<<< HEAD
 export async function UpdateRequest(p_id, d_id, response) {
     //const [returnResult] = await pool.query(`
     //    UPDATE doctorschedules SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
@@ -497,60 +899,109 @@ export async function UpdateRequest(p_id, d_id, response) {
     , [response, p_id, d_id])
     console.log("Database update result:", returnResult);
     return returnResult
+=======
+export async function UpdateRequest(p_id, d_id, response, Appt_Date, Appt_Time) {
+    try {
+        const [returnResult] = await pool.query(`
+            UPDATE Requests SET Request_Status = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ? AND Doctor_ID = ? AND Appt_Date = ? AND Appt_Time = ?;`
+        , [response, p_id, d_id, Appt_Date, Appt_Time])
+        console.log("Database update result:", returnResult);
+        return returnResult
+    } catch (err) {
+        console.log("Failed Updating Request: ", err)
+        throw err
+    }
+>>>>>>> 9f40792830ee7def8f2fcefd66326188d68994e1
 }
 
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (only doc schedule is extracted)
 export async function UpdateDoctorSchedule(id, entry) {
+    try {
     const [returnResult] = await pool.query(`
         UPDATE doctorschedules SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
+    }
+    catch (err) {
+        console.log("Failed Updating Doctor Schedule: ", err)
+        throw err
+    }
 }
 
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (fixed for tiers, and IDs)
 export async function UpdateApptInfo(id, entry) {
+    try {
     const [returnResult] = await pool.query(`
         UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
+    }
+    catch (err) {
+        console.log("Failed Updating Appointment Info: ", err)
+        throw err
+    }
 }
 
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (Fixed for IDs)
 export async function UpdateApptStat(id, status) {
+    try {
     const [returnResult] = await pool.query(`
         UPDATE requests SET Request_Status = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Request_ID = ?;`
     , [status, id])
     console.log("Database update result:", returnResult);
     return returnResult
+    }
+    catch (err) {
+        console.log("Failed Updating Appointment Status: ", err)
+        throw err
+    }
 }
 
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (fixed for IDs)
 export async function UpdatePerscriptionInfo(id, entry) {
+    try {
     const [returnResult] = await pool.query(`
         UPDATE prescription SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Prescription_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
+    }
+    catch (err) {
+        console.log("Failed Updating Prescription Info: ", err)
+        throw err
+    }
 }
 
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (almost evrything besides ID)
 export async function UpdatePillInfo(id, entry) {
+    try {
     const [returnResult] = await pool.query(`
         UPDATE pillbank SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Pill_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
+    }
+    catch (err) {
+        console.log("Failed Updating Pill Info: ", err)
+        throw err
+    }
 }
 
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (There's not much you can update - VC)
 export async function UpdateRegiment(id, entry) {
+    try {
     const [returnResult] = await pool.query(`
         UPDATE regiments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
+    }
+    catch (err) {
+        console.log("Failed Updating Regiment Info: ", err)
+        throw err
+    }
 }
 
 //REMOVE DATA ----------------------------------------------------------------------------------------------
@@ -558,74 +1009,135 @@ export async function UpdateRegiment(id, entry) {
 // delete based on a given id - VC
 
 export async function deletePatient(id) {
+    try {
     const [deleteResult] = await pool.query(`DELETE FROM patientbase WHERE Patient_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
+    }
+    catch (err) {
+        console.log("Failed Deleting Patient: ", err)
+        throw err
+    }
 }
 
 // Add Patient info to this to make secure?
 export async function deleteAppointment(id) {
+    try {
     const [deleteResult] = await pool.query(`DELETE FROM appointments WHERE Appointment_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
+    }
+    catch (err) {
+        console.log("Failed Deleting Appointment: ", err)
+        throw err
+    }
 }
 
 export async function deleteRegiment(id) {
+    try {
     const [deleteResult] = await pool.query(`DELETE FROM regiments WHERE Patient_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
+    }
+    catch (err) {
+        console.log("Failed Deleting Regiment: ", err)
+        throw err
+    }
 }
 
 export async function deleteDoctor(id) {
+    try {
     const [deleteResult] = await pool.query(`DELETE FROM doctorbase WHERE Doctor_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
+    }
+    catch (err) {
+        console.log("Failed Deleting Doctor: ", err)
+        throw err
+    }
 }
 
 export async function deleteDoctorTiers(id) {
+    try {
     const [deleteResult] = await pool.query(`DELETE FROM tiers WHERE Doctor_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
+    }
+    catch (err) {
+        console.log("Failed Deleting Doctor Tiers: ", err)
+        throw err
+    }
 }
 
 export async function deleteDoctorSchedule(id) {
+    try {
     const [deleteResult] = await pool.query(`DELETE FROM doctorschedules WHERE Doctor_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
+    }
+    catch (err) {
+        console.log("Failed Deleting Doctor Schedule: ", err)
+        throw err
+    }
 }
 
 export async function deletePerscription(id) {
+    
+    try {
     const [deleteResult] = await pool.query(`DELETE FROM prescription WHERE Prescription_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
+    }
+    catch (err) {
+        console.log("Failed Deleting Prescription: ", err)
+        throw err
+    }
 }
 
 export async function deletePill(id) {
+    try {
     const [deleteResult] = await pool.query(`DELETE FROM pillbank WHERE Pill_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
+    }
+    catch (err) {
+        console.log("Failed Deleting Pill: ", err)
+        throw err
+    }
 }
 
 export async function deleteComment(id) {
+    try {
     const [deleteResult] = await pool.query(`DELETE FROM comments WHERE Comment_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
+    }
+    catch (err) {
+        console.log("Failed Deleting Comment: ", err)
+        throw err
+    }
 }
 
 export async function deleteForumPost(id) {
+    try {
     const [deleteResult] = await pool.query(`
         DELETE FROM comments WHERE Forum_ID = ?;
         DELETE FROM forum_post WHERE Forum_ID = ?;`
     , [id, id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
+    }
+    catch (err) {
+        console.log("Failed Deleting Forum Post: ", err)
+        throw err
+    }
 }
