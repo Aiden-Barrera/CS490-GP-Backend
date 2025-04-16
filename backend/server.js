@@ -223,7 +223,7 @@ app.get("/appointment/doctor/:id", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/request/:id", async (req, res) => {
+app.get("/request/:id", async (req, res) => { // Used for retrieving a given doctor's appointments, using their Doctor_ID
     const rows = await getApptRequest(req.params.id)
     const event_Details = 'retrieval of appointment requests'
     const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
