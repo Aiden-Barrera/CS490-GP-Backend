@@ -355,6 +355,17 @@ export async function getTimeslot(Doctor_ID, Appt_Date, Appt_Time) {
     }
 }
 
+export async function checkExistingRequests(patient_id, doctor_id, appt_date, appt_time) {
+    try {
+        const [resultRows] = await pool.query(`select * from Requests where patient_id = ? and doctor_id = ? and appt_date = ? and appt_time = ?;`, 
+            [patient_id, doctor_id, appt_date, appt_time])
+        return resultRows
+    } catch (err) {
+        console.log("error getting existing requests")
+        throw err
+    }
+}
+
 // joins other tables to get data - VC
 export async function getApptRequest(id) {
     try {
