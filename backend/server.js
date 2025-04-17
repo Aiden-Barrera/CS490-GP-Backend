@@ -19,11 +19,15 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPatientInfo,
     getDoctorInfo,
     getPharmInfo, getDocID,
-    getNearestPharms, getTimeslot } from './PrimeWell_db.js'
+    getNearestPharms, getTimeslot, 
+    rmPatientAppt,
+    checkExistingRequests} from './PrimeWell_db.js'
 
 
 import cors from 'cors'
 import multer from 'multer'
+import dotenv from 'dotenv'
+dotenv.config()
 
 //import socket from 'socket.io'
 /*
@@ -73,6 +77,21 @@ io.on('connection', (socket) => {
   //var socket = io();
 //</script>
 */
+
+const apiKeyMiddleware = (req, res, next) => {
+    const apiKey = req.headers['x-api-key']; // Or req.query.apiKey if you prefer query parameters
+
+    if (!apiKey) {
+      return res.status(401).json({ message: 'API key required' });
+    }
+
+    // In real applications, validate the API key against a database or environment variable
+    if (apiKey !== process.env.API_KEY) {
+      return res.status(403).json({ message: 'Invalid API key' });
+    }
+
+    next(); // Proceed to the next middleware or route handler
+};
 
 //GET DATA ----------------------------------------------------------------------------------------------
 
@@ -335,6 +354,7 @@ app.post("/appointment/doctor", async (req, res) => {
     }
 })
 
+<<<<<<< HEAD
 app.post("/request", async (req, res) => {
     const {Doctor_ID} = req.body;
     if (!Doctor_ID) {
@@ -349,6 +369,13 @@ app.post("/request", async (req, res) => {
     catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" })
     }
+=======
+app.get("/request/:id", async (req, res) => { // Used for retrieving a given doctor's appointments, using their Doctor_ID
+    const rows = await getApptRequest(req.params.id)
+    const event_Details = 'retrieval of appointment requests'
+    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
+    res.send(rows)
+>>>>>>> 539597cab1e23317e10a6ec6592e0aa94083bb32
 })
 
 app.post("/prescription", async (req, res) => { //based on patient -VC
@@ -437,7 +464,7 @@ app.post("/chatroomMsgs", async (req, res) => { //by chatroom_id, got from chatr
     res.send(rows)
 })
 
-app.get("/reviewsTop", async (req, res) => {
+app.get("/reviewsTop", apiKeyMiddleware, async (req, res) => {
     const rows = await getReviewsTop()
     res.send(rows)
 })
@@ -495,11 +522,21 @@ app.post("/passAuthPatient", async (req, res) => {
 
     try {
         const rows = await getPatientAuth(email, pw);
+<<<<<<< HEAD
         if (rows === undefined)
             var logstatus = await LogAttempt(email, false);
         else
             var logstatus = await LogAttempt(email, true);
+=======
+       if (rows === undefined) { // If the credentials are not authenticated
+        const log_status = await LogAttempt(email, false)
+        return res.status(401).json({ error: "Invalid credentials" });
+       }
+       else {
+        const log_status = await LogAttempt(email, true)
+>>>>>>> 539597cab1e23317e10a6ec6592e0aa94083bb32
         res.send(rows);
+       }
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
@@ -513,11 +550,22 @@ app.post("/passAuthDoctor", async (req, res) => {
 
     try {
         const rows = await getDoctorAuth(email, pw);
+<<<<<<< HEAD
         if (rows === undefined)
             var logstatus = await LogAttempt(email, false);
         else
             var logstatus = await LogAttempt(email, true);
         res.send(rows);
+=======
+        if (rows === undefined) { // If the credentials are not authenticated
+            const log_status = await LogAttempt(email, false)
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+        else {
+            const log_status = await LogAttempt(email, true)
+            res.send(rows);
+        }
+>>>>>>> 539597cab1e23317e10a6ec6592e0aa94083bb32
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
@@ -532,14 +580,24 @@ app.post("/passAuthPharm", async (req, res) => {
 
     try {
         const rows = await getPharmAuth(email, pw);
+<<<<<<< HEAD
         if (rows === undefined)
             var logstatus = await LogAttempt(email, false);
         else
             var logstatus = await LogAttempt(email, true);
         //console.log(rows)
         res.send(rows);
+=======
+        if (rows === undefined) { // If the credentials are not authenticated
+            const log_status = await LogAttempt(email, false)
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+        else {
+            const log_status = await LogAttempt(email, true)
+            res.send(rows);
+        }
+>>>>>>> 539597cab1e23317e10a6ec6592e0aa94083bb32
     } catch (error) {
-        console.log(error)
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
@@ -730,7 +788,7 @@ app.post("/forumPosts", async (req, res) => {
         const newExercise = await createExercise(Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps)
         const event_Details1 = 'Created new exercise'
         const audit1 = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details1)
-        
+
         const newFPost = await createForumPost(Patient_ID, newExercise.insertId, Forum_Text)
         const event_Details = 'Created new post'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
@@ -846,9 +904,9 @@ app.post("/request", async (req, res) => { // We might not need this since it's 
     console.log(req.body)
     try {
         const patientsDoctor = await getPatientDoc(Patient_ID)
-
+        console.log("Patient Info: ", patientsDoctor, "DoctorID: ", Doctor_ID)
         //check if correct doctor
-        if (patientsDoctor !== undefined && patientsDoctor?.Doctor_ID !== Doctor_ID) {
+        if (patientsDoctor !== undefined && patientsDoctor?.doctor_id !== Doctor_ID) {
             return res.status(400).json({ error: "Patient already has a different doctor"});
         }
 
@@ -859,6 +917,10 @@ app.post("/request", async (req, res) => { // We might not need this since it's 
             return res.status(400).json({ error: "Timeslot taken"});    
         }
 
+        const requestTaken = await checkExistingRequests(Patient_ID, Doctor_ID, Appt_Date, Appt_Time)
+        if (requestTaken.length > 0) {
+            return res.status(400).json({error: "Request Taken Already"})
+        }
         // Generate an audit for assigning a doctor to this patient
         const newAppt = await createApptRequest(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier)
         const event_Details = 'Created new Request for an appointment'
@@ -1018,12 +1080,20 @@ app.patch('/patient/addDoc', async(req, res)=>{ //Give patient a doctor -VC
 })
 
 // ONLY MAKE VISIBLE FROM PATIENT PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
+<<<<<<< HEAD
 app.patch('/patient/removeDoc', async(req, res)=>{ //Remove patient doctor -VC
     try {
         const Patient_ID = req.body.Patient_ID
+=======
+app.patch('/patientDropDoctor/removeDoc', async(req, res)=>{ //Remove patient doctor -VC
+    try {
+        const {Patient_ID, Doctor_ID} = req.body
+>>>>>>> 539597cab1e23317e10a6ec6592e0aa94083bb32
         const updateResult = await rmPatientDoc(Patient_ID)
         const event_Details = 'removed Doctor to Patient info'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details)
+
+        const removeAppts = await rmPatientAppt(Patient_ID, Doctor_ID)
         res.status(201).send(updateResult)
         }
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
