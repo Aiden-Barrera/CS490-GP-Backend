@@ -19,7 +19,9 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPatientInfo,
     getDoctorInfo,
     getPharmInfo, getDocID,
-    getNearestPharms, getTimeslot } from './PrimeWell_db.js'
+    getNearestPharms, getTimeslot, 
+    rmPatientAppt,
+    checkExistingRequests} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -91,6 +93,21 @@ io.on('connection', (socket) => {
   //var socket = io();
 //</script>
 */
+
+const apiKeyMiddleware = (req, res, next) => {
+    const apiKey = req.headers['x-api-key']; // Or req.query.apiKey if you prefer query parameters
+
+    if (!apiKey) {
+      return res.status(401).json({ message: 'API key required' });
+    }
+
+    // In real applications, validate the API key against a database or environment variable
+    if (apiKey !== process.env.API_KEY) {
+      return res.status(403).json({ message: 'Invalid API key' });
+    }
+
+    next(); // Proceed to the next middleware or route handler
+};
 
 //GET DATA ----------------------------------------------------------------------------------------------
 
@@ -278,7 +295,7 @@ app.get("/chatroomMsgs/:id", async (req, res) => { //by chatroom_id - VC
     res.send(rows)
 })
 
-app.get("/reviewsTop", async (req, res) => {
+app.get("/reviewsTop", apiKeyMiddleware, async (req, res) => {
     const rows = await getReviewsTop()
     res.send(rows)
 })
@@ -672,9 +689,9 @@ app.post("/request", async (req, res) => { // We might not need this since it's 
     console.log(req.body)
     try {
         const patientsDoctor = await getPatientDoc(Patient_ID)
-
+        console.log("Patient Info: ", patientsDoctor, "DoctorID: ", Doctor_ID)
         //check if correct doctor
-        if (patientsDoctor !== undefined && patientsDoctor?.Doctor_ID !== Doctor_ID) {
+        if (patientsDoctor !== undefined && patientsDoctor?.doctor_id !== Doctor_ID) {
             return res.status(400).json({ error: "Patient already has a different doctor"});
         }
 
@@ -685,6 +702,10 @@ app.post("/request", async (req, res) => { // We might not need this since it's 
             return res.status(400).json({ error: "Timeslot taken"});    
         }
 
+        const requestTaken = await checkExistingRequests(Patient_ID, Doctor_ID, Appt_Date, Appt_Time)
+        if (requestTaken.length > 0) {
+            return res.status(400).json({error: "Request Taken Already"})
+        }
         // Generate an audit for assigning a doctor to this patient
         const newAppt = await createApptRequest(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier)
         const event_Details = 'Created new Request for an appointment'
@@ -844,12 +865,14 @@ app.patch('/patient/:id/addDoc', async(req, res)=>{ //Give patient a doctor -VC
 })
 
 // ONLY MAKE VISIBLE FROM PATIENT PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
-app.patch('/patient/:id/removeDoc', async(req, res)=>{ //Remove patient doctor -VC
+app.patch('/patientDropDoctor/removeDoc', async(req, res)=>{ //Remove patient doctor -VC
     try {
-        const Patient_ID = req.params.id
+        const {Patient_ID, Doctor_ID} = req.body
         const updateResult = await rmPatientDoc(Patient_ID)
         const event_Details = 'removed Doctor to Patient info'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details)
+
+        const removeAppts = await rmPatientAppt(Patient_ID, Doctor_ID)
         res.status(201).send(updateResult)
         }
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }

@@ -65,8 +65,8 @@ export async function getPharmInfo(id) {
 
 export async function getPatientDoc(id) { //changed for doc info
     try {
-    const [resultRows] = await pool.query(`SELECT doctorbase.Doctor_ID, doctorbase.First_Name, doctorbase.Last_Name, 
-        doctorbase.specialty, doctorbase.email 
+    const [resultRows] = await pool.query(`SELECT doctorbase.doctor_id, doctorbase.first_name, doctorbase.last_name, 
+        doctorbase.specialty, doctorbase.availability 
         FROM PatientBase INNER JOIN doctorbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
         WHERE Patient_ID = ?;`, [id])
     return resultRows[0]
@@ -355,12 +355,23 @@ export async function getTimeslot(Doctor_ID, Appt_Date, Appt_Time) {
     }
 }
 
+export async function checkExistingRequests(patient_id, doctor_id, appt_date, appt_time) {
+    try {
+        const [resultRows] = await pool.query(`select * from Requests where patient_id = ? and doctor_id = ? and appt_date = ? and appt_time = ?;`, 
+            [patient_id, doctor_id, appt_date, appt_time])
+        return resultRows
+    } catch (err) {
+        console.log("error getting existing requests")
+        throw err
+    }
+}
+
 // joins other tables to get data - VC
 export async function getApptRequest(id) {
     try {
     const [resultRows] = await pool.query(`
-        SELECT patientbase.First_name, patientbase.last_name, Requests.Patient_ID, Requests.Doctor_ID, Requests.Appt_Date, Requests.Appt_Time, Requests.Tier, Requests.Request_Status
-        FROM requests INNER JOIN patientbase ON patientbase.Patient_ID = requests.Patient_ID
+        SELECT patientbase.First_name, patientbase.last_name, Requests.Patient_ID, Requests.Doctor_ID, Requests.Appt_Date,
+        Requests.Appt_Time, Requests.Tier, Requests.Request_Status FROM requests INNER JOIN patientbase ON patientbase.Patient_ID = requests.Patient_ID
         WHERE requests.Doctor_ID = ?;`, [id]) 
         return resultRows
     }
@@ -831,6 +842,17 @@ export async function rmPatientDoc(id) {
     }
     catch (err) {
         console.log("Failed Updating Patient Info: ", err)
+        throw err
+    }
+}
+
+export async function rmPatientAppt(patient_id, doctor_id) {
+    try {
+        const [returnResult] = await pool.query(`delete from appointments where patient_id = ? and doctor_id = ? 
+            and (Appt_Date > CURDATE() OR (Appt_Date = CURDATE() AND Appt_Time > CURTIME()))`, [patient_id, doctor_id])
+        return returnResult
+    } catch (err) {
+        console.log("Failed Removing Patient Appointments: ", err)
         throw err
     }
 }
