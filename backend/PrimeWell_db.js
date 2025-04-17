@@ -359,8 +359,8 @@ export async function getTimeslot(Doctor_ID, Appt_Date, Appt_Time) {
 export async function getApptRequest(id) {
     try {
     const [resultRows] = await pool.query(`
-        SELECT patientbase.First_name, patientbase.last_name, Requests.Patient_ID, Requests.Doctor_ID, Requests.Appt_Date, Requests.Appt_Time, Requests.Tier
-        FROM requests INNER JOIN patientbase ON patientbase.Patient_ID = requests.Patient_ID
+        SELECT patientbase.First_name, patientbase.last_name, Requests.Patient_ID, Requests.Doctor_ID, Requests.Appt_Date,
+        Requests.Appt_Time, Requests.Tier, Requests.Request_Status FROM requests INNER JOIN patientbase ON patientbase.Patient_ID = requests.Patient_ID
         WHERE requests.Doctor_ID = ?;`, [id]) 
         return resultRows
     }
