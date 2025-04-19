@@ -87,17 +87,6 @@ export async function getAllDoctors() {
     }
 }
 
-export async function getDoctors(id) {
-    try {
-    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase WHERE Doctor_ID = ?;`, [id]) 
-    return resultRows
-    } 
-    catch (err) {
-        console.log("Error All Fetching Doctor Info: ", err)
-        throw err
-    }
-}
-
 export async function getDocPatients(Doctor_ID) { //patient info for doc
     try {
     const [resultRows] = await pool.query(`SELECT patientbase.First_Name, patientbase.Last_Name, 
@@ -172,28 +161,6 @@ export async function getPills() {
     }
     catch (err) {
         console.log("Error Fetching Pills: ", err)
-        throw err
-    }
-}
-
-export async function getTiers(id) {
-    try {
-    const [resultRows] = await pool.query(`SELECT Tier, Service, Cost FROM Tiers WHERE Doctor_ID = ?;`, [id]) 
-    return resultRows
-    }
-    catch (err) {
-        console.log("Error Fetching Tiers: ", err)
-        throw err
-    }
-}
-
-export async function getExercises() {
-    try {
-    const [resultRows] = await pool.query(`SELECT Exercise_ID, Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps FROM ExerciseBank;`)
-    return resultRows
-    }
-    catch (err) {
-        console.log("Error Fetching Exercises: ", err)
         throw err
     }
 }
@@ -317,29 +284,6 @@ export async function getSurveyLatestDate(id){
     }
     catch (err) {
         console.log("Error Fetching Patient Survey Latest Date: ", err)
-        throw err
-    }
-}
-
-export async function getAuthSurvey(id) { // get patient's recent surveys by recent date
-    try {
-    const [resultRows] = await pool.query(`SELECT Survey_Date FROM PatientDailySurvey WHERE Patient_ID = ? ORDER BY Survey_Date DESC Limit 1;`, [id]) 
-    return resultRows
-    }
-    catch (err) {
-        console.log("Error Fetching Patient Survey: ", err)
-        throw err
-    }
-}
-
-// Make the below a POST because it is sensitive? - FI
-export async function getAppointmentsPatient(id) {
-    try {
-        const [resultRows] = await pool.query(`SELECT A.Appointment_ID, A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier, DB.first_name, DB.last_name, DB.specialty FROM Appointments as A, doctorbase as DB 
-            WHERE A.Patient_ID = ? and DB.doctor_id = A.doctor_id ORDER BY (Appt_Date >= CURDATE()) DESC, Appt_Date ASC;`, [id]) 
-        return resultRows
-    } catch (err) {
-        console.log("Failed Fetching Appointments for Patient: ", err)
         throw err
     }
 }
@@ -515,12 +459,8 @@ export async function getNearestPharms(zip) {
 // Add to db via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM table);
 // - VC
 
-<<<<<<< HEAD
-export async function LogAttempt(User_ID, Success_Status){
-=======
 /*
 export async function LogAttempt(User_ID, User_type, Success_Status){
->>>>>>> 539597cab1e23317e10a6ec6592e0aa94083bb32
     try {
     const [login] = await pool.query(`
         INSERT INTO AuthAttempts (UserEmail, Success_Status) VALUES (?, ?);`
@@ -927,21 +867,6 @@ export async function UpdateApptInfo(id, entry) {
     }
     catch (err) {
         console.log("Failed Updating Appointment Info: ", err)
-        throw err
-    }
-}
-
-// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (Fixed for IDs)
-export async function UpdateApptStat(id, status) {
-    try {
-    const [returnResult] = await pool.query(`
-        UPDATE requests SET Request_Status = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Request_ID = ?;`
-    , [status, id])
-    console.log("Database update result:", returnResult);
-    return returnResult
-    }
-    catch (err) {
-        console.log("Failed Updating Appointment Status: ", err)
         throw err
     }
 }

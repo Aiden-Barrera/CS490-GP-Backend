@@ -1,19 +1,17 @@
 import express from 'express'
 import { addPatientDoc, createAppointment, createChatMsg, createChatroom, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPerscription, createPharmacy, 
-    createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePerscription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getAppointmentsPatient, getChatMesseges, getComments_id, getDoctorAuth, getDoctors, 
+    createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePerscription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getChatMesseges, getComments_id, getDoctorAuth, 
     getDoctorSchedule, 
-    getExercises, getExerciseByClass, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
+    getExerciseByClass, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
     getReviewsTop, getReviewsByID, 
-    getReviewsComments,  getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
+    getReviewsComments,  getSurvey, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
     UpdateRegiment,
     getPatientDoc,
     createApptRequest,
     getApptRequest,
-    UpdateApptStat,
     UpdateRequest,
     getDocPatients,
     getPrescriptionDoc,
-    getAuthSurvey,
     getSurveyLatestDate,
     getAllDoctors,
     getPatientInfo,
@@ -25,7 +23,6 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
 
 
 import cors from 'cors'
-import multer from 'multer'
 import dotenv from 'dotenv'
 dotenv.config()
 
@@ -48,19 +45,6 @@ app.use((err, req, res, next) => {
 app.listen(3000, () => {
     console.log('Server is running on port 3000')
 })
-
-const store = multer.diskStorage({
-    destination: (req, file, cb) => { //where to store (folder name ExerciseBankImages)
-        cb(null, './ExerciseBankImages') //cb = call back function
-    }, 
-
-    filename: (req, file, cb) => { //file name
-        console.log(file);
-        cb(null, path.extname(file.originalname))
-
-    }
-})
-const upload = multer({storage: store})
 
 app.use((err, req, res, next) => {
     console.error(err.stack)
@@ -152,23 +136,6 @@ app.post("/pharmInfo", async (req, res) => {
     }
 })
 
-// MAKE THIS A POST REQUEST BECAUSE IT IS SENSITIVE - FI
-app.post("/patientDoc", async (req, res) => {
-    const {Patient_ID} = req.body;
-    if (!Patient_ID) {
-        return res.status(400).json({ error: "patient_ID required" });
-    }
-    try {
-        const rows = await getPatientDoc(Patient_ID)
-        const event_Details = 'retrieval of patient\'s doctor'
-        const audit = await genereateAudit(Patient_ID, 'Patient', 'GET', event_Details) 
-        res.send(rows)
-    } 
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
-})
-
 app.get("/doctor/listAll", async (req, res) => {
     const rows = await getAllDoctors()
     res.send(rows)
@@ -236,26 +203,6 @@ app.get("/pillbank", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/tiers", async (req, res) => { //tiers by doctor - VC
-    const {Doctor_ID, day} = req.body;
-    if (!Doctor_ID | !day) {
-        return res.status(400).json({ error: "Doctor_ID required" });
-    }
-    try {
-        const rows = await getTiers(Doctor_ID)
-        res.send(rows)
-    }
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
-})
-
-app.get("/exercisebank", async (req, res) => {
-    const rows = await getExercises()
-    res.send(rows)
-})
-
-
 app.post("/exerciseByClass", async (req, res) => {
     try {
         const { Exercise_Class } = req.body
@@ -320,22 +267,6 @@ app.get("/reviews/Doctor", async (req, res) => {
         res.status(500).json({ error: error.message || "Internal server error" })
     }
 })
-    
-app.post("/appointment/patient", async (req, res) => {
-    const {Patient_ID} = req.body;
-    if (!Patient_ID) {
-        return res.status(400).json({ error: "Patient_ID required" });
-    }
-    try {
-        const rows = await getAppointmentsPatient(Patient_ID)
-        const event_Details = 'retrieval of appointment data'
-        const audit = await genereateAudit(Patient_ID, 'Patient', 'GET', event_Details)
-        res.send(rows)
-        } 
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
-})
 
 app.post("/appointment/doctor", async (req, res) => {
     const {Doctor_ID} = req.body;
@@ -354,28 +285,11 @@ app.post("/appointment/doctor", async (req, res) => {
     }
 })
 
-<<<<<<< HEAD
-app.post("/request", async (req, res) => {
-    const {Doctor_ID} = req.body;
-    if (!Doctor_ID) {
-        return res.status(400).json({ error: "Doctor_ID required" });
-    }
-    try {
-        const rows = await getApptRequest(Doctor_ID)
-        const event_Details = 'retrieval of appointment requests'
-        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
-        res.send(rows)
-    }
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
-=======
 app.get("/request/:id", async (req, res) => { // Used for retrieving a given doctor's appointments, using their Doctor_ID
     const rows = await getApptRequest(req.params.id)
     const event_Details = 'retrieval of appointment requests'
     const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
     res.send(rows)
->>>>>>> 539597cab1e23317e10a6ec6592e0aa94083bb32
 })
 
 app.post("/prescription", async (req, res) => { //based on patient -VC
@@ -500,20 +414,6 @@ app.post("/patientsurvey", async (req, res) => {
     }
 })
 
-app.get("/patientsurveyAuth", async (req, res) => {  //returns true (if posting is ok) or false
-    const {Patient_ID} = req.body;
-    if (!Patient_ID) {
-        return res.status(400).json({ error: "Patient_ID required" });
-    }
-    const rows = await getAuthSurvey(Patient_ID)
-    const event_Details = 'check to see if patient can post survey'
-    const audit = await genereateAudit(Patient_ID, 'Patient', 'GET', event_Details)
-    const tday = new Date();
-    if (tday.toISOString().substring(0, 10) != rows[0]?.Survey_Date.toISOString().substring(0, 10)) res.send(tday)
-        else res.send('false')
-    //res.send(rows)
-})
-
 app.post("/passAuthPatient", async (req, res) => {
     const { email, pw } = req.body;
     if (!email || !pw) {
@@ -522,19 +422,12 @@ app.post("/passAuthPatient", async (req, res) => {
 
     try {
         const rows = await getPatientAuth(email, pw);
-<<<<<<< HEAD
-        if (rows === undefined)
-            var logstatus = await LogAttempt(email, false);
-        else
-            var logstatus = await LogAttempt(email, true);
-=======
        if (rows === undefined) { // If the credentials are not authenticated
         const log_status = await LogAttempt(email, false)
         return res.status(401).json({ error: "Invalid credentials" });
        }
        else {
         const log_status = await LogAttempt(email, true)
->>>>>>> 539597cab1e23317e10a6ec6592e0aa94083bb32
         res.send(rows);
        }
     } catch (error) {
@@ -550,13 +443,6 @@ app.post("/passAuthDoctor", async (req, res) => {
 
     try {
         const rows = await getDoctorAuth(email, pw);
-<<<<<<< HEAD
-        if (rows === undefined)
-            var logstatus = await LogAttempt(email, false);
-        else
-            var logstatus = await LogAttempt(email, true);
-        res.send(rows);
-=======
         if (rows === undefined) { // If the credentials are not authenticated
             const log_status = await LogAttempt(email, false)
             return res.status(401).json({ error: "Invalid credentials" });
@@ -565,7 +451,6 @@ app.post("/passAuthDoctor", async (req, res) => {
             const log_status = await LogAttempt(email, true)
             res.send(rows);
         }
->>>>>>> 539597cab1e23317e10a6ec6592e0aa94083bb32
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
@@ -580,14 +465,6 @@ app.post("/passAuthPharm", async (req, res) => {
 
     try {
         const rows = await getPharmAuth(email, pw);
-<<<<<<< HEAD
-        if (rows === undefined)
-            var logstatus = await LogAttempt(email, false);
-        else
-            var logstatus = await LogAttempt(email, true);
-        //console.log(rows)
-        res.send(rows);
-=======
         if (rows === undefined) { // If the credentials are not authenticated
             const log_status = await LogAttempt(email, false)
             return res.status(401).json({ error: "Invalid credentials" });
@@ -596,7 +473,6 @@ app.post("/passAuthPharm", async (req, res) => {
             const log_status = await LogAttempt(email, true)
             res.send(rows);
         }
->>>>>>> 539597cab1e23317e10a6ec6592e0aa94083bb32
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
@@ -652,7 +528,7 @@ app.post("/doctor", async (req, res) => {
     }
 })
 
-app.post("/tiers", async (req, res) => {
+/*app.post("/tiers", async (req, res) => {
     const {Doctor_ID, Cost} = req.body
 
     if (!Doctor_ID |!Cost) {
@@ -667,7 +543,7 @@ app.post("/tiers", async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
-})
+})*/
 
 app.post("/doctorSchedule", async (req, res) => {
     const {Doctor_ID, Doctor_Schedule} = req.body
@@ -748,30 +624,6 @@ app.post("/pillbank", async (req, res) => {
         const event_Details = 'Created new Pill'
         const audit = await genereateAudit(0, 'Pharmacist', 'POST', event_Details)
         res.status(201).send(newPill)
-    } catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})
-
-/*
-for this function to work each entry should be labeled as such:
-<form method="POST" action="/upload" enctype="multipart/form-data"> <!--post, /upload-->
-        <input type="text" name="desc">  ------- req.body (each attribute has it's proper label)
-        <input type="file" name="image"> ------- req.file.originalname
-        <input type="submit">
-</form>
-*/
-// -VC
-app.post("/exercisebank", upload.single('image'), async (req, res) => { //User created exercise from post - VC
-    const { Patient_ID, Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps } = req.body
-    if (!Patient_ID || !Exercise_Name || !Muscle_Group || !Exercise_Description || !Exercise_Class || !Sets || !Reps) {
-        return res.status(400).json({ error: "Missing required information" });
-    }
-    try {
-        const newExercise = await createExercise(Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps)
-        const event_Details = 'Created new exercise'
-        const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
-        res.status(201).send(newExercise)
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
@@ -1001,7 +853,6 @@ app.post("/patientsurvey", async (req, res) => {
     }
 })
 
-//do we need this? -VC
 app.post("/patientsurvey/date/", async (req, res) => {
     const {patient_id} = req.body
     const rows = await getSurveyLatestDate(patient_id)
@@ -1080,15 +931,9 @@ app.patch('/patient/addDoc', async(req, res)=>{ //Give patient a doctor -VC
 })
 
 // ONLY MAKE VISIBLE FROM PATIENT PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
-<<<<<<< HEAD
-app.patch('/patient/removeDoc', async(req, res)=>{ //Remove patient doctor -VC
-    try {
-        const Patient_ID = req.body.Patient_ID
-=======
 app.patch('/patientDropDoctor/removeDoc', async(req, res)=>{ //Remove patient doctor -VC
     try {
         const {Patient_ID, Doctor_ID} = req.body
->>>>>>> 539597cab1e23317e10a6ec6592e0aa94083bb32
         const updateResult = await rmPatientDoc(Patient_ID)
         const event_Details = 'removed Doctor to Patient info'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details)
@@ -1305,12 +1150,12 @@ app.delete("/doctor", async(req, res) => {
     res.status(204).send(deleteResult)
 })
 
-app.delete("/tiers", async(req, res) => {
+/*app.delete("/tiers", async(req, res) => {
     const deleteResult = await deleteDoctor(req.body.Doctor_ID)
     const event_Details = 'Doctor Tiers has been deleted'
     const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'DELETE', event_Details)
     res.status(204).send(deleteResult)
-})
+})*/
 
 app.delete("/doctorSchedule", async(req, res) => {
     const deleteResult = await deleteDoctor(req.body.Doctor_ID)
