@@ -83,7 +83,6 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!')
   })
 
-
 //GET DATA ----------------------------------------------------------------------------------------------
 
 /*ADDED: Gets for appointments, doctor schedule, perscription, preliminaries, survey, regiments, chat rooms<-messages, 
