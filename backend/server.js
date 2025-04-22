@@ -26,6 +26,8 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
 import cors from 'cors'
 import multer from 'multer'
 import dotenv from 'dotenv'
+import http from "http"
+import {Server} from "socket.io"
 dotenv.config()
 
 //import socket from 'socket.io'
@@ -43,8 +45,37 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!')
 })
 
+const server = http.createServer(app)
+const io = new Server(server, {
+    cors: {
+        origin: "http://localhost:5173",
+        methods: ["GET", "POST"]
+    }
+})
 
-app.listen(3000, () => {
+io.on("connection", (socket) => {
+    console.log("User connected:", socket.id) // Prints Session ID for Client
+
+    // Joining a Appointment
+    socket.on("join_appointment", (appt_id) => {
+        socket.join(appt_id)
+        console.log(`User ${socket.id} joined appointment: ${appt_id}`)
+    })
+
+    // Sending Messages 
+    socket.on("send_msg", (data) => {
+        console.log("Message Sent: ", data)
+        io.to(data.appt_id).emit("receive_msg", data)
+    })
+
+    // Handle disconnection
+    socket.on("disconnect", () => {
+        console.log("User disconnected:", socket.id);
+    })
+})
+
+
+server.listen(3000, () => {
     console.log('Server is running on port 3000')
 })
 
@@ -770,7 +801,7 @@ app.post("/reviews", async (req, res) => {
     }
 })
 
-app.post("/patientsurvey", async (req, res) => {
+app.post("/patientsurvey", apiKeyMiddleware, async (req, res) => {
     const {Patient_ID, Weight, Caloric_Intake, Water_Intake, Mood} = req.body
     if (!Patient_ID | !Weight | !Caloric_Intake | !Water_Intake| !Mood) {
         return res.status(400).json({ error: "Missing required information" });
