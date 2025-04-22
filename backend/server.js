@@ -79,6 +79,23 @@ server.listen(3000, () => {
     console.log('Server is running on port 3000')
 })
 
+const apiKeyMiddleware = (req, res, next) => {
+    const apiKey = req.headers['x-api-key']; // Or req.query.apiKey if you prefer query parameters
+  
+    if (!apiKey) {
+      return res.status(401).json({ message: 'API key required' });
+    }
+  
+    // In real applications, validate the API key against a database or environment variable
+    if (apiKey !== process.env.API_KEY) {
+      return res.status(403).json({ message: 'Invalid API key' });
+    }
+  
+    next(); // Proceed to the next middleware or route handler
+};
+
+// app.use(apiKeyMiddleware)
+
 const store = multer.diskStorage({
     destination: (req, file, cb) => { //where to store (folder name ExerciseBankImages)
         cb(null, './ExerciseBankImages') //cb = call back function
