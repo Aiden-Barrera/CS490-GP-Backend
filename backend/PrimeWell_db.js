@@ -91,7 +91,7 @@ export async function getAllDoctors() {
 export async function getDoctors(id) {
     try {
     const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase WHERE Doctor_ID = ?;`, [id]) 
-    return resultRows
+    return resultRows[0]
     } 
     catch (err) {
         console.log("Error All Fetching Doctor Info: ", err)
@@ -700,10 +700,10 @@ export async function createChatroom(Chatroom_Name) {
     }
 }
 
-export async function createChatMsg(Appointment_ID, SenderID, SenderType, Message) { //for chatroom above -VC
+export async function createChatMsg(Appointment_ID, SenderID, SenderName, SenderType, Message) { //for chatroom above -VC
     try {
-    const [resultMsgCreate] = await pool.query(`INSERT INTO messages (Appointment_ID, SenderID, SenderType, Message) 
-        VALUES (?, ?, ?, ?);`, [Appointment_ID, SenderID, SenderType, Message])
+    const [resultMsgCreate] = await pool.query(`INSERT INTO messages (Appointment_ID, SenderID, SenderName, SenderType, Message) 
+        VALUES (?, ?, ?, ?, ?);`, [Appointment_ID, SenderID,  SenderName, SenderType, Message])
     return resultMsgCreate
     }
     catch (err) {
@@ -714,7 +714,7 @@ export async function createChatMsg(Appointment_ID, SenderID, SenderType, Messag
 
 export async function fetchAppointmentMessages(Appointment_ID) {
     try {
-        const [resultMessageFetch] = await pool.query(`SELECT Message, SenderType FROM Messages WHERE Appointment_ID = ? ORDER BY Sent_At;`, [Appointment_ID])
+        const [resultMessageFetch] = await pool.query(`SELECT message, senderType, senderID, senderName, sent_at FROM Messages WHERE Appointment_ID = ? ORDER BY Sent_At;`, [Appointment_ID])
         return resultMessageFetch
     }
     catch (err) {
