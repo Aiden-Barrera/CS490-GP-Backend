@@ -21,7 +21,9 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPharmInfo, getDocID,
     getNearestPharms, getTimeslot, 
     rmPatientAppt,
-    checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages, getAppointmentInfo} from './PrimeWell_db.js'
+    checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages, getAppointmentInfo,
+    UpdateDoctorFeedback} from './PrimeWell_db.js'
+
 
 import cors from 'cors'
 import multer from 'multer'
@@ -295,6 +297,7 @@ app.get("/prescriptionDoc/:id", async (req, res) => { //based on doctor -VC
 app.get("/preliminaries/:id", async (req, res) => {
     try {
         const rows = await getPreliminaries(req.params.id)
+        console.log(rows)
         res.send(rows)
     }
     catch (err) {
@@ -1127,6 +1130,23 @@ app.patch('/endAppointment', async(req, res) => {
         res.status(201).send(endApptResult)
     } catch (error) { 
         res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
+app.patch('/giveFeedback', async (req, res) => {
+    const {appointment_id, doctor_feedback, doctor_id} = req.body
+    if (!doctor_feedback || !appointment_id) {
+        return res.status(400).json({ error: "Missing Appointment ID and/or Doctor_Feedback"});
+    }
+
+    try {
+        const addFeedback = await UpdateDoctorFeedback(appointment_id, doctor_feedback)
+        const event_Details = 'Ended appointment'
+        const audit = await genereateAudit(doctor_id, 'Doctor', 'PATCH', event_Details)
+        res.status(201).send(addFeedback)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
+
     }
 })
 
