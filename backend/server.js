@@ -66,7 +66,7 @@ io.on("connection", (socket) => {
     socket.on("send_msg", async (data) => {
         console.log("Message Sent: ", data)
         // Save the message to the database
-        const saveChat = await createChatMsg(data.appt_id, data.senderID, data.senderType, data.message)
+        const saveChat = await createChatMsg(data.appt_id, data.senderID, data.senderName, data.senderType, data.message)
         console.log(saveChat)
         io.to(data.appt_id).emit("receive_msg", data)
     })
@@ -124,6 +124,7 @@ and their (1st draft of) audit log entries*/
 
 app.get("/patient/:id", async (req, res) => {
     const rows = await getPatients(req.params.id)
+    console.log("Patient Fetched: ", rows)
     const event_Details = 'retrieval of patient data'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details) 
     res.send(rows)
@@ -165,6 +166,7 @@ app.get("/doctor/listAll", async (req, res) => {
 
 app.get("/doctor/:id", async (req, res) => {
     const rows = await getDoctors(req.params.id)
+    console.log("Doctor Fetched: ", rows)
     const event_Details = 'retrieval of doctor data'
     const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
     res.send(rows)
