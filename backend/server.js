@@ -21,8 +21,11 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPharmInfo, getDocID,
     getNearestPharms, getTimeslot, 
     rmPatientAppt,
-    checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages, getAppointmentInfo,
-    UpdateDoctorFeedback} from './PrimeWell_db.js'
+    checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages, getAppointmentInfo, 
+    UpdateDoctorFeedback,
+    fetchApptEndStatus} from './PrimeWell_db.js'
+
+
 
 
 import cors from 'cors'
@@ -588,6 +591,21 @@ app.post("/fetchApptStartStatus", async (req, res) => {
     try {
         const fetchStartStatus = await fetchApptStartStatus(Appointment_ID)
         res.status(201).send(fetchStartStatus)
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
+app.post("/fetchApptEndStatus", async (req, res) => {
+    const {Appointment_ID} = req.body
+    if (!Appointment_ID) {
+        return res.status(400).json({ error: "Missing Appt ID information" });
+    }
+
+    try {
+        const fetchEndStatus = await fetchApptEndStatus(Appointment_ID)
+        res.status(201).send(fetchEndStatus)
     }
     catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
