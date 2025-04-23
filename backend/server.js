@@ -21,7 +21,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPharmInfo, getDocID,
     getNearestPharms, getTimeslot, 
     rmPatientAppt,
-    checkExistingRequests} from './PrimeWell_db.js'
+    checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -63,8 +63,11 @@ io.on("connection", (socket) => {
     })
 
     // Sending Messages 
-    socket.on("send_msg", (data) => {
+    socket.on("send_msg", async (data) => {
         console.log("Message Sent: ", data)
+        // Save the message to the database
+        const saveChat = await createChatMsg(data.appt_id, data.senderID, data.senderType, data.message)
+        console.log(saveChat)
         io.to(data.appt_id).emit("receive_msg", data)
     })
 
@@ -113,32 +116,6 @@ app.use((err, req, res, next) => {
     console.error(err.stack)
     res.status(500).send('Something broke!')
   })
-
-/*
-io.on('connection', (socket) => {
-  console.log('a user connected');
-});
-
-//<script src="/socket.io/socket.io.js"></script>
-//<script>
-  //var socket = io();
-//</script>
-*/
-
-const apiKeyMiddleware = (req, res, next) => {
-    const apiKey = req.headers['x-api-key']; // Or req.query.apiKey if you prefer query parameters
-
-    if (!apiKey) {
-      return res.status(401).json({ message: 'API key required' });
-    }
-
-    // In real applications, validate the API key against a database or environment variable
-    if (apiKey !== process.env.API_KEY) {
-      return res.status(403).json({ message: 'Invalid API key' });
-    }
-
-    next(); // Proceed to the next middleware or route handler
-};
 
 //GET DATA ----------------------------------------------------------------------------------------------
 
@@ -418,6 +395,21 @@ app.post("/passAuthPharm", async (req, res) => {
     }
 })
 
+app.post("/fetchApptMessages", async (req, res) => {
+    const { Appointment_ID } = req.body;
+    if (!Appointment_ID) {
+        return res.status(400).json({ error: "Missing Appointment ID" });
+    }
+
+    try {
+        const rows = await fetchAppointmentMessages(Appointment_ID)
+        res.send(rows);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
 //ADD DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with type POST
 // - VC
@@ -569,6 +561,20 @@ app.post("/pillbank", async (req, res) => {
     }
 })
 
+app.post("/fetchApptStartStatus", async (req, res) => {
+    const {Appointment_ID} = req.body
+    if (!Appointment_ID) {
+        return res.status(400).json({ error: "Missing Appt ID information" });
+    }
+
+    try {
+        const fetchStartStatus = await fetchApptStartStatus(Appointment_ID)
+        res.status(201).send(fetchStartStatus)
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
 /*
 for this function to work each entry should be labeled as such:
 <form method="POST" action="/upload" enctype="multipart/form-data"> <!--post, /upload-->
@@ -666,14 +672,14 @@ app.post("/chatrooms", async (req, res) => { //Chatroom maker is determined by f
 })
 
 app.post("/messages", async (req, res) => { //chat room id, based on sender type and ID - VC
-    const {Chatroom_ID, SenderID, SenderType, Message} = req.body
-    if(!Chatroom_ID | !SenderID | !enderType |  !Message){
+    const {Appointment_ID, SenderID, SenderType, Message} = req.body
+    if(!Appointment_ID | !SenderID | !SenderType |  !Message){
         return res.status(400).json({ error: "Missing required information" });
     }
 
     try{
-    const newMsg = await createChatMsg(Chatroom_ID, SenderID, SenderType, Message)
-    const event_Details = 'Created message to chatrooms'
+    const newMsg = await createChatMsg(Appointment_ID, SenderID, SenderType, Message)
+    const event_Details = 'Created message to Appointment Room'
     const audit = await genereateAudit(SenderID, SenderType, 'POST', event_Details)
     res.status(201).send(newMsg)
     }catch (error) {  
@@ -1069,6 +1075,40 @@ app.patch('/rejectRequest', async(req, res) => {
         const event_Details = 'Rejected appointment request'
         const audit = await genereateAudit(Doctor_ID, 'Doctor', 'PATCH', event_Details)
         res.status(201).send(updateResult)
+    } catch (error) { 
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
+// MODIFY BELOW ST APPOINTMENT ACTUALLY EXISTS, AND DOCTOR IS THE ACTUAL DOCTOR FOR THE APPT
+app.patch('/startAppointment', async(req, res) => {
+    const {Appointment_ID, Doctor_ID} = req.body
+    if (!Appointment_ID || !Doctor_ID) {
+        return res.status(400).json({ error: "Missing Appointment ID and/or Doctor_ID" });
+    }    
+    
+    try {
+        const startApptResult = await startAppointment(Appointment_ID)
+        const event_Details = 'Started appointment'
+        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'PATCH', event_Details)
+        res.status(201).send(startApptResult)
+    } catch (error) { 
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
+// MODIFY BELOW ST APPOINTMENT ACTUALLY EXISTS, AND DOCTOR IS THE ACTUAL DOCTOR FOR THE APPT
+app.patch('/endAppointment', async(req, res) => {
+    const {Appointment_ID, Doctor_ID} = req.body
+    if (!Appointment_ID || !Doctor_ID) {
+        return res.status(400).json({ error: "Missing Appointment ID and/or Doctor_ID" });
+    }    
+    
+    try {
+        const endApptResult = await endAppointment(Appointment_ID)
+        const event_Details = 'Ended appointment'
+        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'PATCH', event_Details)
+        res.status(201).send(endApptResult)
     } catch (error) { 
         res.status(500).json({ error: error.message || "Internal server error" });
     }
