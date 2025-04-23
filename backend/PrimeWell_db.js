@@ -884,6 +884,44 @@ export async function UpdateRequest(p_id, d_id, response, Appt_Date, Appt_Time) 
     }
 }
 
+export async function startAppointment(apptID) {
+    try {
+        const [startApptResult] = await pool.query(`
+            UPDATE Appointments SET Appt_Start = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
+        , [true, apptID])
+        console.log("Database update result:", startApptResult);
+        return startApptResult
+    } catch (err) {
+        console.log("Failed Updating Request: ", err)
+        throw err
+    }
+}
+
+export async function endAppointment(apptID) {
+    try {
+        const [endApptResult] = await pool.query(`
+            UPDATE Appointments SET Appt_Start = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
+        , [false, apptID])
+        console.log("Database update result:", endApptResult);
+        return endApptResult
+    } catch (err) {
+        console.log("Failed Updating Request: ", err)
+        throw err
+    }
+}
+
+export async function fetchApptStartStatus(apptID) {
+    try {
+        const [startStatusResult] = await pool.query(`SELECT Appt_Start FROM Appointments WHERE Appointment_ID = ?;`, [apptID])
+        console.log("Database update result:", startStatusResult);
+        return startStatusResult[0] 
+    }
+    catch (err) {
+        console.log("Failed fetching Appt Start Status: ", err)
+        throw err
+    }
+}
+
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (only doc schedule is extracted)
 export async function UpdateDoctorSchedule(id, entry) {
     try {
@@ -1111,3 +1149,4 @@ export async function deleteForumPost(id) {
         throw err
     }
 }
+
