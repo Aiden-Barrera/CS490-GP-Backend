@@ -21,7 +21,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPharmInfo, getDocID,
     getNearestPharms, getTimeslot, 
     rmPatientAppt,
-    checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages} from './PrimeWell_db.js'
+    checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages, getAppointmentInfo} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -334,6 +334,16 @@ app.get("/patientsurveyAuth/:id", async (req, res) => {  //returns true (if post
     if (tday.toISOString().substring(0, 10) != rows[0]?.Survey_Date.toISOString().substring(0, 10)) res.send(tday)
         else res.send('false')
     //res.send(rows)
+})
+
+app.get("/appointmentInfo/:id", async (req, res) => {  
+    try {
+    const rows = await getAppointmentInfo(req.params.id)
+    res.send(rows)
+    }
+    catch (err) {
+        console.log("Failed Fetching Appointment Info: ", err)
+    }
 })
 
 app.post("/passAuthPatient", async (req, res) => {
