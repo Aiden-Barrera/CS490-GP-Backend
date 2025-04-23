@@ -700,14 +700,25 @@ export async function createChatroom(Chatroom_Name) {
     }
 }
 
-export async function createChatMsg(Chatroom_ID, SenderID, SenderType, Message) { //for chatroom above -VC
+export async function createChatMsg(Appointment_ID, SenderID, SenderType, Message) { //for chatroom above -VC
     try {
-    const [resultMsgCreate] = await pool.query(`INSERT INTO messages (Chatroom_ID, SenderID, SenderType, Message) 
-        VALUES (?, ?, ?, ?);`, [Chatroom_ID, SenderID, SenderType, Message])
+    const [resultMsgCreate] = await pool.query(`INSERT INTO messages (Appointment_ID, SenderID, SenderType, Message) 
+        VALUES (?, ?, ?, ?);`, [Appointment_ID, SenderID, SenderType, Message])
     return resultMsgCreate
     }
     catch (err) {
         console.log("Error Creating Message: ", err)
+        throw err
+    }
+}
+
+export async function fetchAppointmentMessages(Appointment_ID) {
+    try {
+        const [resultMessageFetch] = await pool.query(`SELECT Message, SenderType FROM Messages WHERE Appointment_ID = ? ORDER BY Sent_At;`, [Appointment_ID])
+        return resultMessageFetch
+    }
+    catch (err) {
+        console.log("Error Fetching Appointment Messages: ", err)
         throw err
     }
 }

@@ -21,7 +21,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPharmInfo, getDocID,
     getNearestPharms, getTimeslot, 
     rmPatientAppt,
-    checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus} from './PrimeWell_db.js'
+    checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages} from './PrimeWell_db.js'
 
 import cors from 'cors'
 import multer from 'multer'
@@ -63,8 +63,11 @@ io.on("connection", (socket) => {
     })
 
     // Sending Messages 
-    socket.on("send_msg", (data) => {
+    socket.on("send_msg", async (data) => {
         console.log("Message Sent: ", data)
+        // Save the message to the database
+        const saveChat = await createChatMsg(data.appt_id, data.senderID, data.senderType, data.message)
+        console.log(saveChat)
         io.to(data.appt_id).emit("receive_msg", data)
     })
 
@@ -392,6 +395,21 @@ app.post("/passAuthPharm", async (req, res) => {
     }
 })
 
+app.post("/fetchApptMessages", async (req, res) => {
+    const { Appointment_ID } = req.body;
+    if (!Appointment_ID) {
+        return res.status(400).json({ error: "Missing Appointment ID" });
+    }
+
+    try {
+        const rows = await fetchAppointmentMessages(Appointment_ID)
+        res.send(rows);
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
 //ADD DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with type POST
 // - VC
@@ -654,14 +672,14 @@ app.post("/chatrooms", async (req, res) => { //Chatroom maker is determined by f
 })
 
 app.post("/messages", async (req, res) => { //chat room id, based on sender type and ID - VC
-    const {Chatroom_ID, SenderID, SenderType, Message} = req.body
-    if(!Chatroom_ID | !SenderID | !enderType |  !Message){
+    const {Appointment_ID, SenderID, SenderType, Message} = req.body
+    if(!Appointment_ID | !SenderID | !SenderType |  !Message){
         return res.status(400).json({ error: "Missing required information" });
     }
 
     try{
-    const newMsg = await createChatMsg(Chatroom_ID, SenderID, SenderType, Message)
-    const event_Details = 'Created message to chatrooms'
+    const newMsg = await createChatMsg(Appointment_ID, SenderID, SenderType, Message)
+    const event_Details = 'Created message to Appointment Room'
     const audit = await genereateAudit(SenderID, SenderType, 'POST', event_Details)
     res.status(201).send(newMsg)
     }catch (error) {  
