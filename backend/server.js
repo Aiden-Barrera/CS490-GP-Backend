@@ -292,11 +292,14 @@ app.get("/prescriptionDoc/:id", async (req, res) => { //based on doctor -VC
 
 // Why are the params weird?
 // MAKE THIS A POST REQUEST BECAUSE IT IS SENSITIVE - FI
-app.get("/preliminaries/:id/:doc_id", async (req, res) => { //based on patient, but doctor accesses it -VC
-    const rows = await getPreliminaries(req.params.id)
-    const event_Details = 'retrieval of Preliminary data'
-    const audit = await genereateAudit(req.params.doc_id, 'Doctor', 'GET', event_Details)
-    res.send(rows)
+app.get("/preliminaries/:id", async (req, res) => {
+    try {
+        const rows = await getPreliminaries(req.params.id)
+        res.send(rows)
+    }
+    catch (err) {
+        console.log("Failed Fetching Preliminaries: ", err)
+    }
 })
 
 // Change this to a post because it is senstitive
