@@ -958,6 +958,7 @@ app.patch('/doctorSchedule/:id', async(req, res)=>{
 })
 
 // MAKE ONLY AVAILABLE TO A PATIENT FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
+// MAKE THE BELOW THE DOCTORS FEEDBACK ENDPOINT FOR THE PATIENTS APPOINTMENT - FI
 app.patch('/appointment/:patient_id/:appt_id', async (req, res) => {
     try {
         const patient_id = req.params.patient_id;
