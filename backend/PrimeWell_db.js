@@ -714,7 +714,7 @@ export async function createChatMsg(Appointment_ID, SenderID, SenderType, Messag
 
 export async function fetchAppointmentMessages(Appointment_ID) {
     try {
-        const [resultMessageFetch] = await pool.query(`SELECT Message, SenderType FROM Messages WHERE Appointment_ID = ? ORDER BY Sent_At;`, [Appointment_ID])
+        const [resultMessageFetch] = await pool.query(`SELECT message, senderType FROM Messages WHERE Appointment_ID = ? ORDER BY Sent_At;`, [Appointment_ID])
         return resultMessageFetch
     }
     catch (err) {
