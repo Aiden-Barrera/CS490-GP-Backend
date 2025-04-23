@@ -423,7 +423,7 @@ export async function getPrescriptionDoc(id) {
 // Make the below a POST because it is sensitive? - FI
 export async function getPreliminaries(id) { //order by for most recent
     try {
-    const [resultRows] = await pool.query(`SELECT Preliminary_ID, Symptoms FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
+    const [resultRows] = await pool.query(`SELECT patient_id, Symptoms FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
     return resultRows
     }
     catch (err) {
@@ -974,6 +974,18 @@ export async function UpdateApptStat(id, status) {
     }
     catch (err) {
         console.log("Failed Updating Appointment Status: ", err)
+        throw err
+    }
+}
+
+export async function UpdateDoctorFeedback(appointment_id, doctor_feedback) {
+    try {
+        const [returnedResult] = await pool.query(`Update appointments set doctors_feedback = ?, \`Last_Update\` = CURRENT_TIMESTAMP where appointment_id = ?`, 
+            [doctor_feedback, appointment_id])
+        console.log("Doctor Feedback Updated Result: ", returnedResult)
+        return returnedResult
+    } catch (err) {
+        console.log("Failed Updating Feedback: ", err)
         throw err
     }
 }
