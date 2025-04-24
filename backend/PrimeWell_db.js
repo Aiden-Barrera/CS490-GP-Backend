@@ -75,6 +75,10 @@ export async function getAllDoctors() {
     }
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6039fcd1bb71829a735034af3e81a42716ed0b36
 export async function getDoctors(id) {
     try {
     const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase WHERE Doctor_ID = ?;`, [id]) 
@@ -363,6 +367,7 @@ export async function getPrescriptionDoc(id) {
 
 // Make the below a POST because it is sensitive? - FI
 <<<<<<< HEAD
+<<<<<<< HEAD
 export async function getPreliminaries(id) { //order by for most recent, USE Appointment ID
     try{
     const [resultRows] = await pool.query(`SELECT Preliminary_ID, Symptoms FROM preliminaries 
@@ -373,6 +378,12 @@ export async function getPreliminaries(id) { //order by for most recent
     try {
     const [resultRows] = await pool.query(`SELECT patient_id, Symptoms FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
 >>>>>>> 8f591fe3d3afeaeeebf21bdc9e0e856eec606a3c
+=======
+export async function getPreliminaries(id) { //order by for most recent
+    try {
+    const [resultRows] = await pool.query(`SELECT patient_id, Symptoms FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
+
+>>>>>>> 6039fcd1bb71829a735034af3e81a42716ed0b36
     return resultRows
     }
     catch (err) {
@@ -940,6 +951,7 @@ export async function UpdateDoctorSchedule(id, entry) {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (fixed for tiers, and IDs)
 export async function UpdateApptInfo(id, entry) {
     try {
@@ -947,20 +959,28 @@ export async function UpdateApptInfo(id, entry) {
         UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
     , [entry, id])
 =======
+=======
+>>>>>>> 6039fcd1bb71829a735034af3e81a42716ed0b36
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (Fixed for IDs)
 export async function UpdateApptStat(id, status) {
     try {
     const [returnResult] = await pool.query(`
         UPDATE requests SET Request_Status = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Request_ID = ?;`
     , [status, id])
+<<<<<<< HEAD
 >>>>>>> 8f591fe3d3afeaeeebf21bdc9e0e856eec606a3c
+=======
+>>>>>>> 6039fcd1bb71829a735034af3e81a42716ed0b36
     console.log("Database update result:", returnResult);
     return returnResult
     }
     catch (err) {
 <<<<<<< HEAD
+<<<<<<< HEAD
         console.log("Failed Updating Appointment Info: ", err)
 =======
+=======
+>>>>>>> 6039fcd1bb71829a735034af3e81a42716ed0b36
         console.log("Failed Updating Appointment Status: ", err)
         throw err
     }
@@ -974,7 +994,10 @@ export async function UpdateDoctorFeedback(appointment_id, doctor_feedback) {
         return returnedResult
     } catch (err) {
         console.log("Failed Updating Feedback: ", err)
+<<<<<<< HEAD
 >>>>>>> 8f591fe3d3afeaeeebf21bdc9e0e856eec606a3c
+=======
+>>>>>>> 6039fcd1bb71829a735034af3e81a42716ed0b36
         throw err
     }
 }
