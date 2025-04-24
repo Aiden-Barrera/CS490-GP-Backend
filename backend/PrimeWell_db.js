@@ -578,7 +578,7 @@ export async function createDoctor(License_Serial,First_Name,Last_Name,Specialty
     
     console.log(resultDoctorCreate)
     const [body] = await pool.query(`select doctor_id, First_Name, Last_Name from doctorbase where doctor_id = ?`, [resultDoctorCreate.insertId])
-    console.log("Doctor Name: ", body)
+    console.log("Doctor: ", body)
     return body[0]
     }
     catch (err) {
@@ -587,13 +587,13 @@ export async function createDoctor(License_Serial,First_Name,Last_Name,Specialty
     }
 }
 
-export async function createDoctorTiers(Doctor_ID, Cost) {
+export async function createDoctorTiers(Doctor_ID) {
     try {
     const [resultDoctorTiersCreate] = await pool.query(`
-        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Basic', 'General Consulatation', ?);
-        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Plus', 'Elevated Servicing', ?);
-        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Premium', 'Premium Doctor-Patient Facilities', ?);`, 
-        [Doctor_ID, Cost, Doctor_ID, Cost * 1.25, Doctor_ID, Cost * 1.50])
+        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Basic', 'General Consulatation', 100);
+        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Plus', 'Elevated Servicing', 200);
+        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Premium', 'Premium Doctor-Patient Facilities', 300);`, 
+        [Doctor_ID, Doctor_ID,Doctor_ID])
     return resultDoctorTiersCreate
     } 
     catch (err) {
