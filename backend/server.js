@@ -4,7 +4,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getDoctorSchedule, 
     getExercises, getExerciseByClass, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
     getReviewsTop, getReviewsByID, 
-    getReviewsComments,  getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
+    getReviewsComments,  getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
     UpdateRegiment,
     getPatientDoc,
     createApptRequest,
@@ -475,6 +475,8 @@ app.post("/doctor", async (req, res) => {
         console.log("Doctor Info: ", newDoctor)
         const event_Details = 'Created new Doctor'
         const audit = await genereateAudit(newDoctor['doctor_id'], 'Doctor', 'POST', event_Details)
+        const tiers = await createDoctorTiers(newDoctor['doctor_id'])
+        console.log(tiers)
         res.status(201).send(newDoctor)
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
