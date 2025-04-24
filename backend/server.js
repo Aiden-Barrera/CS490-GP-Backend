@@ -4,11 +4,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getDoctorSchedule, 
     getExerciseByClass, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
     getReviewsTop, getReviewsByID, 
-<<<<<<< HEAD
-    getReviewsComments,  getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
-=======
-    getReviewsComments,  getSurvey, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
->>>>>>> 6039fcd1bb71829a735034af3e81a42716ed0b36
+    getReviewsComments,  getSurvey, LogAttempt, rmPatientDoc, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
     UpdateRegiment,
     getPatientDoc,
     createApptRequest,
