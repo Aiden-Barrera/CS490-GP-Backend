@@ -183,6 +183,17 @@ export async function getTiers(id) {
     }
 }
 
+export async function getPillsFromPharm(id) {
+    try {
+    const [resultRows] = await pool.query(`SELECT Pill_ID, Cost, Pill_Name, Dosage FROM PillBank WHERE Pharm_ID = ?;`, [id]) 
+    return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Pills: ", err)
+        throw err
+    }
+}
+
 export async function getExercises() {
     try {
     const [resultRows] = await pool.query(`SELECT Exercise_ID, Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps FROM ExerciseBank;`)

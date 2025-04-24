@@ -23,7 +23,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     rmPatientAppt,
     checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages, getAppointmentInfo, 
     UpdateDoctorFeedback,
-    fetchApptEndStatus} from './PrimeWell_db.js'
+    fetchApptEndStatus, getPillsFromPharm} from './PrimeWell_db.js'
 
 
 
@@ -345,6 +345,16 @@ app.get("/patientsurveyAuth/:id", async (req, res) => {  //returns true (if post
 app.get("/appointmentInfo/:id", async (req, res) => {  
     try {
     const rows = await getAppointmentInfo(req.params.id)
+    res.send(rows)
+    }
+    catch (err) {
+        console.log("Failed Fetching Appointment Info: ", err)
+    }
+})
+
+app.get("/pharmacyPills/:id", async (req, res) => {  
+    try {
+    const rows = await getPillsFromPharm(req.params.id)
     res.send(rows)
     }
     catch (err) {
