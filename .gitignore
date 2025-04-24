@@ -1,5 +1,5 @@
 #ignore .env file
 .env
-
+server2.js
 #ignore node_modules
 node_modules/
