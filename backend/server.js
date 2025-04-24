@@ -21,9 +21,9 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPharmInfo, getDocID,
     getNearestPharms, getTimeslot, 
     rmPatientAppt,
-    checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages, getAppointmentInfo, 
+    checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages, getAppointmentInfo, appendToRegiment, 
     UpdateDoctorFeedback,
-    fetchApptEndStatus, getPillsFromPharm} from './PrimeWell_db.js'
+    fetchApptEndStatus, getPillsFromPharm, clearPatientRegiment} from './PrimeWell_db.js'
 
 
 
@@ -1040,29 +1040,33 @@ app.patch('/pillbank/:pill_id', async(req, res)=>{
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
-app.patch('/regiments/:id', async(req, res)=>{
+app.patch('/regiments/:id', async (req, res) => {
+    try {
+      const Patient_ID = req.params.id;
+      const newRegimentData = req.body.Regiment;
+  
+      const updateResult = await appendToRegiment(Patient_ID, newRegimentData);
+      const event_Details = 'Edited Regiment';
+      await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details);
+  
+      res.status(200).send(updateResult);
+    } catch (error) {
+      console.error("PATCH error:", error);
+      res.status(500).json({ error: error.message || "Internal server error" });
+    }
+});
+  
+app.patch('/regimentClear/:id', async (req, res) => {
     try {
         const Patient_ID = req.params.id
-        let entry = req.body
 
-        // Fields that are NOT allowed to be updated
-        const restrictedFields = ['Patient_ID', 'Last_Update', 'Create_Date']; // Allows Patient to change their regiment
+        const clearRegiment = await clearPatientRegiment(Patient_ID)
 
-        // Remove restricted fields from the entry object
-        entry = Object.fromEntries(
-            Object.entries(entry).filter(([key]) => !restrictedFields.includes(key))
-        );
-
-        if (Object.keys(entry).length === 0) {
-            return res.status(400).json({ error: "No valid fields to update." });
-        }
-
-        const updateResult = await UpdateRegiment(Patient_ID, entry)
-        const event_Details = 'Edited Regiment'
-        const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'PATCH', event_Details)
-        res.status(201).send(updateResult)
-        }
-    catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
+        res.status(200).send(clearRegiment)
+    } catch (err) {
+        console.error("PATCH error:", error);
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
 })
 
 app.patch('/rejectRequest', async(req, res) => {

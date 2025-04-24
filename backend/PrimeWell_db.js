@@ -1056,6 +1056,78 @@ export async function UpdateRegiment(id, entry) {
     }
 }
 
+export async function appendToRegiment(patientId, newRegimentData) {
+    try {
+      // 1. Get existing regiment
+      const [existingRows] = await pool.query(
+        `SELECT Regiment FROM Regiments WHERE Patient_ID = ?`,
+        [patientId]
+      );
+  
+      if (!existingRows.length) {
+        throw new Error("No existing regiment found for this patient.");
+      }
+  
+      // ✅ Robust parsing of existing regiment
+      let existingRegiment = {};
+  
+      try {
+        const regData = existingRows[0].Regiment;
+  
+        if (typeof regData === 'string') {
+          existingRegiment = JSON.parse(regData || '{}');
+        } else if (typeof regData === 'object' && regData !== null) {
+          existingRegiment = regData;
+        }
+      } catch (parseErr) {
+        console.error("Failed parsing Regiment from DB:", parseErr);
+        throw new Error("Corrupt regiment data in database.");
+      }
+  
+      // 2. Merge new regiment into existing
+    console.log(newRegimentData)
+    for (const [day, exercises] of Object.entries(newRegimentData)) {
+        if (!Array.isArray(exercises)) {
+        console.warn(`Skipping invalid entry for day: ${day}, expected array but got`, typeof exercises);
+        continue; // Skip this day if the value isn't an array
+        }
+    
+        if (!existingRegiment[day]) existingRegiment[day] = [];
+    
+        exercises.forEach(ex => {
+        if (!existingRegiment[day].includes(ex)) {
+            existingRegiment[day].push(ex);
+        }
+        });
+    }
+  
+      // 3. Update the DB
+      const [result] = await pool.query(
+        `UPDATE Regiments SET Regiment = ?, Last_Update = CURRENT_TIMESTAMP WHERE Patient_ID = ?`,
+        [JSON.stringify(existingRegiment), patientId]
+      );
+  
+      return result;
+    } catch (err) {
+      console.error("Error in appendToRegiment:", err);
+      throw err;
+    }
+  }
+
+export async function clearPatientRegiment(patientID) {
+    try {
+        const [result] = await pool.query(
+            `UPDATE Regiments SET Regiment = ?, Last_Update = CURRENT_TIMESTAMP WHERE Patient_ID = ?`,
+            [JSON.stringify({}), patientID]
+          );
+        return result;
+    } catch (err) {
+        console.log("Error Clearing regiment: ", err)
+        throw err
+    }
+}
+  
+
 //REMOVE DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with tyoe DELETE
 // delete based on a given id - VC
