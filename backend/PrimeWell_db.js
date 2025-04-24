@@ -88,6 +88,17 @@ export async function getAllDoctors() {
     }
 }
 
+export async function getDoctors(id) {
+    try {
+    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase WHERE Doctor_ID = ?;`, [id]) 
+    return resultRows[0]
+    } 
+    catch (err) {
+        console.log("Error All Fetching Doctor Info: ", err)
+        throw err
+    }
+}
+
 export async function getDocPatients(Doctor_ID) { //patient info for doc
     try {
     const [resultRows] = await pool.query(`SELECT patientbase.First_Name, patientbase.Last_Name, 
@@ -135,6 +146,17 @@ export async function getDoctorSchedule(id, day, date) {
         return availableSlots
     } catch (err) {
         console.log("Error Fetching Available Slots: ", err)
+        throw err
+    }
+}
+
+export async function getPharmacies() {
+    try {
+    const [resultRows] = await pool.query(`SELECT Pharm_ID, Company_Name, Address, Zip, Work_Hours FROM Pharmacies;`)
+    return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Pharmacies: ", err)
         throw err
     }
 }
@@ -318,16 +340,16 @@ export async function getAuthSurvey(id) { // get patient's recent surveys by rec
 }
 
 // Make the below a POST because it is sensitive? - FI
-/*export async function getAppointmentsPatient(id) {
+export async function getAppointmentsPatient(id) {
     try {
         const [resultRows] = await pool.query(`SELECT A.Appointment_ID, A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier, DB.first_name, DB.last_name, DB.specialty FROM Appointments as A, doctorbase as DB 
-            WHERE A.Patient_ID = ? and DB.doctor_id = A.doctor_id ORDER BY (Appt_End = false AND Appt_Date >= CURDATE()) DESC, Appt_End ASC, Appt_Date ASC;`, [id]) 
+            WHERE A.Patient_ID = ? and DB.doctor_id = A.doctor_id ORDER BY (Appt_Date >= CURDATE()) DESC, Appt_Date ASC;`, [id]) 
         return resultRows
     } catch (err) {
         console.log("Failed Fetching Appointments for Patient: ", err)
         throw err
     }
-}*/
+}
 
 export async function getTimeslot(Doctor_ID, Appt_Date, Appt_Time) {
     try {
@@ -375,8 +397,7 @@ export async function getAppointmentsDoctor(id) {
     try {
     const [resultRows] = await pool.query(`SELECT PB.First_Name, PB.Last_Name, A.Appointment_ID, 
         A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier FROM Appointments as A, PatientBase as PB 
-        WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID and A.Appt_End = false 
-        ORDER BY (A.Appt_End = false AND A.Appt_Date >= CURDATE()) DESC, A.Appt_Date ASC;
+        WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID and A.Appt_End = false;
     `, [id]) 
     return resultRows
     }
@@ -687,6 +708,18 @@ export async function createComment(Patient_ID, Forum_ID, Comment_Text) { //for 
     }
     catch (err) {
         console.log("Error Creating Comment: ", err)
+        throw err
+    }
+}
+
+//same idea for chatroom and messages should apply for above - VC
+export async function createChatroom(Chatroom_Name) {
+    try {
+    const [resultChatCreate] = await pool.query(`INSERT INTO chatrooms (Chatroom_Name) VALUES (?);`, [Chatroom_Name])
+    return resultChatCreate
+    }
+    catch (err) {
+        console.log("Error Creating Chatroom: ", err)
         throw err
     }
 }
