@@ -332,7 +332,7 @@ export async function getAuthSurvey(id) { // get patient's recent surveys by rec
 export async function getAppointmentsPatient(id) {
     try {
         const [resultRows] = await pool.query(`SELECT A.Appointment_ID, A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier, DB.first_name, DB.last_name, DB.specialty FROM Appointments as A, doctorbase as DB 
-            WHERE A.Patient_ID = ? and DB.doctor_id = A.doctor_id ORDER BY (Appt_Date >= CURDATE()) DESC, Appt_Date ASC;`, [id]) 
+            WHERE A.Patient_ID = ? and DB.doctor_id = A.doctor_id ORDER BY (Appt_End = false AND Appt_Date >= CURDATE()) DESC, Appt_End ASC, Appt_Date ASC;`, [id]) 
         return resultRows
     } catch (err) {
         console.log("Failed Fetching Appointments for Patient: ", err)
@@ -386,7 +386,8 @@ export async function getAppointmentsDoctor(id) {
     try {
     const [resultRows] = await pool.query(`SELECT PB.First_Name, PB.Last_Name, A.Appointment_ID, 
         A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier FROM Appointments as A, PatientBase as PB 
-        WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID and A.Appt_End = false;
+        WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID and A.Appt_End = false 
+        ORDER BY (A.Appt_End = false AND A.Appt_Date >= CURDATE()) DESC, A.Appt_Date ASC;
     `, [id]) 
     return resultRows
     }
