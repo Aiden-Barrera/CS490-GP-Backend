@@ -5,7 +5,11 @@ import app from './server.js'
 
 })*/
 
+<<<<<<< HEAD
 describe("/patientInfo/:id", ()=>{
+=======
+describe("/patient/:id", ()=>{
+>>>>>>> 3eac44a3d82e3b64db52a10e9e8c5f1eee27a3d5
     test("should return rows", async ()=>{
         const response = await request(app).get("/patientInfo/2").send({})
         expect(response.statusCode).toBe(200)
