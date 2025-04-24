@@ -14,18 +14,6 @@ const pool = mysql.createPool({
 //GET DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with type GET
 
-export async function getPatients(id) {
-    
-    try {
-    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name FROM PatientBase WHERE Patient_ID = ?;`, [id])
-    return resultRows[0]
-    }
-    catch (err) {
-        console.log("Error Fetching Patient Info: ", err)
-        throw err
-    }
-}
-
 // These endpoints are insecure but I need them for allowing user to view their profile
 export async function getPatientInfo(id) {
     try {
@@ -642,18 +630,6 @@ export async function createComment(Patient_ID, Forum_ID, Comment_Text) { //for 
     }
     catch (err) {
         console.log("Error Creating Comment: ", err)
-        throw err
-    }
-}
-
-//same idea for chatroom and messages should apply for above - VC
-export async function createChatroom(Chatroom_Name) {
-    try {
-    const [resultChatCreate] = await pool.query(`INSERT INTO chatrooms (Chatroom_Name) VALUES (?);`, [Chatroom_Name])
-    return resultChatCreate
-    }
-    catch (err) {
-        console.log("Error Creating Chatroom: ", err)
         throw err
     }
 }

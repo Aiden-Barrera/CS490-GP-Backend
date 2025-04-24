@@ -1,8 +1,8 @@
 import express from 'express'
-import { addPatientDoc, createAppointment, createChatMsg, createChatroom, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPerscription, createPharmacy, 
+import { addPatientDoc, createAppointment, createChatMsg, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPerscription, createPharmacy, 
     createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePerscription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getChatMesseges, getComments_id, getDoctorAuth, 
     getDoctorSchedule, 
-    getExerciseByClass, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
+    getExerciseByClass, getForumPosts, getPatientAuth, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
     getReviewsTop, getReviewsByID, 
     getReviewsComments,  getSurvey, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
     UpdateRegiment,
@@ -27,12 +27,6 @@ import dotenv from 'dotenv'
 import http from "http"
 import {Server} from "socket.io"
 dotenv.config()
-
-//import socket from 'socket.io'
-/*
-const server = http.createServer(app);
-const io = new socket(server);
-*/
 
 const app = express()
 app.use(express.json())
@@ -77,54 +71,10 @@ server.listen(3000, () => {
     console.log('Server is running on port 3000')
 })
 
-<<<<<<< HEAD
-=======
-const apiKeyMiddleware = (req, res, next) => {
-    const apiKey = req.headers['x-api-key']; // Or req.query.apiKey if you prefer query parameters
-  
-    if (!apiKey) {
-      return res.status(401).json({ message: 'API key required' });
-    }
-  
-    // In real applications, validate the API key against a database or environment variable
-    if (apiKey !== process.env.API_KEY) {
-      return res.status(403).json({ message: 'Invalid API key' });
-    }
-  
-    next(); // Proceed to the next middleware or route handler
-};
-
-// app.use(apiKeyMiddleware)
-
-const store = multer.diskStorage({
-    destination: (req, file, cb) => { //where to store (folder name ExerciseBankImages)
-        cb(null, './ExerciseBankImages') //cb = call back function
-    }, 
-
-    filename: (req, file, cb) => { //file name
-        console.log(file);
-        cb(null, path.extname(file.originalname))
-
-    }
-})
-const upload = multer({storage: store})
-
->>>>>>> 466d247b1dd4e120d69826e375468355f9695aa1
 app.use((err, req, res, next) => {
     console.error(err.stack)
     res.status(500).send('Something broke!')
   })
-
-/*
-io.on('connection', (socket) => {
-  console.log('a user connected');
-});
-
-//<script src="/socket.io/socket.io.js"></script>
-//<script>
-  //var socket = io();
-//</script>
-*/
 
 const apiKeyMiddleware = (req, res, next) => {
     const apiKey = req.headers['x-api-key']; // Or req.query.apiKey if you prefer query parameters
@@ -145,17 +95,6 @@ const apiKeyMiddleware = (req, res, next) => {
 
 /*ADDED: Gets for appointments, doctor schedule, perscription, preliminaries, survey, regiments, chat rooms<-messages, 
 and their (1st draft of) audit log entries*/
-
-app.get("/patient", async (req, res) => {
-    const {Patient_ID} = req.body;
-    if (!Patient_ID) {
-        return res.status(400).json({ error: "Patient_ID required" });
-    }
-    const rows = await getPatients(Patient_ID)
-    const event_Details = 'retrieval of patient data'
-    const audit = await genereateAudit(Patient_ID, 'Patient', 'GET', event_Details) 
-    res.send(rows)
-})
 
 app.post("/patientInfo", async (req, res) => {
     const {Patient_ID} = req.body;
@@ -205,21 +144,6 @@ app.get("/doctor/listAll", async (req, res) => {
     res.send(rows)
 })
 
-app.post("/doctor", async (req, res) => {
-    const {Doctor_ID} = req.body;
-    if (!Doctor_ID) {
-        return res.status(400).json({ error: "Doctor_ID required" });
-    }
-    try {
-        const event_Details = 'retrieval of doctor data'
-        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
-        res.send(rows)
-    } 
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
-})
-
 app.post("/doctorPatients", async (req, res) => {
     const {Doctor_ID} = req.body;
     if (!Doctor_ID) {
@@ -251,7 +175,6 @@ app.post("/doctorSchedule", async (req, res) => { // FIX? -VC
         res.status(500).json({ error: error.message || "Internal server error" })
     }
 })
-
 
 app.get("/pharmacies", async (req, res) => {
     const rows = await getPharmacies()
@@ -372,7 +295,8 @@ app.post("/prescription", async (req, res) => { //based on patient -VC
     }
 })
 
-app.post("/prescriptionDoc", async (req, res) => { //based on doctor -VC
+// FOR RABBIT MQ - VC
+/*app.post("/prescriptionDoc", async (req, res) => { //based on doctor -VC
     const {Doctor_ID} = req.body;
     if (!Doctor_ID) {
         return res.status(400).json({ error: "Doctor_ID required" });
@@ -387,7 +311,7 @@ app.post("/prescriptionDoc", async (req, res) => { //based on doctor -VC
     catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" })
     }
-})
+})*/
 
 // Why are the params weird? ----CHANGE
 // MAKE THIS A POST REQUEST BECAUSE IT IS SENSITIVE - FI
@@ -407,34 +331,6 @@ app.post("/preliminaries", async (req, res) => { //based on patient, but doctor 
     }
 })
 
-app.post("/chatrooms/Patient", async (req, res) => {
-    const {Patient_ID} = req.body;
-    if (!Patient_ID) {
-        return res.status(400).json({ error: "Patient_ID required" });
-    }
-    try {
-        const rows = await getChatRoomPatient(Patient_ID)
-        res.send(rows)
-    }
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
-})
-
-app.post("/chatrooms/Doctor", async (req, res) => {
-    const {Doctor_ID} = req.body;
-    if (!Doctor_ID) {
-        return res.status(400).json({ error: "Doctor_ID required" });
-    }
-    try {
-        const rows = await getChatRoomDoctor(Doctor_ID)
-        res.send(rows)
-    }
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
-})
-
 // Change this to a post because it is senstitive
 app.post("/chatroomMsgs", async (req, res) => { //by chatroom_id, got from chatroom lists above - VC
     const {Chatroom_ID} = req.body
@@ -447,7 +343,7 @@ app.get("/reviewsTop", apiKeyMiddleware, async (req, res) => {
     res.send(rows)
 })
 
-app.get("/reviews/comments", async (req, res) => {
+app.get("/forumPosts/comments", async (req, res) => {
     const {Message_ID} = req.body;
     if (!Message_ID) {
         return res.status(400).json({ error: "Message_ID required" });
@@ -723,7 +619,7 @@ app.post("/comments", async (req, res) => {
     }
 
     try{
-    const newComment = createNewComment(Patient_ID, Forum_ID, Comment_Text)  
+    const newComment = createComment(Patient_ID, Forum_ID, Comment_Text)  
     const event_Details = 'Created new comment'
     const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
     res.status(201).send(newComment)
@@ -745,21 +641,6 @@ app.post("/regiment", async (req, res) => {
     const event_Details = 'Created new Regiment'
     const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
     res.status(201).send(newRegiment)
-    }catch (error) {  
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})
-
-app.post("/chatrooms", async (req, res) => { //Chatroom maker is determined by front end in req.body -VC
-    if(req.body.Chatroom_Name){
-        return res.status(400).json({ error: "Missing required information" });
-    }
-
-    try {
-    const newChatroom = await createChatroom(req.body.Chatroom_Name)
-    const event_Details = 'Created new chatroom'
-    const audit = await genereateAudit(req.body.UserID, req.body.UserType, 'POST', event_Details)
-    res.status(201).send(newChatroom)
     }catch (error) {  
         res.status(500).json({ error: error.message || "Internal server error" });
     }
