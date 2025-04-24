@@ -1,23 +1,28 @@
-import supertest from 'supertest'
-import server from './server.js'
+import request from 'supertest'
+import app from './server.js'
 //import database from './PrimeWell_db.js'
 
-//install with: npm i -D jest supertes
+//install with: npm i -D jest supertest
 //NODE_OPTIONS=--experimental-vm-modules npx jest //the line that will rund the tests
 
 /*describe("", ()=>{
 
 })*/
 
+afterAll((done) => {
+    done();
+  });
+
 describe("/patient/:id", ()=>{
     test("should return rows", async ()=>{
-        const response = await request(server).post("/patient/2").send({})
-    expect()
+        const response = await request(app).get("/patient/2").send({})
+        expect(response.statusCode).toBe(200)
+        expect(response.body).toStrictEqual({"First_Name": "Crystal", "Last_Name": "Nunnery"})
     })
 
 })
 
-
+/*
 describe("POST /users", ()=>{ //to set tests apart
     describe("given an email and pass", ()=>{
         test("should respond with 200", async () => { //the block that will actually test our code
@@ -60,7 +65,7 @@ describe("POST /users", ()=>{ //to set tests apart
             expect(response.statusCode).toBe(400)
         })
     })
-})
+})*/
 
 /*
 list of points to test:
