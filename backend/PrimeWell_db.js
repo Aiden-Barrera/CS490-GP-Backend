@@ -508,10 +508,11 @@ export async function getNearestPharms(zip) {
     }
 }
 
-export async function getAppointmentInfo(appt_id) {
+export async function getAppointmentInfo(patient_id) {
     try {
-    const [resultRows] = await pool.query(`SELECT Appointments.Appt_Date, Appointments.Appt_Time, CONCAT(DoctorBase.First_Name, ' ', DoctorBase.Last_Name) AS Doctor, Appointments.Doctors_Feedback FROM Appointments, DoctorBase WHERE Appointments.Doctor_ID = DoctorBase.Doctor_ID AND Appointments.Patient_ID = ?;`,
-        [appt_id])
+    const [resultRows] = await pool.query(`SELECT Appointments.Appt_Date, Appointments.Appt_Time, CONCAT(DoctorBase.First_Name, ' ', DoctorBase.Last_Name) AS Doctor, Appointments.Doctors_Feedback FROM Appointments, DoctorBase WHERE Appointments.Doctor_ID = DoctorBase.Doctor_ID AND Appointments.Patient_ID = ? and Appointments.Appt_End = true
+        ORDER BY Appointments.Appt_Date DESC;`,
+        [patient_id])
     console.log(resultRows)
     return resultRows
     }
