@@ -665,7 +665,7 @@ app.post("/comments", async (req, res) => {
     }
 
     try{
-    const newComment = createNewComment(Patient_ID, Forum_ID, Comment_Text)  
+    const newComment = createComment(Patient_ID, Forum_ID, Comment_Text)  
     const event_Details = 'Created new comment'
     const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
     res.status(201).send(newComment)
