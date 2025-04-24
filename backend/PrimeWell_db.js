@@ -75,6 +75,17 @@ export async function getAllDoctors() {
     }
 }
 
+export async function getDoctors(id) {
+    try {
+    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase WHERE Doctor_ID = ?;`, [id]) 
+    return resultRows[0]
+    } 
+    catch (err) {
+        console.log("Error All Fetching Doctor Info: ", err)
+        throw err
+    }
+}
+
 export async function getDocPatients(Doctor_ID) { //patient info for doc
     try {
     const [resultRows] = await pool.query(`SELECT patientbase.First_Name, patientbase.Last_Name, 
@@ -316,7 +327,7 @@ export async function getAppointmentsDoctor(id) {
     try {
     const [resultRows] = await pool.query(`SELECT PB.First_Name, PB.Last_Name, A.Appointment_ID, 
         A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier FROM Appointments as A, PatientBase as PB 
-        WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID;
+        WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID and A.Appt_End = false;
     `, [id]) 
     return resultRows
     }
@@ -351,11 +362,17 @@ export async function getPrescriptionDoc(id) {
 }
 
 // Make the below a POST because it is sensitive? - FI
+<<<<<<< HEAD
 export async function getPreliminaries(id) { //order by for most recent, USE Appointment ID
     try{
     const [resultRows] = await pool.query(`SELECT Preliminary_ID, Symptoms FROM preliminaries 
         INNER JOIN patientbase on preliminaries.Patient_ID = patientbase.Patient_ID
         WHERE patientbase.Doctor_ID = ? ORDER BY Create_Date DESC;`, [id])
+=======
+export async function getPreliminaries(id) { //order by for most recent
+    try {
+    const [resultRows] = await pool.query(`SELECT patient_id, Symptoms FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
+>>>>>>> 8f591fe3d3afeaeeebf21bdc9e0e856eec606a3c
     return resultRows
     }
     catch (err) {
@@ -438,6 +455,19 @@ export async function getNearestPharms(zip) {
         return resultRows
     } catch (err) {
         console.log(err)
+        throw err
+    }
+}
+
+export async function getAppointmentInfo(appt_id) {
+    try {
+    const [resultRows] = await pool.query(`SELECT Appointments.Appt_Date, Appointments.Appt_Time, CONCAT(DoctorBase.First_Name, ' ', DoctorBase.Last_Name) AS Doctor, Appointments.Doctors_Feedback FROM Appointments, DoctorBase WHERE Appointments.Doctor_ID = DoctorBase.Doctor_ID AND Appointments.Appointment_ID = ?;`,
+        [appt_id])
+    console.log(resultRows)
+    return resultRows[0]
+    }
+    catch (err) {
+        console.log("Error Fetching Appointment Info: ", err)
         throw err
     }
 }
@@ -634,14 +664,41 @@ export async function createComment(Patient_ID, Forum_ID, Comment_Text) { //for 
     }
 }
 
+<<<<<<< HEAD
 export async function createChatMsg(Chatroom_ID, SenderID, SenderType, Message) { //for chatroom above -VC
+=======
+//same idea for chatroom and messages should apply for above - VC
+export async function createChatroom(Chatroom_Name) {
     try {
-    const [resultMsgCreate] = await pool.query(`INSERT INTO messages (Chatroom_ID, SenderID, SenderType, Message) 
-        VALUES (?, ?, ?, ?);`, [Chatroom_ID, SenderID, SenderType, Message])
+    const [resultChatCreate] = await pool.query(`INSERT INTO chatrooms (Chatroom_Name) VALUES (?);`, [Chatroom_Name])
+    return resultChatCreate
+    }
+    catch (err) {
+        console.log("Error Creating Chatroom: ", err)
+        throw err
+    }
+}
+
+export async function createChatMsg(Appointment_ID, SenderID, SenderName, SenderType, Message) { //for chatroom above -VC
+>>>>>>> 8f591fe3d3afeaeeebf21bdc9e0e856eec606a3c
+    try {
+    const [resultMsgCreate] = await pool.query(`INSERT INTO messages (Appointment_ID, SenderID, SenderName, SenderType, Message) 
+        VALUES (?, ?, ?, ?, ?);`, [Appointment_ID, SenderID,  SenderName, SenderType, Message])
     return resultMsgCreate
     }
     catch (err) {
         console.log("Error Creating Message: ", err)
+        throw err
+    }
+}
+
+export async function fetchAppointmentMessages(Appointment_ID) {
+    try {
+        const [resultMessageFetch] = await pool.query(`SELECT message, senderType, senderID, senderName, sent_at FROM Messages WHERE Appointment_ID = ? ORDER BY Sent_At;`, [Appointment_ID])
+        return resultMessageFetch
+    }
+    catch (err) {
+        console.log("Error Fetching Appointment Messages: ", err)
         throw err
     }
 }
@@ -817,6 +874,56 @@ export async function UpdateRequest(p_id, d_id, response, Appt_Date, Appt_Time) 
     }
 }
 
+export async function startAppointment(apptID) {
+    try {
+        const [startApptResult] = await pool.query(`
+            UPDATE Appointments SET Appt_Start = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
+        , [true, apptID])
+        console.log("Database update result:", startApptResult);
+        return startApptResult
+    } catch (err) {
+        console.log("Failed Updating Request: ", err)
+        throw err
+    }
+}
+
+export async function endAppointment(apptID) {
+    try {
+        const [endApptResult] = await pool.query(`
+            UPDATE Appointments SET Appt_End = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
+        , [true, apptID])
+        console.log("Database update result:", endApptResult);
+        return endApptResult
+    } catch (err) {
+        console.log("Failed Updating Request: ", err)
+        throw err
+    }
+}
+
+export async function fetchApptStartStatus(apptID) {
+    try {
+        const [startStatusResult] = await pool.query(`SELECT Appt_Start FROM Appointments WHERE Appointment_ID = ?;`, [apptID])
+        console.log("Database update result:", startStatusResult);
+        return startStatusResult[0] 
+    }
+    catch (err) {
+        console.log("Failed fetching Appt Start Status: ", err)
+        throw err
+    }
+}
+
+export async function fetchApptEndStatus(apptID) {
+    try {
+        const [startStatusResult] = await pool.query(`SELECT Appt_End FROM Appointments WHERE Appointment_ID = ?;`, [apptID])
+        console.log("Database update result:", startStatusResult);
+        return startStatusResult[0] 
+    }
+    catch (err) {
+        console.log("Failed fetching Appt Start Status: ", err)
+        throw err
+    }
+}
+
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (only doc schedule is extracted)
 export async function UpdateDoctorSchedule(id, entry) {
     try {
@@ -832,17 +939,42 @@ export async function UpdateDoctorSchedule(id, entry) {
     }
 }
 
+<<<<<<< HEAD
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (fixed for tiers, and IDs)
 export async function UpdateApptInfo(id, entry) {
     try {
     const [returnResult] = await pool.query(`
         UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
     , [entry, id])
+=======
+// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (Fixed for IDs)
+export async function UpdateApptStat(id, status) {
+    try {
+    const [returnResult] = await pool.query(`
+        UPDATE requests SET Request_Status = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Request_ID = ?;`
+    , [status, id])
+>>>>>>> 8f591fe3d3afeaeeebf21bdc9e0e856eec606a3c
     console.log("Database update result:", returnResult);
     return returnResult
     }
     catch (err) {
+<<<<<<< HEAD
         console.log("Failed Updating Appointment Info: ", err)
+=======
+        console.log("Failed Updating Appointment Status: ", err)
+        throw err
+    }
+}
+
+export async function UpdateDoctorFeedback(appointment_id, doctor_feedback) {
+    try {
+        const [returnedResult] = await pool.query(`Update appointments set doctors_feedback = ?, \`Last_Update\` = CURRENT_TIMESTAMP where appointment_id = ?`, 
+            [doctor_feedback, appointment_id])
+        console.log("Doctor Feedback Updated Result: ", returnedResult)
+        return returnedResult
+    } catch (err) {
+        console.log("Failed Updating Feedback: ", err)
+>>>>>>> 8f591fe3d3afeaeeebf21bdc9e0e856eec606a3c
         throw err
     }
 }
@@ -1029,3 +1161,4 @@ export async function deleteForumPost(id) {
         throw err
     }
 }
+
