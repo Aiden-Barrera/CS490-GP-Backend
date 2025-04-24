@@ -993,37 +993,6 @@ app.patch('/doctorSchedule/:id', async(req, res)=>{
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
-// MAKE ONLY AVAILABLE TO A PATIENT FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
-// MAKE THE BELOW THE DOCTORS FEEDBACK ENDPOINT FOR THE PATIENTS APPOINTMENT - FI
-app.patch('/appointment/:patient_id/:appt_id', async (req, res) => {
-    try {
-        const patient_id = req.params.patient_id;
-        const appt_id = req.params.appt_id;
-        let entry = req.body;
-
-        // Fields that are NOT allowed to be updated
-        const restrictedFields = ['Appointment_ID', 'Patient_ID', 'Doctor_ID', 'Date_Scheduled', 'Doctors_Feedback', 'Last_Update', 'Create_Date']; // Allow patient to change Appt_Date, Appt_Time and Tier_ID
-
-        // Remove restricted fields from the entry object
-        entry = Object.fromEntries(
-            Object.entries(entry).filter(([key]) => !restrictedFields.includes(key))
-        );
-
-        if (Object.keys(entry).length === 0) {
-            return res.status(400).json({ error: "No valid fields to update." });
-        }
-
-        const updateResult = await UpdateApptInfo(patient_id, appt_id, entry);
-        const event_Details = 'Edited Appointment info';
-        const audit = await genereateAudit(id, 'Patient', 'PATCH', event_Details);
-        
-        console.log(audit);
-        res.status(200).json(updateResult);
-    } catch (error) { 
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-});
-
 // MAKE ONLY AVAILABLE TO A DOCTOR FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
 app.patch('/prescription/:doctor_id', async(req, res)=>{ //Doctor's can change this - VC
     try {

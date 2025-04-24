@@ -973,21 +973,6 @@ export async function UpdateDoctorSchedule(id, entry) {
     }
 }
 
-// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (fixed for tiers, and IDs)
-export async function UpdateApptInfo(id, entry) {
-    try {
-    const [returnResult] = await pool.query(`
-        UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
-    , [entry, id])
-    console.log("Database update result:", returnResult);
-    return returnResult
-    }
-    catch (err) {
-        console.log("Failed Updating Appointment Info: ", err)
-        throw err
-    }
-}
-
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (Fixed for IDs)
 export async function UpdateApptStat(id, status) {
     try {
