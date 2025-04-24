@@ -4,14 +4,13 @@ import { addPatientDoc, createAppointment, createChatMsg, createComment, createD
     getDoctorSchedule, 
     getExerciseByClass, getForumPosts, getPatientAuth, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
     getReviewsTop, getReviewsByID, 
-    getReviewsComments,  getSurvey, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
+    getReviewsComments,  getSurvey, LogAttempt, rmPatientDoc, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
     UpdateRegiment,
     getPatientDoc,
     createApptRequest,
     getApptRequest,
     UpdateRequest,
     getDocPatients,
-    getPrescriptionDoc,
     getSurveyLatestDate,
     getAllDoctors,
     getPatientInfo,
@@ -79,8 +78,6 @@ server.listen(3000, () => {
     console.log('Server is running on port 3000')
 })
 
-<<<<<<< HEAD
-=======
 const apiKeyMiddleware = (req, res, next) => {
     const apiKey = req.headers['x-api-key']; // Or req.query.apiKey if you prefer query parameters
   
@@ -98,57 +95,20 @@ const apiKeyMiddleware = (req, res, next) => {
 
 // app.use(apiKeyMiddleware)
 
-const store = multer.diskStorage({
-    destination: (req, file, cb) => { //where to store (folder name ExerciseBankImages)
-        cb(null, './ExerciseBankImages') //cb = call back function
-    }, 
-
-    filename: (req, file, cb) => { //file name
-        console.log(file);
-        cb(null, path.extname(file.originalname))
-
-    }
-})
-const upload = multer({storage: store})
-
->>>>>>> 6039fcd1bb71829a735034af3e81a42716ed0b36
 app.use((err, req, res, next) => {
     console.error(err.stack)
     res.status(500).send('Something broke!')
   })
-
-const apiKeyMiddleware = (req, res, next) => {
-    const apiKey = req.headers['x-api-key']; // Or req.query.apiKey if you prefer query parameters
-
-    if (!apiKey) {
-      return res.status(401).json({ message: 'API key required' });
-    }
-
-    // In real applications, validate the API key against a database or environment variable
-    if (apiKey !== process.env.API_KEY) {
-      return res.status(403).json({ message: 'Invalid API key' });
-    }
-
-    next(); // Proceed to the next middleware or route handler
-};
 
 //GET DATA ----------------------------------------------------------------------------------------------
 
 /*ADDED: Gets for appointments, doctor schedule, perscription, preliminaries, survey, regiments, chat rooms<-messages, 
 and their (1st draft of) audit log entries*/
 
-app.get("/patient/:id", async (req, res) => {
-    const rows = await getPatients(req.params.id)
-    console.log("Patient Fetched: ", rows)
-    const event_Details = 'retrieval of patient data'
-    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details) 
-    res.send(rows)
-})
-
 app.get("/patientInfo/:id", async (req, res) => {
     const rows = await getPatientInfo(req.params.id)
     const event_Details = 'retrieval of patient profile'
-    const audit = await genereateAudit(Patient_ID, 'Patient', 'Get', event_Details)
+    const audit = await genereateAudit(req.params.id, 'Patient', 'Get', event_Details)
     res.send(rows)
 })
 
@@ -555,28 +515,12 @@ app.post("/doctor", async (req, res) => {
         console.log("Doctor Info: ", newDoctor)
         const event_Details = 'Created new Doctor'
         const audit = await genereateAudit(newDoctor['doctor_id'], 'Doctor', 'POST', event_Details)
+        const tiers = await createDoctorTiers(newDoctor['doctor_id'])
         res.status(201).send(newDoctor)
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
-
-/*app.post("/tiers", async (req, res) => {
-    const {Doctor_ID, Cost} = req.body
-
-    if (!Doctor_ID |!Cost) {
-        return res.status(400).json({ error: "Missing required information" });
-    }
-
-    try {
-        const newDoctor = await createDoctorTiers(Doctor_ID, Cost)
-        const event_Details = 'Created new Doctor Tiers'
-        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'POST', event_Details)
-        res.status(201).send(newDoctor)
-    } catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})*/
 
 app.post("/doctorSchedule", async (req, res) => {
     const {Doctor_ID, Doctor_Schedule} = req.body
@@ -700,7 +644,7 @@ for this function to work each entry should be labeled as such:
 </form>
 */
 // -VC
-app.post("/exercisebank", upload.single('image'), async (req, res) => { //User created exercise from post - VC
+app.post("/exercisebank", async (req, res) => { //User created exercise from post - VC
     const { Patient_ID, Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps } = req.body
     if (!Patient_ID || !Exercise_Name || !Muscle_Group || !Exercise_Description || !Exercise_Class || !Sets || !Reps) {
         return res.status(400).json({ error: "Missing required information" });
@@ -714,6 +658,10 @@ app.post("/exercisebank", upload.single('image'), async (req, res) => { //User c
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
+
+
+// ----------------------------------------------- stop her for tests ----------------------------------------------------------- VC
+
 
 // Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
 app.post("/forumPosts", async (req, res) => {
@@ -1241,13 +1189,6 @@ app.delete("/doctor", async(req, res) => {
     const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'DELETE', event_Details)
     res.status(204).send(deleteResult)
 })
-
-/*app.delete("/tiers", async(req, res) => {
-    const deleteResult = await deleteDoctor(req.body.Doctor_ID)
-    const event_Details = 'Doctor Tiers has been deleted'
-    const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})*/
 
 app.delete("/doctorSchedule", async(req, res) => {
     const deleteResult = await deleteDoctor(req.body.Doctor_ID)

@@ -14,6 +14,18 @@ const pool = mysql.createPool({
 //GET DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with type GET
 
+export async function getPatients(id) {
+    
+    try {
+    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name FROM PatientBase WHERE Patient_ID = ?;`, [id])
+    return resultRows[0]
+    }
+    catch (err) {
+        console.log("Error Fetching Patient Info: ", err)
+        throw err
+    }
+}
+
 // These endpoints are insecure but I need them for allowing user to view their profile
 export async function getPatientInfo(id) {
     try {
@@ -75,10 +87,7 @@ export async function getAllDoctors() {
     }
 }
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 6039fcd1bb71829a735034af3e81a42716ed0b36
 export async function getDoctors(id) {
     try {
     const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase WHERE Doctor_ID = ?;`, [id]) 
@@ -366,24 +375,10 @@ export async function getPrescriptionDoc(id) {
 }
 
 // Make the below a POST because it is sensitive? - FI
-<<<<<<< HEAD
-<<<<<<< HEAD
-export async function getPreliminaries(id) { //order by for most recent, USE Appointment ID
-    try{
-    const [resultRows] = await pool.query(`SELECT Preliminary_ID, Symptoms FROM preliminaries 
-        INNER JOIN patientbase on preliminaries.Patient_ID = patientbase.Patient_ID
-        WHERE patientbase.Doctor_ID = ? ORDER BY Create_Date DESC;`, [id])
-=======
-export async function getPreliminaries(id) { //order by for most recent
-    try {
-    const [resultRows] = await pool.query(`SELECT patient_id, Symptoms FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
->>>>>>> 8f591fe3d3afeaeeebf21bdc9e0e856eec606a3c
-=======
 export async function getPreliminaries(id) { //order by for most recent
     try {
     const [resultRows] = await pool.query(`SELECT patient_id, Symptoms FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
 
->>>>>>> 6039fcd1bb71829a735034af3e81a42716ed0b36
     return resultRows
     }
     catch (err) {
@@ -561,13 +556,13 @@ export async function createDoctor(License_Serial,First_Name,Last_Name,Specialty
     }
 }
 
-export async function createDoctorTiers(Doctor_ID, Cost) {
+export async function createDoctorTiers(Doctor_ID) {
     try {
     const [resultDoctorTiersCreate] = await pool.query(`
-        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Basic', 'General Consulatation', ?);
-        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Plus', 'Elevated Servicing', ?);
-        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Premium', 'Premium Doctor-Patient Facilities', ?);`, 
-        [Doctor_ID, Cost, Doctor_ID, Cost * 1.25, Doctor_ID, Cost * 1.50])
+        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Basic', 'General Consulatation', 100.00);
+        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Plus', 'Elevated Servicing', 200.00);
+        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Premium', 'Premium Doctor-Patient Facilities', 300.00);`, 
+        [Doctor_ID, Doctor_ID, Doctor_ID])
     return resultDoctorTiersCreate
     } 
     catch (err) {
@@ -675,9 +670,6 @@ export async function createComment(Patient_ID, Forum_ID, Comment_Text) { //for 
     }
 }
 
-<<<<<<< HEAD
-export async function createChatMsg(Chatroom_ID, SenderID, SenderType, Message) { //for chatroom above -VC
-=======
 //same idea for chatroom and messages should apply for above - VC
 export async function createChatroom(Chatroom_Name) {
     try {
@@ -691,7 +683,6 @@ export async function createChatroom(Chatroom_Name) {
 }
 
 export async function createChatMsg(Appointment_ID, SenderID, SenderName, SenderType, Message) { //for chatroom above -VC
->>>>>>> 8f591fe3d3afeaeeebf21bdc9e0e856eec606a3c
     try {
     const [resultMsgCreate] = await pool.query(`INSERT INTO messages (Appointment_ID, SenderID, SenderName, SenderType, Message) 
         VALUES (?, ?, ?, ?, ?);`, [Appointment_ID, SenderID,  SenderName, SenderType, Message])
@@ -950,37 +941,16 @@ export async function UpdateDoctorSchedule(id, entry) {
     }
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-// THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (fixed for tiers, and IDs)
-export async function UpdateApptInfo(id, entry) {
-    try {
-    const [returnResult] = await pool.query(`
-        UPDATE appointments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Appointment_ID = ?;`
-    , [entry, id])
-=======
-=======
->>>>>>> 6039fcd1bb71829a735034af3e81a42716ed0b36
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (Fixed for IDs)
 export async function UpdateApptStat(id, status) {
     try {
     const [returnResult] = await pool.query(`
         UPDATE requests SET Request_Status = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Request_ID = ?;`
     , [status, id])
-<<<<<<< HEAD
->>>>>>> 8f591fe3d3afeaeeebf21bdc9e0e856eec606a3c
-=======
->>>>>>> 6039fcd1bb71829a735034af3e81a42716ed0b36
     console.log("Database update result:", returnResult);
     return returnResult
     }
     catch (err) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-        console.log("Failed Updating Appointment Info: ", err)
-=======
-=======
->>>>>>> 6039fcd1bb71829a735034af3e81a42716ed0b36
         console.log("Failed Updating Appointment Status: ", err)
         throw err
     }
@@ -994,10 +964,6 @@ export async function UpdateDoctorFeedback(appointment_id, doctor_feedback) {
         return returnedResult
     } catch (err) {
         console.log("Failed Updating Feedback: ", err)
-<<<<<<< HEAD
->>>>>>> 8f591fe3d3afeaeeebf21bdc9e0e856eec606a3c
-=======
->>>>>>> 6039fcd1bb71829a735034af3e81a42716ed0b36
         throw err
     }
 }
@@ -1184,4 +1150,3 @@ export async function deleteForumPost(id) {
         throw err
     }
 }
-
