@@ -1,14 +1,15 @@
 import express from 'express'
-import { addPatientDoc, createAppointment, createChatMsg, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPerscription, createPharmacy, 
-    createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePerscription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getChatMesseges, getComments_id, getDoctorAuth, 
+import { addPatientDoc, createAppointment, createChatMsg, createChatroom, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPerscription, createPharmacy, 
+    createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePerscription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getAppointmentsPatient, getChatMesseges, getComments_id, getDoctorAuth, getDoctors, 
     getDoctorSchedule, 
-    getExerciseByClass, getForumPosts, getPatientAuth, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
+    getExercises, getExerciseByClass, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
     getReviewsTop, getReviewsByID, 
     getReviewsComments,  getSurvey, LogAttempt, rmPatientDoc, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
     UpdateRegiment,
     getPatientDoc,
     createApptRequest,
     getApptRequest,
+    UpdateApptStat,
     UpdateRequest,
     getDocPatients,
     getSurveyLatestDate,
@@ -18,15 +19,15 @@ import { addPatientDoc, createAppointment, createChatMsg, createComment, createD
     getPharmInfo, getDocID,
     getNearestPharms, getTimeslot, 
     rmPatientAppt,
-    checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages, getAppointmentInfo, 
+    checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages, getAppointmentInfo, appendToRegiment, 
     UpdateDoctorFeedback,
-    fetchApptEndStatus} from './PrimeWell_db.js'
-
+    fetchApptEndStatus, getPillsFromPharm, clearPatientRegiment} from './PrimeWell_db.js'
 
 
 
 
 import cors from 'cors'
+import multer from 'multer'
 import dotenv from 'dotenv'
 import http from "http"
 import {Server} from "socket.io"
@@ -105,6 +106,14 @@ app.use((err, req, res, next) => {
 /*ADDED: Gets for appointments, doctor schedule, perscription, preliminaries, survey, regiments, chat rooms<-messages, 
 and their (1st draft of) audit log entries*/
 
+app.get("/patient/:id", async (req, res) => {
+    const rows = await getPatients(req.params.id)
+    console.log("Patient Fetched: ", rows)
+    const event_Details = 'retrieval of patient data'
+    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details) 
+    res.send(rows)
+})
+
 app.get("/patientInfo/:id", async (req, res) => {
     const rows = await getPatientInfo(req.params.id)
     const event_Details = 'retrieval of patient profile'
@@ -112,36 +121,26 @@ app.get("/patientInfo/:id", async (req, res) => {
     res.send(rows)
 })
 
-app.post("/doctorInfo", async (req, res) => {
-    const {Doctor_ID} = req.body;
-    if (!Doctor_ID) {
-        return res.status(400).json({ error: "Doctor_ID required" });
-    }
-    try{
-        const rows = await getDoctorInfo(Doctor_ID)
-        const event_Details = 'retrieval of patient profile'
-        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'Get', event_Details)
-        res.send(rows)
-    } 
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
+app.get("/doctorInfo/:id", async (req, res) => {
+    const rows = await getDoctorInfo(req.params.id)
+    const event_Details = 'retrieval of patient profile'
+    const audit = await genereateAudit(req.params.id, 'Doctor', 'Get', event_Details)
+    res.send(rows)
 })
 
-app.post("/pharmInfo", async (req, res) => {
-    const {Pharm_ID} = req.body;
-    if (!Pharm_ID) {
-        return res.status(400).json({ error: "Pharm_ID required" });
-    }
-    try {
-        const rows = await getPharmInfo(Pharm_ID)
-        const event_Details = 'retrieval of patient profile'
-        const audit = await genereateAudit(Pharm_ID, 'Pharmacist', 'Get', event_Details)
-        res.send(rows)
-    } 
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
+app.get("/pharmInfo/:id", async (req, res) => {
+    const rows = await getPharmInfo(req.params.id)
+    const event_Details = 'retrieval of patient profile'
+    const audit = await genereateAudit(req.params.id, 'Pharmacist', 'Get', event_Details)
+    res.send(rows)
+})
+
+// MAKE THIS A POST REQUEST BECAUSE IT IS SENSITIVE - FI
+app.get("/patientDoc/:id", async (req, res) => {
+    const rows = await getPatientDoc(req.params.id)
+    const event_Details = 'retrieval of patient\'s doctor'
+    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details) 
+    res.send(rows)
 })
 
 app.get("/doctor/listAll", async (req, res) => {
@@ -203,6 +202,11 @@ app.get("/pillbank", async (req, res) => {
     res.send(rows)
 })
 
+app.get("/exercisebank", async (req, res) => {
+    const rows = await getExercises()
+    res.send(rows)
+})
+
 app.post("/exerciseByClass", async (req, res) => {
     try {
         const { Exercise_Class } = req.body
@@ -214,20 +218,11 @@ app.post("/exerciseByClass", async (req, res) => {
     }
 })
 
-app.post("/regiment", async (req, res) => { //based on patient -VC
-    const {Patient_ID} = req.body
-    if (!Patient_ID) {
-        return res.status(400).json({ error: "Patient_ID required" });
-    }
-    try {
-        const rows = await getRegiment(Patient_ID)
-        const event_Details = 'retrieval of patient regiment'
-        const audit = await genereateAudit(Patient_ID, 'Patient', 'GET', event_Details)
-        res.send(rows)
-    }
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
+app.get("/regiment/:id", async (req, res) => { //based on patient -VC
+    const rows = await getRegiment(req.params.id)
+    const event_Details = 'retrieval of patient regiment'
+    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+    res.send(rows)
 })
 
 app.get("/forumPosts", async (req, res) => {
@@ -235,18 +230,9 @@ app.get("/forumPosts", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/comments", async (req, res) => { //by post - VC
-    const {Patient_ID} = req.body
-    if (!Patient_ID) {
-        return res.status(400).json({ error: "params required" });
-    }
-    try {
-    const rows = await getComments_id(Patient_ID)
+app.get("/comments/:id", async (req, res) => { //by post - VC
+    const rows = await getComments_id(req.params.id)
     res.send(rows)
-    }
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
 })
 
 app.get("/reviews", async (req, res) => {
@@ -254,35 +240,27 @@ app.get("/reviews", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/reviews/Doctor", async (req, res) => {
-    const {Doctor_ID} = req.body;
-    if (!Doctor_ID) {
-        return res.status(400).json({ error: "Doctor_ID required" });
-    }
+app.get("/reviews/:id", async (req, res) => {
+    const rows = await getReviewsByID(req.params.id)
+    res.send(rows)
+})
+    
+app.get("/appointment/patient/:id", async (req, res) => {
     try {
-        const rows = await getReviewsByID(Doctor_ID)
+        const rows = await getAppointmentsPatient(req.params.id)
+        const event_Details = 'retrieval of appointment data'
+        const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
         res.send(rows)
-    } 
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
+    } catch (err) {
+        console.log("Failed Fetching Appointments for Patient: ", err)
     }
 })
 
-app.post("/appointment/doctor", async (req, res) => {
-    const {Doctor_ID} = req.body;
-    if (!Doctor_ID) {
-        return res.status(400).json({ error: "Doctor_ID required" });
-    }
-    try {
-        const { Doctor_ID } = await getDocID(email, pw)
-        const rows = await getAppointmentsDoctor(Doctor_ID)
-        const event_Details = 'retrieval of appointment data'
-        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
-        res.send(rows)
-    }
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
+app.get("/appointment/doctor/:id", async (req, res) => {
+    const rows = await getAppointmentsDoctor(req.params.id)
+    const event_Details = 'retrieval of appointment data'
+    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
+    res.send(rows)
 })
 
 app.get("/request/:id", async (req, res) => { // Used for retrieving a given doctor's appointments, using their Doctor_ID
@@ -292,20 +270,11 @@ app.get("/request/:id", async (req, res) => { // Used for retrieving a given doc
     res.send(rows)
 })
 
-app.post("/prescription", async (req, res) => { //based on patient -VC
-    const {Patient_ID} = req.body;
-    if (!Patient_ID) {
-        return res.status(400).json({ error: "Patient_ID required" });
-    }
-    try {
-        const rows = await getPrescription(Patient_ID)
-        const event_Details = 'retrieval of perscription'
-        const audit = await genereateAudit(Patient_ID, 'Patient', 'GET', event_Details)
-        res.send(rows)
-    }
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
+app.get("/prescription/:id", async (req, res) => { //based on patient -VC
+    const rows = await getPrescription(req.params.id)
+    const event_Details = 'retrieval of perscription'
+    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+    res.send(rows)
 })
 
 // FOR RABBIT MQ - VC
@@ -326,7 +295,7 @@ app.post("/prescription", async (req, res) => { //based on patient -VC
     }
 })*/
 
-// Why are the params weird? ----CHANGE
+// Why are the params weird?
 // MAKE THIS A POST REQUEST BECAUSE IT IS SENSITIVE - FI
 app.get("/preliminaries/:id", async (req, res) => {
     try {
@@ -340,9 +309,8 @@ app.get("/preliminaries/:id", async (req, res) => {
 })
 
 // Change this to a post because it is senstitive
-app.post("/chatroomMsgs", async (req, res) => { //by chatroom_id, got from chatroom lists above - VC
-    const {Chatroom_ID} = req.body
-    const rows = await getChatMesseges(Chatroom_ID)
+app.get("/chatroomMsgs/:id", async (req, res) => { //by chatroom_id - VC
+    const rows = await getChatMesseges(req.params.id)
     res.send(rows)
 })
 
@@ -366,25 +334,36 @@ app.get("/forumPosts/comments", async (req, res) => {
 })
 
 // Make post because it is sensitive
-app.post("/patientsurvey", async (req, res) => {
-    const {Patient_ID} = req.body;
-    if (!Patient_ID) {
-        return res.status(400).json({ error: "Patient_ID required" });
-    }
-    try{
-        const rows = await getSurvey(Patient_ID)
-        const event_Details = 'retrieval of Patient data for graph'
-        const audit = await genereateAudit(Patient_ID, 'Patient', 'GET', event_Details)
-        res.send(rows)
-    }
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
+app.get("/patientsurvey/:id", async (req, res) => {
+    const rows = await getSurvey(req.params.id)
+    const event_Details = 'retrieval of Patient data for graph'
+    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+    res.send(rows)
+})
+
+app.get("/patientsurveyAuth/:id", async (req, res) => {  //returns true (if posting is ok) or false
+    const rows = await getAuthSurvey(req.params.id)
+    const event_Details = 'check to see if patient can post survey'
+    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+    const tday = new Date();
+    if (tday.toISOString().substring(0, 10) != rows[0]?.Survey_Date.toISOString().substring(0, 10)) res.send(tday)
+        else res.send('false')
+    //res.send(rows)
 })
 
 app.get("/appointmentInfo/:id", async (req, res) => {  
     try {
     const rows = await getAppointmentInfo(req.params.id)
+    res.send(rows)
+    }
+    catch (err) {
+        console.log("Failed Fetching Appointment Info: ", err)
+    }
+})
+
+app.get("/pharmacyPills/:id", async (req, res) => {  
+    try {
+    const rows = await getPillsFromPharm(req.params.id)
     res.send(rows)
     }
     catch (err) {
@@ -516,6 +495,7 @@ app.post("/doctor", async (req, res) => {
         const event_Details = 'Created new Doctor'
         const audit = await genereateAudit(newDoctor['doctor_id'], 'Doctor', 'POST', event_Details)
         const tiers = await createDoctorTiers(newDoctor['doctor_id'])
+        console.log(tiers)
         res.status(201).send(newDoctor)
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
@@ -909,9 +889,9 @@ app.post("/payment", async (req, res) => {
 
 // BELOW IS CORRECTED
 // ONLY MAKE VISIBLE FROM PATIENT PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
-app.patch('/patient', async (req, res) => {
+app.patch('/patient/:id', async (req, res) => {
     try {
-        const id = req.body.Patient_ID;
+        const id = req.params.id;
         let entry = req.body;
 
         // Fields that are NOT allowed to be updated
@@ -938,9 +918,10 @@ app.patch('/patient', async (req, res) => {
 });
 
 // ONLY MAKE VISIBLE FROM Patient Portal VIA FRONTEND OR ADD AUTHENTICATION - FI
-app.patch('/patient/addDoc', async(req, res)=>{ //Give patient a doctor -VC
+app.patch('/patient/:id/addDoc', async(req, res)=>{ //Give patient a doctor -VC
     try {
-        const {Doctor_ID, Patient_ID} = req.body
+        const {Doctor_ID} = req.body
+        const Patient_ID = req.params.id
         const updateResult = await addPatientDoc(Patient_ID, Doctor_ID)
         const event_Details = 'Added Doctor to Patient info'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details)
@@ -964,9 +945,9 @@ app.patch('/patientDropDoctor/removeDoc', async(req, res)=>{ //Remove patient do
 })
 
 // ONLY MAKE VISIBLE FROM DOCTOR PORTAL VIA FRONTEND OR ADD AUTHENTICATION- FI
-app.patch('/doctor', async (req, res) => {
+app.patch('/doctor/:id', async (req, res) => {
     try {
-        const id = req.body.Doctor_ID;
+        const id = req.params.id;
         let entry = req.body;
 
         // Fields that are NOT allowed to be updated
@@ -993,9 +974,10 @@ app.patch('/doctor', async (req, res) => {
 });
 
 // MAKE ONLY AVAILABLE TO A DOCTOR FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
-app.patch('/doctorSchedule', async(req, res)=>{
+app.patch('/doctorSchedule/:id', async(req, res)=>{
     try {
-        const { Doctor_Schedule, Doctor_ID } = req.body
+        const { Doctor_Schedule } = req.body
+        const Doctor_ID = req.params.id
         const updateResult = await UpdateDoctorSchedule(Doctor_ID, Doctor_Schedule)
         const event_Details = 'Edited Doctor Schedule info'
         const audit = await genereateAudit(Doctor_ID, 'Doctor', 'PATCH', event_Details)
@@ -1005,7 +987,7 @@ app.patch('/doctorSchedule', async(req, res)=>{
 })
 
 // MAKE ONLY AVAILABLE TO A DOCTOR FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
-app.patch('/prescription', async(req, res)=>{ //Doctor's can change this - VC
+app.patch('/prescription/:doctor_id', async(req, res)=>{ //Doctor's can change this - VC
     try {
         const id = req.body.Perscription_ID
         const entry = req.body
@@ -1031,9 +1013,9 @@ app.patch('/prescription', async(req, res)=>{ //Doctor's can change this - VC
 })
 
 // MAKE ONLY AVAILABLE TO SUPER ADMIN FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
-app.patch('/pillbank', async(req, res)=>{
+app.patch('/pillbank/:pill_id', async(req, res)=>{
     try {
-        const Pill_ID = req.body.pill_id
+        const Pill_ID = req.params.pill_id
         const entry = req.body
         
         // Fields that are NOT allowed to be updated
@@ -1056,29 +1038,33 @@ app.patch('/pillbank', async(req, res)=>{
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
-app.patch('/regiments', async(req, res)=>{
+app.patch('/regiments/:id', async (req, res) => {
     try {
-        const Patient_ID = req.body.Patient_ID
-        const entry = req.body
+      const Patient_ID = req.params.id;
+      const newRegimentData = req.body.Regiment;
+  
+      const updateResult = await appendToRegiment(Patient_ID, newRegimentData);
+      const event_Details = 'Edited Regiment';
+      await genereateAudit(Patient_ID, 'Patient', 'PATCH', event_Details);
+  
+      res.status(200).send(updateResult);
+    } catch (error) {
+      console.error("PATCH error:", error);
+      res.status(500).json({ error: error.message || "Internal server error" });
+    }
+});
+  
+app.patch('/regimentClear/:id', async (req, res) => {
+    try {
+        const Patient_ID = req.params.id
 
-        // Fields that are NOT allowed to be updated
-        const restrictedFields = ['Patient_ID', 'Last_Update', 'Create_Date']; // Allows Patient to change their regiment
+        const clearRegiment = await clearPatientRegiment(Patient_ID)
 
-        // Remove restricted fields from the entry object
-        entry = Object.fromEntries(
-            Object.entries(entry).filter(([key]) => !restrictedFields.includes(key))
-        );
-
-        if (Object.keys(entry).length === 0) {
-            return res.status(400).json({ error: "No valid fields to update." });
-        }
-
-        const updateResult = await UpdateRegiment(Patient_ID, entry)
-        const event_Details = 'Edited Regiment'
-        const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'PATCH', event_Details)
-        res.status(201).send(updateResult)
-        }
-    catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
+        res.status(200).send(clearRegiment)
+    } catch (err) {
+        console.error("PATCH error:", error);
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
 })
 
 app.patch('/rejectRequest', async(req, res) => {
