@@ -1033,7 +1033,7 @@ app.patch('/pillbank/:pill_id', async(req, res)=>{
 app.patch('/regiments/:id', async(req, res)=>{
     try {
         const Patient_ID = req.params.id
-        const entry = req.body
+        let entry = req.body
 
         // Fields that are NOT allowed to be updated
         const restrictedFields = ['Patient_ID', 'Last_Update', 'Create_Date']; // Allows Patient to change their regiment
