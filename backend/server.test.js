@@ -5,11 +5,7 @@ import app from './server.js'
 
 })*/
 
-<<<<<<< HEAD
 describe("/patientInfo/:id", ()=>{
-=======
-describe("/patient/:id", ()=>{
->>>>>>> 3eac44a3d82e3b64db52a10e9e8c5f1eee27a3d5
     test("should return rows", async ()=>{
         const response = await request(app).get("/patientInfo/2").send({})
         expect(response.statusCode).toBe(200)
@@ -34,9 +30,8 @@ describe("/pharmInfo/:id", ()=>{
     test("should return rows", async ()=>{
         const response = await request(app).get("/pharmInfo/2").send({})
         expect(response.statusCode).toBe(200)
-        expect(response['pharm_id']).toBeDefined()
-        //expect(response['compnay_name']).toBeDefined()
-        //expect(response['zip']).toBeDefined()
+        expect(response.body).toBeDefined()
+        expect(response.headers['content-type']).toEqual(expect.stringContaining("json"))
         //expect(response.body).toStrictEqual({})
     })
 })
@@ -45,8 +40,38 @@ describe("/doctor/listAll", ()=>{
     test("should return rows", async ()=>{
         const response = await request(app).get("/doctor/listAll").send({})
         expect(response.statusCode).toBe(200)
+        expect(response.body).toBeDefined()
         expect(response.headers['content-type']).toEqual(expect.stringContaining("json"))
         //expect(response.body).toStrictEqual({})
+    })
+})
+
+describe("/doctorPatients", ()=>{
+    test("should return rows", async ()=>{
+        const response = await request(app).post("/doctorPatients").send({"Doctor_ID": "2"})
+        expect(response.statusCode).toBe(200)
+        expect(response.body).toBeDefined()
+        expect(response.headers['content-type']).toEqual(expect.stringContaining("json"))
+        //expect(response.body).toStrictEqual({})
+    })
+
+    test("should result in an error", async ()=>{
+        const response = await request(app).post("/doctorPatients").send({})
+        expect(response.statusCode).toBe(400)
+    })
+})
+
+describe("/doctorSchedule", ()=>{
+    test("should return rows", async ()=>{
+        const response = await request(app).post("/doctorSchedule").send({"Doctor_ID": "2", "day": "Monday"})
+        expect(response.statusCode).toBe(200)
+        expect(response.body).toStrictEqual(["9:00-10:00", "10:00-11:00", "11:00-12:00", "12:00-1:00", "2:00-3:00"])
+        //expect(response.body).toStrictEqual({})
+    })
+
+    test("should result in an error", async ()=>{
+        const response = await request(app).post("/doctorSchedule").send({"Doctor_ID": "2"})
+        expect(response.statusCode).toBe(400)
     })
 })
 
@@ -63,10 +88,9 @@ GET DATA
 /patientInfo/:id X
 /doctorInfo X
 /pharmInfo X
-/doctor/listAll
-/doctor/:id
-/doctorPatients
-/doctorSchedule
+/doctor/listAll X
+/doctorPatients X
+/doctorSchedule X
 /pharmacies
 /pillbank
 /exerciseByClass

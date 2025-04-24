@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">15.98% </span>
+                <span class="strong">18.22% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>101/632</span>
+                <span class='fraction'>115/631</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">1.25% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/240</span>
+                <span class='fraction'>3/240</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">5.81% </span>
+                <span class="strong">8.13% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/86</span>
+                <span class='fraction'>7/86</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">15.98% </span>
+                <span class="strong">18.22% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>101/632</span>
+                <span class='fraction'>115/631</span>
             </div>
         
             
@@ -1214,8 +1214,7 @@
 <a name='L1149'></a><a href='#L1149'>1149</a>
 <a name='L1150'></a><a href='#L1150'>1150</a>
 <a name='L1151'></a><a href='#L1151'>1151</a>
-<a name='L1152'></a><a href='#L1152'>1152</a>
-<a name='L1153'></a><a href='#L1153'>1153</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1152'></a><a href='#L1152'>1152</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1349,7 +1348,6 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1366,15 +1364,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1382,15 +1380,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -2500,7 +2498,6 @@ app.get("/pharmInfo/:id", async (req, res) =&gt; {
     const rows = await getPharmInfo(req.params.id)
     const event_Details = 'retrieval of patient profile'
     const audit = await genereateAudit(req.params.id, 'Pharmacist', 'Get', event_Details)
-    console.log(rows['pharm_id'])
     res.send(rows)
 })
 &nbsp;
@@ -2517,32 +2514,32 @@ app.get("/doctor/listAll", async (req, res) =&gt; {
     res.send(rows)
 })
 &nbsp;
-app.post("/doctorPatients", <span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
-    const {Doctor_ID} = <span class="cstat-no" title="statement not covered" >req.body;</span>
-<span class="cstat-no" title="statement not covered" >    if (!Doctor_ID) {</span>
+app.post("/doctorPatients", async (req, res) =&gt; {
+    const {Doctor_ID} = req.body;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!Doctor_ID) {
 <span class="cstat-no" title="statement not covered" >        return res.status(400).json({ error: "Doctor_ID required" });</span>
     }
-<span class="cstat-no" title="statement not covered" >    try {</span>
-        const rows = <span class="cstat-no" title="statement not covered" >await getDocPatients(Doctor_ID)</span>
-        const event_Details = <span class="cstat-no" title="statement not covered" >'retrieval of doctor\'s patients'</span>
-        const audit = <span class="cstat-no" title="statement not covered" >await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)</span>
-<span class="cstat-no" title="statement not covered" >        res.send(rows)</span>
+    try {
+        const rows = await getDocPatients(Doctor_ID)
+        const event_Details = 'retrieval of doctor\'s patients'
+        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
+        res.send(rows)
     } 
     catch (error) {
 <span class="cstat-no" title="statement not covered" >        res.status(500).json({ error: error.message || "Internal server error" })</span>
     }
 })
 &nbsp;
-app.post("/doctorSchedule", <span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; { // FIX? -VC
-    const {Doctor_ID, day} = <span class="cstat-no" title="statement not covered" >req.body;</span>
-<span class="cstat-no" title="statement not covered" >    if (!Doctor_ID | !day) {</span>
-<span class="cstat-no" title="statement not covered" >        return res.status(400).json({ error: "params required" });</span>
+app.post("/doctorSchedule", async (req, res) =&gt; { // FIX? -VC
+    const {Doctor_ID, day} = req.body;
+    if (!Doctor_ID | !day) {
+        return res.status(400).json({ error: "params required" });
     }
-<span class="cstat-no" title="statement not covered" >    try {</span>
-        const rows = <span class="cstat-no" title="statement not covered" >await getDoctorSchedule(Doctor_ID, day)</span>
-        const event_Details = <span class="cstat-no" title="statement not covered" >'retrieval of doctor schedule data'</span>
-        const audit = <span class="cstat-no" title="statement not covered" >await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)</span>
-<span class="cstat-no" title="statement not covered" >        res.send(rows)</span>
+    try {
+        const rows = await getDoctorSchedule(Doctor_ID, day)
+        const event_Details = 'retrieval of doctor schedule data'
+        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
+        res.send(rows)
     } 
     catch (error) {
 <span class="cstat-no" title="statement not covered" >        res.status(500).json({ error: error.message || "Internal server error" })</span>
@@ -3526,7 +3523,7 @@ export default app</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-04-24T19:55:50.150Z
+                at 2025-04-24T21:18:23.101Z
             </div>
         <script src="prettify.js"></script>
         <script>
