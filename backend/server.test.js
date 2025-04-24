@@ -9,10 +9,6 @@ import app from './server.js'
 
 })*/
 
-afterAll((done) => {
-    done();
-  });
-
 describe("/patient/:id", ()=>{
     test("should return rows", async ()=>{
         const response = await request(app).get("/patient/2").send({})
