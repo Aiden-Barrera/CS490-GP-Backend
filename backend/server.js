@@ -1,8 +1,8 @@
 import express from 'express'
-import { addPatientDoc, createAppointment, createChatMsg, createChatroom, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPerscription, createPharmacy, 
-    createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePerscription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getAppointmentsPatient, getChatMesseges, getComments_id, getDoctorAuth, getDoctors, 
+import { addPatientDoc, createAppointment, createChatMsg, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPerscription, createPharmacy, 
+    createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePerscription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getChatMesseges, getComments_id, getDoctorAuth, 
     getDoctorSchedule, 
-    getExercises, getExerciseByClass, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
+    getExercises, getExerciseByClass, getForumPosts, getPatientAuth, getPatients, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
     getReviewsTop, getReviewsByID, 
     getReviewsComments,  getSurvey, LogAttempt, rmPatientDoc, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
     UpdateRegiment,
@@ -147,14 +147,6 @@ app.get("/doctor/listAll", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/doctor/:id", async (req, res) => {
-    const rows = await getDoctors(req.params.id)
-    console.log("Doctor Fetched: ", rows)
-    const event_Details = 'retrieval of doctor data'
-    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
-    res.send(rows)
-})
-
 app.post("/doctorPatients", async (req, res) => {
     const {Doctor_ID} = req.body;
     if (!Doctor_ID) {
@@ -185,13 +177,6 @@ app.post("/doctorSchedule", async (req, res) => { // FIX? -VC
     catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" })
     }
-})
-
-app.get("/pharmacies", async (req, res) => {
-    const rows = await getPharmacies()
-    const event_Details = 'retrieval of pharmacy data'
-    const audit = await genereateAudit(0, 'Pharmacist', 'GET', event_Details)
-    res.send(rows)
 })
 
 app.get("/pillbank", async (req, res) => {
@@ -242,17 +227,6 @@ app.get("/reviews", async (req, res) => {
 app.get("/reviews/:id", async (req, res) => {
     const rows = await getReviewsByID(req.params.id)
     res.send(rows)
-})
-    
-app.get("/appointment/patient/:id", async (req, res) => {
-    try {
-        const rows = await getAppointmentsPatient(req.params.id)
-        const event_Details = 'retrieval of appointment data'
-        const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
-        res.send(rows)
-    } catch (err) {
-        console.log("Failed Fetching Appointments for Patient: ", err)
-    }
 })
 
 app.get("/appointment/doctor/:id", async (req, res) => {
@@ -338,16 +312,6 @@ app.get("/patientsurvey/:id", async (req, res) => {
     const event_Details = 'retrieval of Patient data for graph'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
     res.send(rows)
-})
-
-app.get("/patientsurveyAuth/:id", async (req, res) => {  //returns true (if posting is ok) or false
-    const rows = await getAuthSurvey(req.params.id)
-    const event_Details = 'check to see if patient can post survey'
-    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
-    const tday = new Date();
-    if (tday.toISOString().substring(0, 10) != rows[0]?.Survey_Date.toISOString().substring(0, 10)) res.send(tday)
-        else res.send('false')
-    //res.send(rows)
 })
 
 app.get("/appointmentInfo/:id", async (req, res) => {  
@@ -614,31 +578,6 @@ app.post("/fetchApptEndStatus", async (req, res) => {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
-/*
-for this function to work each entry should be labeled as such:
-<form method="POST" action="/upload" enctype="multipart/form-data"> <!--post, /upload-->
-        <input type="text" name="desc">  ------- req.body (each attribute has it's proper label)
-        <input type="file" name="image"> ------- req.file.originalname
-        <input type="submit">
-</form>
-*/
-// -VC
-app.post("/exercisebank", async (req, res) => { //User created exercise from post - VC
-    const { Patient_ID, Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps } = req.body
-    if (!Patient_ID || !Exercise_Name || !Muscle_Group || !Exercise_Description || !Exercise_Class || !Sets || !Reps) {
-        return res.status(400).json({ error: "Missing required information" });
-    }
-    try {
-        const newExercise = await createExercise(Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps)
-        const event_Details = 'Created new exercise'
-        const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
-        res.status(201).send(newExercise)
-    } catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})
-
-
 // ----------------------------------------------- stop her for tests ----------------------------------------------------------- VC
 
 
