@@ -260,7 +260,6 @@ app.post("/regiment", async (req, res) => { //based on patient -VC
     }
     catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" })
-    }
 })
 
 app.get("/forumPosts", async (req, res) => {
