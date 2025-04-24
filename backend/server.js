@@ -4,7 +4,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getDoctorSchedule, 
     getExercises, getExerciseByClass, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
     getReviewsTop, getReviewsByID, 
-    getReviewsComments,  getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateApptInfo, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
+    getReviewsComments,  getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
     UpdateRegiment,
     getPatientDoc,
     createApptRequest,
@@ -23,8 +23,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     rmPatientAppt,
     checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages, getAppointmentInfo, appendToRegiment, 
     UpdateDoctorFeedback,
-    fetchApptEndStatus,
-    clearPatientRegiment} from './PrimeWell_db.js'
+    fetchApptEndStatus, getPillsFromPharm, clearPatientRegiment} from './PrimeWell_db.js'
 
 
 
@@ -231,14 +230,10 @@ app.post("/exerciseByClass", async (req, res) => {
 })
 
 app.get("/regiment/:id", async (req, res) => { //based on patient -VC
-    try {
-        const rows = await getRegiment(req.params.id)
-        const event_Details = 'retrieval of patient regiment'
-        const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
-        res.send(rows)
-    } catch (err) {
-        res.status(500).json({ error: err.message || "Internal server error" });
-    }
+    const rows = await getRegiment(req.params.id)
+    const event_Details = 'retrieval of patient regiment'
+    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
+    res.send(rows)
 })
 
 app.get("/forumPosts", async (req, res) => {
@@ -350,6 +345,16 @@ app.get("/patientsurveyAuth/:id", async (req, res) => {  //returns true (if post
 app.get("/appointmentInfo/:id", async (req, res) => {  
     try {
     const rows = await getAppointmentInfo(req.params.id)
+    res.send(rows)
+    }
+    catch (err) {
+        console.log("Failed Fetching Appointment Info: ", err)
+    }
+})
+
+app.get("/pharmacyPills/:id", async (req, res) => {  
+    try {
+    const rows = await getPillsFromPharm(req.params.id)
     res.send(rows)
     }
     catch (err) {
@@ -480,23 +485,8 @@ app.post("/doctor", async (req, res) => {
         console.log("Doctor Info: ", newDoctor)
         const event_Details = 'Created new Doctor'
         const audit = await genereateAudit(newDoctor['doctor_id'], 'Doctor', 'POST', event_Details)
-        res.status(201).send(newDoctor)
-    } catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})
-
-app.post("/tiers", async (req, res) => {
-    const {Doctor_ID, Cost} = req.body
-
-    if (!Doctor_ID |!Cost) {
-        return res.status(400).json({ error: "Missing required information" });
-    }
-
-    try {
-        const newDoctor = await createDoctorTiers(Doctor_ID, Cost)
-        const event_Details = 'Created new Doctor Tiers'
-        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'POST', event_Details)
+        const tiers = await createDoctorTiers(newDoctor['doctor_id'])
+        console.log(tiers)
         res.status(201).send(newDoctor)
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
@@ -670,7 +660,7 @@ app.post("/comments", async (req, res) => {
     }
 
     try{
-    const newComment = createNewComment(Patient_ID, Forum_ID, Comment_Text)  
+    const newComment = createComment(Patient_ID, Forum_ID, Comment_Text)  
     const event_Details = 'Created new comment'
     const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
     res.status(201).send(newComment)
@@ -997,37 +987,6 @@ app.patch('/doctorSchedule/:id', async(req, res)=>{
         }
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
-
-// MAKE ONLY AVAILABLE TO A PATIENT FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
-// MAKE THE BELOW THE DOCTORS FEEDBACK ENDPOINT FOR THE PATIENTS APPOINTMENT - FI
-app.patch('/appointment/:patient_id/:appt_id', async (req, res) => {
-    try {
-        const patient_id = req.params.patient_id;
-        const appt_id = req.params.appt_id;
-        let entry = req.body;
-
-        // Fields that are NOT allowed to be updated
-        const restrictedFields = ['Appointment_ID', 'Patient_ID', 'Doctor_ID', 'Date_Scheduled', 'Doctors_Feedback', 'Last_Update', 'Create_Date']; // Allow patient to change Appt_Date, Appt_Time and Tier_ID
-
-        // Remove restricted fields from the entry object
-        entry = Object.fromEntries(
-            Object.entries(entry).filter(([key]) => !restrictedFields.includes(key))
-        );
-
-        if (Object.keys(entry).length === 0) {
-            return res.status(400).json({ error: "No valid fields to update." });
-        }
-
-        const updateResult = await UpdateApptInfo(patient_id, appt_id, entry);
-        const event_Details = 'Edited Appointment info';
-        const audit = await genereateAudit(id, 'Patient', 'PATCH', event_Details);
-        
-        console.log(audit);
-        res.status(200).json(updateResult);
-    } catch (error) { 
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-});
 
 // MAKE ONLY AVAILABLE TO A DOCTOR FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
 app.patch('/prescription/:doctor_id', async(req, res)=>{ //Doctor's can change this - VC
