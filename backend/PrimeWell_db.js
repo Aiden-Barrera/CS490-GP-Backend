@@ -14,6 +14,7 @@ const pool = mysql.createPool({
 //GET DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with type GET
 
+//the 5 request below return data from our only populated tables so far - VC
 export async function getPatients(id) {
     
     try {
@@ -67,7 +68,7 @@ export async function getPatientDoc(id) { //changed for doc info
     const [resultRows] = await pool.query(`SELECT doctorbase.doctor_id, doctorbase.first_name, doctorbase.last_name, 
         doctorbase.specialty, doctorbase.availability 
         FROM PatientBase INNER JOIN doctorbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
-        WHERE PatientBase.Patient_ID;`, [id])
+        WHERE Patient_ID = ?;`, [id])
     return resultRows[0]
     }
     catch (err) {
@@ -86,7 +87,6 @@ export async function getAllDoctors() {
         throw err
     }
 }
-
 
 export async function getDoctors(id) {
     try {
@@ -111,11 +111,6 @@ export async function getDocPatients(Doctor_ID) { //patient info for doc
         console.log("Error Fetching Doctor Patients Info: ", err)
         throw err
     }
-}
-
-export async function getPatientID(email, pw) {
-    const [resultRows] = await pool.query(`SELECT Patient_ID FROM patientbase WHERE Email = ? AND PW = SHA2(CONCAT(?),256);`, [email, pw])
-    return resultRows[0]
 }
 
 export async function getDocID(email, pw) {
@@ -173,6 +168,28 @@ export async function getPills() {
     }
     catch (err) {
         console.log("Error Fetching Pills: ", err)
+        throw err
+    }
+}
+
+export async function getTiers(id) {
+    try {
+    const [resultRows] = await pool.query(`SELECT Tier, Service, Cost FROM Tiers WHERE Doctor_ID = ?;`, [id]) 
+    return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Tiers: ", err)
+        throw err
+    }
+}
+
+export async function getExercises() {
+    try {
+    const [resultRows] = await pool.query(`SELECT Exercise_ID, Exercise_Name, Muscle_Group, Image, Exercise_Description, Sets, Reps FROM ExerciseBank;`)
+    return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Exercises: ", err)
         throw err
     }
 }
@@ -300,13 +317,42 @@ export async function getSurveyLatestDate(id){
     }
 }
 
+export async function getAuthSurvey(id) { // get patient's recent surveys by recent date
+    try {
+    const [resultRows] = await pool.query(`SELECT Survey_Date FROM PatientDailySurvey WHERE Patient_ID = ? ORDER BY Survey_Date DESC Limit 1;`, [id]) 
+    return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Patient Survey: ", err)
+        throw err
+    }
+}
+
+// Make the below a POST because it is sensitive? - FI
+export async function getAppointmentsPatient(id) {
+    try {
+        const [resultRows] = await pool.query(`SELECT A.Appointment_ID, A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier, DB.first_name, DB.last_name, DB.specialty FROM Appointments as A, doctorbase as DB 
+            WHERE A.Patient_ID = ? and DB.doctor_id = A.doctor_id ORDER BY (Appt_Date >= CURDATE()) DESC, Appt_Date ASC;`, [id]) 
+        return resultRows
+    } catch (err) {
+        console.log("Failed Fetching Appointments for Patient: ", err)
+        throw err
+    }
+}
+
 export async function getTimeslot(Doctor_ID, Appt_Date, Appt_Time) {
+    try {
     const [resultRows] = await pool.query(`
         SELECT * FROM Appointments
         WHERE Doctor_ID = ?
         AND Appt_Date = ?
         AND Appt_Time = ?;`, [Doctor_ID, Appt_Date, Appt_Time]) 
     return resultRows
+    }
+    catch (err) {
+        console.log("Error Fetching Timeslot: ", err)
+        throw err
+    }
 }
 
 export async function checkExistingRequests(patient_id, doctor_id, appt_date, appt_time) {
@@ -378,7 +424,6 @@ export async function getPrescriptionDoc(id) {
 export async function getPreliminaries(id) { //order by for most recent
     try {
     const [resultRows] = await pool.query(`SELECT patient_id, Symptoms FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
-
     return resultRows
     }
     catch (err) {
@@ -386,20 +431,6 @@ export async function getPreliminaries(id) { //order by for most recent
         throw err
     }   
 }
-
-export async function getChatRoomPatient(Patient_ID){
-    const [resultRows] = await pool.query(`SELECT Chatroom_ID FROM chatrooms 
-        INNER JOIN Appointments on chatrooms.Appointment_ID = Appointments.Appointment_ID
-        WHERE Appointments.Patient_ID = ?;`, [Patient_ID])
-    return resultRows
-}
-
-export async function getChatRoomDoctor(Patient_ID){
-    const [resultRows] = await pool.query(`SELECT Chatroom_ID FROM chatrooms 
-        INNER JOIN Appointments on chatrooms.Appointment_ID = Appointments.Appointment_ID
-        WHERE Appointments.Doctor_ID = ?;`, [Patient_ID])
-    return resultRows
-}   
 
 // Make the below a POST because it is sensitive? - FI
 export async function getChatMesseges(id) { //order by for most recent
@@ -487,8 +518,8 @@ export async function getAppointmentInfo(appt_id) {
 export async function LogAttempt(User_ID, User_type, Success_Status){
     try {
     const [login] = await pool.query(`
-        INSERT INTO AuthAttempts (UserEmail, Success_Status) VALUES (?, ?);`
-    , [User_ID, Success_Status])
+        INSERT INTO auditlog (UserEmail, UserType, Success_Status) VALUES (?, ?, ?);`
+    , [User_ID, User_type, Success_Status])
     return login
     }
     catch (err) {
@@ -562,7 +593,7 @@ export async function createDoctorTiers(Doctor_ID) {
         INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Basic', 'General Consulatation', 100);
         INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Plus', 'Elevated Servicing', 200);
         INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Premium', 'Premium Doctor-Patient Facilities', 300);`, 
-        [Doctor_ID, Doctor_ID, Doctor_ID])
+        [Doctor_ID, Doctor_ID,Doctor_ID])
     return resultDoctorTiersCreate
     } 
     catch (err) {
@@ -716,6 +747,7 @@ export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_T
     }
 }
 
+
 export async function createApptRequest(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier) {
     try {
         const [resultApptCreate] = await pool.query(`INSERT INTO Requests (Patient_ID, Doctor_ID, Request_Status, Appt_Date, Appt_Time, Tier) VALUES (?, ?, 'Pending', ?, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier])
@@ -793,7 +825,7 @@ export async function createPayment(Patient_ID, Card_Number, Related_ID, Payment
 }
 
 //UPDATE DATA ----------------------------------------------------------------------------------------------
-// All below should have an addtional query to auditlog with type PATCH
+// All below should have an addtional query to auditlog with tyoe PATCH
 //update based on a given id - VC
 
 export async function UpdatePatientInfo(id, entry) {
