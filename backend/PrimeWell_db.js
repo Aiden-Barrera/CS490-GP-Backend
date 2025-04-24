@@ -309,6 +309,7 @@ export async function getReviewsTop() { //top 3 reviews for splash page - VC
 export async function getSurvey(id) { // get patient's recent surveys by recent date
     try {
     const [resultRows] = await pool.query(`SELECT Weight, Caloric_Intake, Water_Intake, Mood, Survey_Date FROM PatientDailySurvey WHERE Patient_ID = ? ORDER BY Survey_Date DESC;`, [id]) 
+    console.log(resultRows)
     return resultRows
     }
     catch (err) {
