@@ -655,6 +655,7 @@ app.post("/forumPosts", async (req, res) => {
 // Ensure that the Forum_ID passed into the Forum_ID field is an existing Forum ID in the ForumPosts table } via frontend? - FI
 app.post("/comments", async (req, res) => {
     const { Patient_ID, Forum_ID, Comment_Text } = req.body
+    console.log("Comment Body: ", req.body)
     if (!Patient_ID || !Forum_ID | !Comment_Text) {
         return res.status(400).json({ error: "Missing required information" });
     }

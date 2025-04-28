@@ -242,7 +242,7 @@ export async function getForumPosts() {
 
 export async function getComments_id(id) { //comments for specific forum post -VC
     try {
-    const [resultRows] = await pool.query(`SELECT Comment_ID, Comment_Text, Patient_ID, Date_Posted FROM Comments WHERE Forum_ID = ?;`, [id])
+    const [resultRows] = await pool.query(`SELECT Comments.Comment_ID, Comments.Comment_Text, patientbase.First_Name, patientbase.Last_Name, Comments.Date_Posted FROM Comments, patientbase WHERE Forum_ID = ? and Comments.patient_id = patientbase.patient_id;`, [id])
     return resultRows
     }
     catch (err) {
