@@ -1,3 +1,5 @@
+// THIS IMPLMEMENTATION OF RABBITMQ IS BASED ON A STREAM
+
 // This file is responsible for acting as the consumer, which continuously runs, waiting for messages to be pushed to it. The producer/publisher sends messages one at a time to the queue, but the consumer will receive messages in a stream. 
 // In the primewell_clinic system. The consumer will be a pharmacy, which will receive the prescription from the doctor.
 // The consumer, will connect to a RabbitMQ node and wait for messages to be pushed to it

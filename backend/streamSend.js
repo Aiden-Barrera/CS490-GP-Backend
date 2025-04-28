@@ -1,3 +1,5 @@
+// THIS IMPLMEMENTATION OF RABBITMQ IS BASED ON A STREAM
+
 // This file is responsible for acting as the producer (sender) of messages, in the case of the Primewell_Clinic system, the producer of messages will  be a 'doctor' sending a prescription (the blob/data) to the pharmacies, in other words, the front-end server is the producer
 
 // Importing the node stream client for RabbitMQ
