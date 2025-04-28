@@ -292,20 +292,6 @@ app.get("/reviewsTop", apiKeyMiddleware, async (req, res) => {
     res.send(rows)
 })
 
-app.get("/forumPosts/comments", async (req, res) => {
-    const {Message_ID} = req.body;
-    if (!Message_ID) {
-        return res.status(400).json({ error: "Message_ID required" });
-    }
-    try {
-        const rows = await getReviewsComments(Message_ID)
-        res.send(rows)
-    }
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
-})
-
 // Make post because it is sensitive
 app.get("/patientsurvey/:id", async (req, res) => {
     const rows = await getSurvey(req.params.id)
