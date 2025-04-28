@@ -309,6 +309,7 @@ export async function getReviewsTop() { //top 3 reviews for splash page - VC
 export async function getSurvey(id) { // get patient's recent surveys by recent date
     try {
     const [resultRows] = await pool.query(`SELECT Weight, Caloric_Intake, Water_Intake, Mood, Survey_Date FROM PatientDailySurvey WHERE Patient_ID = ? ORDER BY Survey_Date DESC;`, [id]) 
+    console.log(resultRows)
     return resultRows
     }
     catch (err) {
@@ -508,10 +509,11 @@ export async function getNearestPharms(zip) {
     }
 }
 
-export async function getAppointmentInfo(appt_id) {
+export async function getAppointmentInfo(patient_id) {
     try {
-    const [resultRows] = await pool.query(`SELECT Appointments.Appt_Date, Appointments.Appt_Time, CONCAT(DoctorBase.First_Name, ' ', DoctorBase.Last_Name) AS Doctor, Appointments.Doctors_Feedback FROM Appointments, DoctorBase WHERE Appointments.Doctor_ID = DoctorBase.Doctor_ID AND Appointments.Patient_ID = ?;`,
-        [appt_id])
+    const [resultRows] = await pool.query(`SELECT Appointments.Appt_Date, Appointments.Appt_Time, CONCAT(DoctorBase.First_Name, ' ', DoctorBase.Last_Name) AS Doctor, Appointments.Doctors_Feedback FROM Appointments, DoctorBase WHERE Appointments.Doctor_ID = DoctorBase.Doctor_ID AND Appointments.Patient_ID = ? and Appointments.Appt_End = true
+        ORDER BY Appointments.Appt_Date DESC;`,
+        [patient_id])
     console.log(resultRows)
     return resultRows
     }
