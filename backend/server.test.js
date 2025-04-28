@@ -5,6 +5,15 @@ import app from './server2.js'
 
 })*/
 
+describe("/reviewsTop", ()=>{
+    test("should return rows", async ()=>{
+        const response = await request(app).get("/reviewsTop").set("x-api-key", process.env.API_KEY).send({})
+        expect(response.statusCode).toBe(200)
+        expect(response.body).toBeDefined()
+    })
+})
+
+
 describe("/patientInfo/:id", ()=>{
     test("should return rows", async ()=>{
         const response = await request(app).get("/patientInfo/2").send({})
@@ -22,7 +31,7 @@ describe("/doctorInfo/:id", ()=>{
         expect(response.body).toStrictEqual([{"Doctor_ID": 2, "License_Serial": "277-31-716244", "First_Name": "Myrvyn",
             "Last_Name": "Rubroe", "Specialty": "Dietitian", "Email": "mrubroe1@state.gov", "Phone": "154-748-2473",
             "PW": "81d1a8c76f3077c88e0fcf40bd010979ef8a32f1a164492ab27320fe7c871886",
-            "Availability": 1, "Last_Update": "2025-04-17T22:25:07.000Z", "Create_Date": "2025-04-17T22:25:07.000Z"}])
+            "Availability": 1, "Last_Update": "2025-04-24T21:45:32.000Z", "Create_Date": "2025-04-24T21:45:32.000Z"}])
     })
 })
 
@@ -63,7 +72,7 @@ describe("/doctorPatients", ()=>{
 
 describe("/doctorSchedule", ()=>{
     test("should return rows", async ()=>{
-        const response = await request(app).post("/doctorSchedule").send({"Doctor_ID": "2", "day": "Monday"})
+        const response = await request(app).post("/doctorSchedule").send({"Doctor_ID": "2", "Doctor_Schedule": {"Friday": ["10:00-11:00", "11:00-12:00"], "Monday": ["9:00-10:00", "10:00-11:00", "11:00-12:00", "12:00-1:00", "2:00-3:00"], "Sunday": [], "Tuesday": ["8:30-9:30", "9:30-10:30", "10:30-11:30", "1:00-2:00", "3:00-4:00"], "Saturday": [], "Thursday": ["9:00-10:00", "10:00-11:00", "11:00-12:00", "12:00-1:00", "4:00-5:00"], "Wednesday": ["9:30-10:30", "10:30-11:30", "11:30-12:30", "2:00-3:00"]}})
         expect(response.statusCode).toBe(200)
         expect(response.body).toStrictEqual(["9:00-10:00", "10:00-11:00", "11:00-12:00", "12:00-1:00", "2:00-3:00"])
         //expect(response.body).toStrictEqual({})
@@ -75,7 +84,45 @@ describe("/doctorSchedule", ()=>{
     })
 })
 
+describe("/getDoctorSchedule", ()=>{
+    test("should return rows", async ()=>{
+        const response = await request(app).post("/getDoctorSchedule").send({"doc_id":1, "day":"Tuesday", "date":"2025-03-28"})
+        expect(response.statusCode).toBe(200)
+        expect(response.body).toStrictEqual([
+            "9:00-10:00",
+            "11:00-12:00",
+            "1:00-2:00",
+            "2:00-3:00",
+            "4:00-5:00"
+        ])
+        //expect(response.body).toStrictEqual({})
+    })
 
+    test("should result in an error", async ()=>{
+        const response = await request(app).post("/doctorSchedule").send({"Doctor_ID": "2"})
+        expect(response.statusCode).toBe(400)
+    })
+})
+
+describe("/pharmacies", ()=>{
+    test("should return rows", async ()=>{
+        const response = await request(app).post("/pharmacies").send({})
+        expect(response.statusCode).toBe(200)
+        expect(response.body).toStrictEqual([
+            "9:00-10:00",
+            "11:00-12:00",
+            "1:00-2:00",
+            "2:00-3:00",
+            "4:00-5:00"
+        ])
+        //expect(response.body).toStrictEqual({})
+    })
+
+    test("should result in an error", async ()=>{
+        const response = await request(app).post("/doctorSchedule").send({"Doctor_ID": "2"})
+        expect(response.statusCode).toBe(400)
+    })
+})
 
 //expect(response.statusCode).toBe(400)
 //expect(response.headers['content-type']).toEqual(expect.stringContaining("json"))
@@ -117,6 +164,7 @@ ADD DATA
 /patient
 /doctor
 /doctorSchedule
+
 /getDoctorSchedule
 /pharmacies
 /getPharmByZip
