@@ -26,7 +26,8 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     fetchApptEndStatus, getPillsFromPharm, clearPatientRegiment,
     getPaymentsForAppointments, createPayment,
     UpdatePayment,
-    fetchPrescriptions} from './PrimeWell_db.js'
+    fetchPrescriptions,
+    getPaymentForPrescription} from './PrimeWell_db.js'
 import { sendPrescription, consumePrescriptions } from './rabbitmq.js';  // import the RabbitMQ helper
 
 
@@ -411,6 +412,15 @@ app.get("/paymentAppointments/:id", async (req, res) => {
     }
 })
 
+app.get("/paymentPrescriptions/:id", async (req, res) => {
+    try {
+        const rows = await getPaymentForPrescription(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        console.log('Failed Fetching Prescription Payments: ', err)
+    }
+})
+
 app.get("/fetchPrescriptions/:id", async (req, res) => {
     try {
         const rows = await fetchPrescriptions(req.params.id)
@@ -620,13 +630,13 @@ app.post("/getPharmByZip", async (req, res) => {
 
 // Ensure that Pharm_ID passed into Pharm_ID field is an existing Pharmacy ID in the Pharmacies table } via frontend? - FI
 app.post("/pillbank", async (req, res) => {
-    const { Cost, Pill_Name, Pharm_ID, Dosage } = req.body
-    if (!Cost || !Pill_Name || !Pharm_ID || !Dosage) {
+    const { Cost, Pill_Name, Pharm_ID, Dosage, Quantity } = req.body
+    if (!Cost || !Pill_Name || !Pharm_ID || !Dosage || !Quantity) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
     try {
-        const newPill = await createPill(Cost, Pill_Name, Pharm_ID, Dosage)
+        const newPill = await createPill(Cost, Pill_Name, Pharm_ID, Dosage, Quantity)
         const event_Details = 'Created new Pill'
         const audit = await genereateAudit(0, 'Pharmacist', 'POST', event_Details)
         res.status(201).send(newPill)
@@ -1228,7 +1238,7 @@ app.patch('/giveFeedback', async (req, res) => {
     }
 })
 
-app.patch("/makePaymentAppointment", async (req, res) => {
+app.patch("/makePayment", async (req, res) => {
     const {Payment_ID, Card_Number} = req.body
     if (!Payment_ID || !Card_Number) {
         return res.status(400).json({ error: "Missing Payment ID and/or Card_Number"});

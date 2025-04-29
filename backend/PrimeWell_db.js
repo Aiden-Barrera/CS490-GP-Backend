@@ -163,7 +163,7 @@ export async function getPharmacies() {
 
 export async function getPills() {
     try {
-    const [resultRows] = await pool.query(`SELECT Pill_ID, Pill_Name, Cost, Dosage, Pharm_ID FROM PillBank;`)
+    const [resultRows] = await pool.query(`SELECT Pill_ID, Pill_Name, Cost, Dosage, Quantity, Pharm_ID FROM PillBank;`)
     return resultRows
     }
     catch (err) {
@@ -536,6 +536,34 @@ export async function getPaymentsForAppointments(patient_id) {
     }
 }
 
+export async function getPaymentForPrescription(patientID) {
+    try {
+        const [resultRows] = await pool.query(`
+            SELECT 
+                P.Payment_ID,
+                CONCAT(DB.First_Name, ' ', DB.Last_Name) AS Doctor_Name,
+                PB.Pill_Name,
+                PB.Cost,
+                P.Payment_Type,
+                P.Payment_Status,
+                PB.Dosage,
+                PR.Quantity,
+                PR.Create_Date AS Create_Date
+            FROM payments AS P
+            JOIN prescription AS PR ON P.Related_ID = PR.Prescription_ID
+            JOIN pillbank AS PB ON PR.Pill_ID = PB.Pill_ID
+            JOIN doctorbase AS DB ON PR.Doctor_ID = DB.Doctor_ID
+            WHERE P.Payment_Type = 'Prescription' AND P.Patient_ID = ?
+            ORDER BY PR.Create_Date DESC;
+        `, [patientID]);
+
+        return resultRows;
+    } catch (err) {
+        console.error('Error fetching prescription payments:', err);
+        throw err;
+    }
+}
+
 //ADD DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with type POST
 // Add to db via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM table);
@@ -663,11 +691,11 @@ export async function createPharmacy(Company_Name,Address,Zip,Work_Hours,Email,P
       }
 }
 
-export async function createPill(Cost, Pill_Name, Pharm_ID, Dosage) {
+export async function createPill(Cost, Pill_Name, Pharm_ID, Dosage, Quantity) {
     try {
     const [resultPillCreate] = await pool.query(`
-        INSERT INTO pillbank (Cost, Pill_Name, Pharm_ID, Dosage) VALUES (?,?,?,?);`
-    , [Cost, Pill_Name, Pharm_ID, Dosage])
+        INSERT INTO pillbank (Cost, Pill_Name, Pharm_ID, Dosage, Quantity) VALUES (?,?,?,?, ?);`
+    , [Cost, Pill_Name, Pharm_ID, Dosage, Quantity])
     return resultPillCreate
     }
     catch (err) {
