@@ -23,8 +23,10 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     rmPatientAppt,
     checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages, getAppointmentInfo, appendToRegiment, 
     UpdateDoctorFeedback,
-    fetchApptEndStatus, getPillsFromPharm, clearPatientRegiment} from './PrimeWell_db.js'
-    import { sendPrescription, consumePrescriptions } from './rabbitmq.js';  // import the RabbitMQ helper
+    fetchApptEndStatus, getPillsFromPharm, clearPatientRegiment,
+    getPaymentsForAppointments, createPayment,
+    UpdatePayment} from './PrimeWell_db.js'
+import { sendPrescription, consumePrescriptions } from './rabbitmq.js';  // import the RabbitMQ helper
 
 
 
@@ -383,6 +385,15 @@ app.get("/pharmacyPills/:id", async (req, res) => {
     }
 })
 
+app.get("/paymentAppointments/:id", async (req, res) => {
+    try {
+        const rows = await getPaymentsForAppointments(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        console.log('Failed Fetching Apointment payments: ', err)
+    }
+})
+
 app.post("/passAuthPatient", async (req, res) => {
     const { email, pw } = req.body;
     if (!email || !pw) {
@@ -676,6 +687,7 @@ app.post("/forumPosts", async (req, res) => {
 // Ensure that the Forum_ID passed into the Forum_ID field is an existing Forum ID in the ForumPosts table } via frontend? - FI
 app.post("/comments", async (req, res) => {
     const { Patient_ID, Forum_ID, Comment_Text } = req.body
+    console.log("Comment Body: ", req.body)
     if (!Patient_ID || !Forum_ID | !Comment_Text) {
         return res.status(400).json({ error: "Missing required information" });
     }
@@ -918,13 +930,13 @@ app.post("/patientsurvey/date/", async (req, res) => {
 })
 
 app.post("/payment", async (req, res) => {
-    const {Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status} = req.body
-    if (!Patient_ID | !Card_Number | !Related_ID | !Payment_Type | !Payment_Status) {
+    const {Patient_ID, Related_ID, Payment_Type, Payment_Status} = req.body
+    if (!Patient_ID || !Related_ID || !Payment_Type || !Payment_Status) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
     try {
-    const newPayment = await createPayment(Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status)
+    const newPayment = await createPayment(Patient_ID, Related_ID, Payment_Type, Payment_Status)
     const event_Details = 'Patient has made a payment'
     const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
     res.status(201).send(newPayment)
@@ -1186,6 +1198,20 @@ app.patch('/giveFeedback', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message || "Internal server error" });
 
+    }
+})
+
+app.patch("/makePaymentAppointment", async (req, res) => {
+    const {Payment_ID, Card_Number} = req.body
+    if (!Payment_ID || !Card_Number) {
+        return res.status(400).json({ error: "Missing Payment ID and/or Card_Number"});
+    }
+
+    try {
+        const makePayment = await UpdatePayment(Payment_ID, Card_Number)
+        res.status(201).send(makePayment)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
     }
 })
 
