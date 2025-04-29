@@ -1,5 +1,6 @@
 // rabbitmq.js
 import amqp from 'amqplib';
+import { createPerscription, createPayment, getPrescriptionWithNamesById } from './PrimeWell_db.js';
 
 const RABBITMQ_URL = 'amqp://localhost';
 const EXCHANGE_NAME = 'prescriptions_exchange';
@@ -26,11 +27,30 @@ async function consumePrescriptions(pharmacyName, onMessage) {
     await channel.bindQueue(q.queue, EXCHANGE_NAME, pharmacyName); // bind the queue to the exchange with the pharmacy name as the routing key -> problem?
 
     console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", q.queue);
-    channel.consume(q.queue, (msg) => {
+    channel.consume(q.queue, async (msg) => {
         if (msg !== null) {
             const prescription = JSON.parse(msg.content.toString());
-            onMessage(prescription);
-            channel.ack(msg);
+
+            try {
+                const prescription_id = await createPerscription(
+                    prescription.Patient_ID,
+                    prescription.Pill_ID, 
+                    prescription.Quantity,
+                    prescription.Doctor_ID,
+                    prescription.Pharm_ID,
+                    "Pending"
+                )
+                console.log("Creating a new prescription from rabbitMQ")
+
+                await createPayment(prescription.Patient_ID, prescription_id, "Prescription", "Pending")
+                console.log("Payment Created")
+
+                const enriched = await getPrescriptionWithNamesById(prescription_id);
+                onMessage(enriched);
+                channel.ack(msg);
+            } catch (err) {
+                console.log("Error Inserting new prescription: ", err)
+            }
         }
     });
 }

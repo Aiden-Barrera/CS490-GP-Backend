@@ -25,7 +25,8 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     UpdateDoctorFeedback,
     fetchApptEndStatus, getPillsFromPharm, clearPatientRegiment,
     getPaymentsForAppointments, createPayment,
-    UpdatePayment} from './PrimeWell_db.js'
+    UpdatePayment,
+    fetchPrescriptions} from './PrimeWell_db.js'
 import { sendPrescription, consumePrescriptions } from './rabbitmq.js';  // import the RabbitMQ helper
 
 
@@ -79,31 +80,47 @@ io.on("connection", (socket) => {
         io.to(data.appt_id).emit("receive_msg", data)
     })
 
+    const activePharmacyConsumers = new Set();
+
+    socket.on("join_connection", (pharm_id) => {
+        socket.join(pharm_id)
+        console.log(`Pharmacy ${socket.id} joined pharmacy id: ${pharm_id}`)
+
+        if (!activePharmacyConsumers.has(pharm_id)) {
+            activePharmacyConsumers.add(pharm_id);
+    
+            consumePrescriptions(pharm_id, (prescription) => {
+                // Emit to everyone in the room
+                io.to(pharm_id).emit("new_prescription", prescription);
+            });
+        }
+    })
+
     // Handle disconnection
     socket.on("disconnect", () => {
         console.log("User disconnected:", socket.id);
     })
 })
 
-await consumePrescriptions("1", (prescription) => {
-    console.log('New prescription received:', prescription); // 
-    // Here, push to frontend via WebSocket, or store in database, etc.
-});
+// await consumePrescriptions("1", (prescription) => {
+//     console.log('New prescription received:', prescription); // 
+//     // Here, push to frontend via WebSocket, or store in database, etc.
+// });
 
-await consumePrescriptions("2", (prescription) => {
-    console.log('New prescription received:', prescription); // 
-    // Here, push to frontend via WebSocket, or store in database, etc.
-});
+// await consumePrescriptions("2", (prescription) => {
+//     console.log('New prescription received:', prescription); // 
+//     // Here, push to frontend via WebSocket, or store in database, etc.
+// });
 
-await consumePrescriptions("5", (prescription) => {
-    console.log('New prescription received:', prescription); // 
-    // Here, push to frontend via WebSocket, or store in database, etc.
-});
+// await consumePrescriptions("5", (prescription) => {
+//     console.log('New prescription received:', prescription); // 
+//     // Here, push to frontend via WebSocket, or store in database, etc.
+// });
 
-await consumePrescriptions("7", (prescription) => {
-    console.log('New prescription received:', prescription); // 
-    // Here, push to frontend via WebSocket, or store in database, etc.
-});
+// await consumePrescriptions("7", (prescription) => {
+//     console.log('New prescription received:', prescription); // 
+//     // Here, push to frontend via WebSocket, or store in database, etc.
+// });
 
 
 server.listen(3000, () => {
@@ -391,6 +408,15 @@ app.get("/paymentAppointments/:id", async (req, res) => {
         res.send(rows)
     } catch (err) {
         console.log('Failed Fetching Apointment payments: ', err)
+    }
+})
+
+app.get("/fetchPrescriptions/:id", async (req, res) => {
+    try {
+        const rows = await fetchPrescriptions(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        console.log("Failed Fetching prescriptions: ", err)
     }
 })
 
@@ -860,17 +886,18 @@ app.post('/sendPrescription', async (req, res) => {
 
     try {      
         // Create new prescription
-        const newPrescription = await createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity)
-        console.log(newPrescription)
-        const event_Details = 'Created new Prescription'
-        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'POST', event_Details)
+        // const newPrescription = await createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity, Pharm_ID)
+        // console.log(newPrescription)
+        // const event_Details = 'Created new Prescription'
+        // const audit = await genereateAudit(Doctor_ID, 'Doctor', 'POST', event_Details)
 
         // Then send to the appropriate pharmacy queue
         const prescription = {
             Patient_ID,
             Doctor_ID,
             Pill_ID,
-            Quantity
+            Quantity, 
+            Pharm_ID
         };
         await sendPrescription(Pharm_ID.toString(), prescription);
         res.status(200).json({ message: `Prescription sent to pharmacy ${Pharm_ID}!` });
