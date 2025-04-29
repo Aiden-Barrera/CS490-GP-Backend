@@ -1,10 +1,10 @@
 import express from 'express'
-import { addPatientDoc, createAppointment, createChatMsg, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPerscription, createPharmacy, 
-    createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePerscription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getChatMesseges, getComments_id, getDoctorAuth, 
+import { addPatientDoc, createAppointment, createChatMsg, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPrescription, createPharmacy, 
+    createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePrescription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getChatMesseges, getComments_id, getDoctorAuth, 
     getDoctorSchedule, 
     getExercises, getExerciseByClass, getForumPosts, getPatientAuth, getPatients, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
     getReviewsTop, getReviewsByID, 
-    getReviewsComments,  getSurvey, LogAttempt, rmPatientDoc, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
+    getReviewsComments,  getSurvey, LogAttempt, rmPatientDoc, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePrescriptionInfo, UpdatePillInfo,
     UpdateRegiment,
     getPatientDoc,
     createApptRequest,
@@ -21,9 +21,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createComment, createD
     rmPatientAppt,
     checkExistingRequests, startAppointment, endAppointment, fetchApptStartStatus, fetchAppointmentMessages, getAppointmentInfo, appendToRegiment, 
     UpdateDoctorFeedback,
-    fetchApptEndStatus, getPillsFromPharm, clearPatientRegiment,
-    getPaymentsForAppointments, createPayment,
-    UpdatePayment} from './PrimeWell_db.js'
+    fetchApptEndStatus, getPillsFromPharm, clearPatientRegiment} from './PrimeWell_db.js'
 
 
 
@@ -247,7 +245,7 @@ app.get("/request/:id", async (req, res) => { // Used for retrieving a given doc
 
 app.get("/prescription/:id", async (req, res) => { //based on patient -VC
     const rows = await getPrescription(req.params.id)
-    const event_Details = 'retrieval of perscription'
+    const event_Details = 'retrieval of prescription'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
     res.send(rows)
 })
@@ -261,7 +259,7 @@ app.get("/prescription/:id", async (req, res) => { //based on patient -VC
     try {
         const { Doctor_ID } = await getDocID(email, pw)
         const rows = await getPrescriptionDoc(Doctor_ID)
-        const event_Details = 'retrieval of perscription'
+        const event_Details = 'retrieval of prescription'
         const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
         res.send(rows)
     }
@@ -319,15 +317,6 @@ app.get("/pharmacyPills/:id", async (req, res) => {
     }
     catch (err) {
         console.log("Failed Fetching Appointment Info: ", err)
-    }
-})
-
-app.get("/paymentAppointments/:id", async (req, res) => {
-    try {
-        const rows = await getPaymentsForAppointments(req.params.id)
-        res.send(rows)
-    } catch (err) {
-        console.log('Failed Fetching Apointment payments: ', err)
     }
 })
 
@@ -419,7 +408,7 @@ app.post("/fetchApptMessages", async (req, res) => {
 // Ensure that the Pharm_ID passed in the Pharm_ID field of the request body is an EXISTING Pharm_ID in the Pharmacies table } via frontend? - FI
 // Ensure that Email holds the form of an email address, Phone holds the form of a phone number, and Address holds the form of a Street address } via frontend? - FI 
 
-/* ADDED: appointments, Doctor schedule, perscription, preliminaries, survey, regiments, chat rooms<-messages, authattempts, 
+/* ADDED: appointments, Doctor schedule, prescription, preliminaries, survey, regiments, chat rooms<-messages, authattempts, 
 payments, audit logs*/
 
 app.post("/patient", async (req, res) => {
@@ -603,7 +592,6 @@ app.post("/forumPosts", async (req, res) => {
 // Ensure that the Forum_ID passed into the Forum_ID field is an existing Forum ID in the ForumPosts table } via frontend? - FI
 app.post("/comments", async (req, res) => {
     const { Patient_ID, Forum_ID, Comment_Text } = req.body
-    console.log("Comment Body: ", req.body)
     if (!Patient_ID || !Forum_ID | !Comment_Text) {
         return res.status(400).json({ error: "Missing required information" });
     }
@@ -742,7 +730,7 @@ app.post("/prescription", async (req, res) => {
     }
 
     try {
-        const newAppt = await createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity)
+        const newAppt = await createPrescription(Patient_ID, Doctor_ID, Pill_ID, Quantity)
         const event_Details = 'Created new Appointment'
         const audit = await genereateAudit(Doctor_ID, 'Doctor', 'POST', event_Details)
         res.status(201).send(newAppt)
@@ -799,13 +787,13 @@ app.post("/patientsurvey/date/", async (req, res) => {
 })
 
 app.post("/payment", async (req, res) => {
-    const {Patient_ID, Related_ID, Payment_Type, Payment_Status} = req.body
-    if (!Patient_ID || !Related_ID || !Payment_Type || !Payment_Status) {
+    const {Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status} = req.body
+    if (!Patient_ID | !Card_Number | !Related_ID | !Payment_Type | !Payment_Status) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
     try {
-    const newPayment = await createPayment(Patient_ID, Related_ID, Payment_Type, Payment_Status)
+    const newPayment = await createPayment(Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status)
     const event_Details = 'Patient has made a payment'
     const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
     res.status(201).send(newPayment)
@@ -818,7 +806,7 @@ app.post("/payment", async (req, res) => {
 // All below should have an addtional query to auditlog with tyoe PATCH
 //update based on a given id - VC
 
-/*ADDED: regiment, appointments, perscription, audit logs*/
+/*ADDED: regiment, appointments, prescription, audit logs*/
 
 
 // FIX ALL USAGES OF req.body AND req.params BELOW - FI
@@ -925,11 +913,11 @@ app.patch('/doctorSchedule/:id', async(req, res)=>{
 // MAKE ONLY AVAILABLE TO A DOCTOR FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
 app.patch('/prescription/:doctor_id', async(req, res)=>{ //Doctor's can change this - VC
     try {
-        const id = req.body.Perscription_ID
+        const id = req.body.Prescription_ID
         const entry = req.body
 
         // Fields that are NOT allowed to be updated
-        const restrictedFields = ['Perscription_ID', 'Patient_ID', 'Doctor_ID'];
+        const restrictedFields = ['Prescription_ID', 'Patient_ID', 'Doctor_ID'];
 
         // Remove restricted fields from the entry object
         entry = Object.fromEntries(
@@ -940,8 +928,8 @@ app.patch('/prescription/:doctor_id', async(req, res)=>{ //Doctor's can change t
             return res.status(400).json({ error: "No valid fields to update." });
         }
 
-        const updateResult = await UpdatePerscriptionInfo(id, entry)
-        const event_Details = 'Edited perscription info'
+        const updateResult = await UpdatePrescriptionInfo(id, entry)
+        const event_Details = 'Edited prescription info'
         const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'PATCH', event_Details)
         res.status(201).send(updateResult)
         }
@@ -1070,25 +1058,11 @@ app.patch('/giveFeedback', async (req, res) => {
     }
 })
 
-app.patch("/makePaymentAppointment", async (req, res) => {
-    const {Payment_ID, Card_Number} = req.body
-    if (!Payment_ID || !Card_Number) {
-        return res.status(400).json({ error: "Missing Payment ID and/or Card_Number"});
-    }
-
-    try {
-        const makePayment = await UpdatePayment(Payment_ID, Card_Number)
-        res.status(201).send(makePayment)
-    } catch (err) {
-        res.status(500).json({ error: err.message || "Internal server error" });
-    }
-})
-
 //REMOVE DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with type DELETE
 // delete based on a given id - VC
 
-/*ADDED: appointments, Doctorschedules, perscription, regiments, posts<-comments, audit logs*/
+/*ADDED: appointments, Doctorschedules, prescription, regiments, posts<-comments, audit logs*/
 
 app.delete("/patient", async(req, res) => {
     const { Patient_ID } = req.body
@@ -1133,8 +1107,8 @@ app.delete("/doctorSchedule", async(req, res) => {
     res.status(204).send(deleteResult)
 })
 
-app.delete("/perscription", async(req, res) => { //Doctor should manage perscriptions - VC
-    const deleteResult = await deletePerscription(req.body.Patient_ID)
+app.delete("/prescription", async(req, res) => { //Doctor should manage perscriptions - VC
+    const deleteResult = await deletePrescription(req.body.Patient_ID)
     const event_Details = 'Doctor has been deleted'
     const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'DELETE', event_Details)
     res.status(204).send(deleteResult)

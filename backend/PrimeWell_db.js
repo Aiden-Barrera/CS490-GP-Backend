@@ -220,7 +220,7 @@ export async function getForumPosts() {
 
 export async function getComments_id(id) { //comments for specific forum post -VC
     try {
-    const [resultRows] = await pool.query(`SELECT Comments.Comment_ID, Comments.Comment_Text, Comments.Patient_ID, CONCAT(PatientBase.First_Name, ' ', PatientBase.Last_Name) AS PatientName, Comments.Date_Posted FROM Comments, PatientBase WHERE Forum_ID = ? AND Comments.Patient_ID = PatientBase.Patient_ID;`, [id])
+    const [resultRows] = await pool.query(`SELECT Comment_ID, Comment_Text, Patient_ID, Date_Posted FROM Comments WHERE Forum_ID = ?;`, [id])
     return resultRows
     }
     catch (err) {
@@ -287,7 +287,6 @@ export async function getReviewsTop() { //top 3 reviews for splash page - VC
 export async function getSurvey(id) { // get patient's recent surveys by recent date
     try {
     const [resultRows] = await pool.query(`SELECT Weight, Caloric_Intake, Water_Intake, Mood, Survey_Date FROM PatientDailySurvey WHERE Patient_ID = ? ORDER BY Survey_Date DESC;`, [id]) 
-    console.log(resultRows)
     return resultRows
     }
     catch (err) {
@@ -322,7 +321,7 @@ export async function getAuthSurvey(id) { // get patient's recent surveys by rec
 /*export async function getAppointmentsPatient(id) {
     try {
         const [resultRows] = await pool.query(`SELECT A.Appointment_ID, A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier, DB.first_name, DB.last_name, DB.specialty FROM Appointments as A, doctorbase as DB 
-            WHERE A.Patient_ID = ? and DB.doctor_id = A.doctor_id ORDER BY (Appt_End = false AND Appt_Date >= CURDATE()) DESC, Appt_End ASC, Appt_Date ASC;`, [id]) 
+            WHERE A.Patient_ID = ? and DB.doctor_id = A.doctor_id ORDER BY (Appt_Date >= CURDATE()) DESC, Appt_Date ASC;`, [id]) 
         return resultRows
     } catch (err) {
         console.log("Failed Fetching Appointments for Patient: ", err)
@@ -376,8 +375,7 @@ export async function getAppointmentsDoctor(id) {
     try {
     const [resultRows] = await pool.query(`SELECT PB.First_Name, PB.Last_Name, A.Appointment_ID, 
         A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier FROM Appointments as A, PatientBase as PB 
-        WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID and A.Appt_End = false 
-        ORDER BY (A.Appt_End = false AND A.Appt_Date >= CURDATE()) DESC, A.Appt_Date ASC;
+        WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID and A.Appt_End = false;
     `, [id]) 
     return resultRows
     }
@@ -487,29 +485,15 @@ export async function getNearestPharms(zip) {
     }
 }
 
-export async function getAppointmentInfo(patient_id) {
+export async function getAppointmentInfo(appt_id) {
     try {
-    const [resultRows] = await pool.query(`SELECT Appointments.Appt_Date, Appointments.Appt_Time, CONCAT(DoctorBase.First_Name, ' ', DoctorBase.Last_Name) AS Doctor, Appointments.Doctors_Feedback FROM Appointments, DoctorBase WHERE Appointments.Doctor_ID = DoctorBase.Doctor_ID AND Appointments.Patient_ID = ? and Appointments.Appt_End = true
-        ORDER BY Appointments.Appt_Date DESC;`,
-        [patient_id])
+    const [resultRows] = await pool.query(`SELECT Appointments.Appt_Date, Appointments.Appt_Time, CONCAT(DoctorBase.First_Name, ' ', DoctorBase.Last_Name) AS Doctor, Appointments.Doctors_Feedback FROM Appointments, DoctorBase WHERE Appointments.Doctor_ID = DoctorBase.Doctor_ID AND Appointments.Appointment_ID = ?;`,
+        [appt_id])
     console.log(resultRows)
-    return resultRows
+    return resultRows[0]
     }
     catch (err) {
         console.log("Error Fetching Appointment Info: ", err)
-        throw err
-    }
-}
-
-export async function getPaymentsForAppointments(patient_id) {
-    try {
-        const [resultRows] = await pool.query(`select P.Payment_ID, Concat(DB.First_Name, ' ', DB.Last_Name) as Doctor_Name, P.Payment_Type, A.Tier, T.Service, T.Cost, P.Payment_Status, P.Create_Date from payments as P, 
-            appointments as A, doctorBase as DB, tiers as T where P.payment_type = "Appointment" and P.patient_id = A.patient_id and P.Related_ID = A.appointment_id 
-            and A.doctor_id = DB.doctor_id and A.doctor_id = T.doctor_id and A.tier = T.tier and P.patient_id = ? order by A.Appt_Date desc;`, [patient_id])
-        console.log(resultRows)
-        return resultRows
-    } catch (err) {
-        console.log("Error Fetching Appointment Payments: ", err)
         throw err
     }
 }
@@ -762,9 +746,9 @@ export async function createPreliminary(Patient_ID, Symptoms) {
     }
 }
 
-export async function createPerscription(Patient_ID, Pill_ID, Quantity, Doctor_ID) {
+export async function createPrescription(Patient_ID, Pill_ID, Quantity, Doctor_ID) {
     try {
-    const [resultPrescriptionCreate] = await pool.query(`INSERT INTO perscription (Patient_ID, Pill_ID, Quantity, Doctor_ID) 
+    const [resultPrescriptionCreate] = await pool.query(`INSERT INTO prescription (Patient_ID, Pill_ID, Quantity, Doctor_ID) 
         VALUES (?, ?, ?, ?);`, [Patient_ID, Pill_ID, Quantity, Doctor_ID])
     return resultPrescriptionCreate
     }
@@ -805,10 +789,10 @@ export async function createSurvey(Patient_ID, Weight, Caloric_Intake, Water_Int
     }
 }
 
-export async function createPayment(Patient_ID, Related_ID, Payment_Type, Payment_Status) {
+export async function createPayment(Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status) {
     try {
-    const [resultPaymentCreate] = await pool.query(`INSERT INTO payments (Patient_ID, Related_ID, Payment_Type, Payment_Status)
-        VALUES (?, ?, ?, ?);`, [Patient_ID, Related_ID, Payment_Type, Payment_Status])
+    const [resultPaymentCreate] = await pool.query(`INSERT INTO payments (Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status)
+        VALUES (?, ?, ?, ?, ?);`, [Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status])
     return resultPaymentCreate
     }
     catch (err) {
@@ -994,7 +978,7 @@ export async function UpdateDoctorFeedback(appointment_id, doctor_feedback) {
 }
 
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (fixed for IDs)
-export async function UpdatePerscriptionInfo(id, entry) {
+export async function UpdatePrescriptionInfo(id, entry) {
     try {
     const [returnResult] = await pool.query(`
         UPDATE prescription SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Prescription_ID = ?;`
@@ -1108,18 +1092,6 @@ export async function clearPatientRegiment(patientID) {
         throw err
     }
 }
-
-export async function UpdatePayment(payment_id, card_number) {
-    try {
-        const [result] = await pool.query(`UPDATE Payments SET Card_Number = ?, Payment_Status = "Paid", Last_Update = CURRENT_TIMESTAMP where Payment_ID = ?`,
-            [card_number, payment_id]
-        )
-        return result
-    } catch (err) {
-        console.log("Error Making Payment: ", err)
-        throw err
-    }
-}
   
 
 //REMOVE DATA ----------------------------------------------------------------------------------------------
@@ -1205,7 +1177,7 @@ export async function deleteDoctorSchedule(id) {
     }
 }
 
-export async function deletePerscription(id) {
+export async function deletePrescription(id) {
     
     try {
     const [deleteResult] = await pool.query(`DELETE FROM prescription WHERE Prescription_ID = ?;`
