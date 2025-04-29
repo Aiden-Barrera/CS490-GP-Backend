@@ -523,6 +523,19 @@ export async function getAppointmentInfo(patient_id) {
     }
 }
 
+export async function getPaymentsForAppointments(patient_id) {
+    try {
+        const [resultRows] = await pool.query(`select P.Payment_ID, Concat(DB.First_Name, ' ', DB.Last_Name) as Doctor_Name, P.Payment_Type, A.Tier, T.Service, T.Cost, P.Payment_Status, P.Create_Date from payments as P, 
+            appointments as A, doctorBase as DB, tiers as T where P.payment_type = "Appointment" and P.patient_id = A.patient_id and P.Related_ID = A.appointment_id 
+            and A.doctor_id = DB.doctor_id and A.doctor_id = T.doctor_id and A.tier = T.tier and P.patient_id = ? order by A.Appt_Date desc;`, [patient_id])
+        console.log(resultRows)
+        return resultRows
+    } catch (err) {
+        console.log("Error Fetching Appointment Payments: ", err)
+        throw err
+    }
+}
+
 //ADD DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with type POST
 // Add to db via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM table);
@@ -826,10 +839,10 @@ export async function createSurvey(Patient_ID, Weight, Caloric_Intake, Water_Int
     }
 }
 
-export async function createPayment(Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status) {
+export async function createPayment(Patient_ID, Related_ID, Payment_Type, Payment_Status) {
     try {
-    const [resultPaymentCreate] = await pool.query(`INSERT INTO payments (Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status)
-        VALUES (?, ?, ?, ?, ?);`, [Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status])
+    const [resultPaymentCreate] = await pool.query(`INSERT INTO payments (Patient_ID, Related_ID, Payment_Type, Payment_Status)
+        VALUES (?, ?, ?, ?);`, [Patient_ID, Related_ID, Payment_Type, Payment_Status])
     return resultPaymentCreate
     }
     catch (err) {
@@ -1126,6 +1139,18 @@ export async function clearPatientRegiment(patientID) {
         return result;
     } catch (err) {
         console.log("Error Clearing regiment: ", err)
+        throw err
+    }
+}
+
+export async function UpdatePayment(payment_id, card_number) {
+    try {
+        const [result] = await pool.query(`UPDATE Payments SET Card_Number = ?, Payment_Status = "Paid", Last_Update = CURRENT_TIMESTAMP where Payment_ID = ?`,
+            [card_number, payment_id]
+        )
+        return result
+    } catch (err) {
+        console.log("Error Making Payment: ", err)
         throw err
     }
 }
