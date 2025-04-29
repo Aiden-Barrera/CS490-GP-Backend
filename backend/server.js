@@ -163,31 +163,10 @@ app.post("/doctorPatients", async (req, res) => {
     }
 })
 
-app.post("/doctorSchedule", async (req, res) => { // FIX? -VC
-    const {Doctor_ID, day} = req.body;
-    if (!Doctor_ID | !day) {
-        return res.status(400).json({ error: "params required" });
-    }
-    try {
-        const rows = await getDoctorSchedule(Doctor_ID, day)
-        const event_Details = 'retrieval of doctor schedule data'
-        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
-        res.send(rows)
-    } 
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
-})
-
 app.get("/pillbank", async (req, res) => {
     const rows = await getPills()
     const event_Details = 'retrieval of pill data'
     const audit = await genereateAudit(0, 'Pharmacist', 'GET', event_Details)
-    res.send(rows)
-})
-
-app.get("/exercisebank", async (req, res) => {
-    const rows = await getExercises()
     res.send(rows)
 })
 
@@ -453,8 +432,7 @@ app.post("/doctor", async (req, res) => {
 
 app.post("/doctorSchedule", async (req, res) => {
     const {Doctor_ID, Doctor_Schedule} = req.body
-
-    if (!Doctor_ID |!Doctor_Schedule) {
+    if (!Doctor_ID || !Doctor_Schedule) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
