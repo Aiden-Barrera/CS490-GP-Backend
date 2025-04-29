@@ -796,17 +796,72 @@ export async function createPreliminary(Patient_ID, Symptoms) {
     }
 }
 
-export async function createPerscription(Patient_ID, Pill_ID, Quantity, Doctor_ID) {
+export async function createPerscription(Patient_ID, Pill_ID, Quantity, Doctor_ID, Pharm_ID, Prescription_Status) {
     try {
-    const [resultPrescriptionCreate] = await pool.query(`INSERT INTO perscription (Patient_ID, Pill_ID, Quantity, Doctor_ID) 
-        VALUES (?, ?, ?, ?);`, [Patient_ID, Pill_ID, Quantity, Doctor_ID])
-    return resultPrescriptionCreate
+    const [result] = await pool.query(`INSERT INTO Prescription (Patient_ID, Pill_ID, Quantity, Doctor_ID, Pharm_ID, Prescription_Status) 
+        VALUES (?, ?, ?, ?, ?, ?);`, [Patient_ID, Pill_ID, Quantity, Doctor_ID, Pharm_ID, Prescription_Status])
+    return result.insertId
     }
     catch (err) {
         console.log("Error Creating Prescription: ", err)
         throw err
     }
 }
+
+export async function fetchPrescriptions(Pharm_ID) {
+    try {
+        const [resultRows] = await pool.query(`
+            SELECT 
+                p.Prescription_ID,
+                p.Patient_ID,
+                CONCAT(pb.First_Name, ' ', pb.Last_Name) AS Patient_Name,
+                p.Doctor_ID,
+                CONCAT(db.First_Name, ' ', db.Last_Name) AS Doctor_Name,
+                p.Pill_ID,
+                pill.Pill_Name,
+                p.Quantity,
+                p.Prescription_Status,
+                p.Create_Date,
+                p.Last_Update
+            FROM Prescription p
+            JOIN PatientBase pb ON p.Patient_ID = pb.Patient_ID
+            JOIN DoctorBase db ON p.Doctor_ID = db.Doctor_ID
+            JOIN PillBank pill ON p.Pill_ID = pill.Pill_ID
+            WHERE p.Pharm_ID = ?
+            ORDER BY p.Create_Date DESC;
+        `, [Pharm_ID]);
+
+        return resultRows;
+    } catch (err) {
+        console.log('Error Fetching Prescriptions by pharm_id: ', err)
+        throw err;
+    }
+}
+
+export async function getPrescriptionWithNamesById(prescriptionId) {
+    const [rows] = await pool.query(`
+        SELECT 
+            p.Prescription_ID,
+            p.Patient_ID,
+            CONCAT(pb.First_Name, ' ', pb.Last_Name) AS Patient_Name,
+            p.Doctor_ID,
+            CONCAT(db.First_Name, ' ', db.Last_Name) AS Doctor_Name,
+            p.Pill_ID,
+            pill.Pill_Name,
+            p.Quantity,
+            p.Prescription_Status,
+            p.Create_Date,
+            p.Last_Update
+        FROM Prescription p
+        JOIN PatientBase pb ON p.Patient_ID = pb.Patient_ID
+        JOIN DoctorBase db ON p.Doctor_ID = db.Doctor_ID
+        JOIN PillBank pill ON p.Pill_ID = pill.Pill_ID
+        WHERE p.Prescription_ID = ?
+    `, [prescriptionId]);
+
+    return rows[0];
+}
+
 
 export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
     const [check] = await pool.query(`select patient_id from patientBase 
