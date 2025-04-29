@@ -83,11 +83,27 @@ io.on("connection", (socket) => {
     })
 })
 
-// TESTER TO CONSUME MESSAGES FROM PHARMACY WITH PHARM ID 1
+/* THE BELOW ARE THE CONSUMER FUNCTIONS, TO BE USED ON THE PHARMACY PAGE FRONTEND
 await consumePrescriptions("1", (prescription) => {
-    console.log('New prescription received:', prescription);
+    console.log('New prescription received:', prescription); // 
     // Here, push to frontend via WebSocket, or store in database, etc.
 });
+
+await consumePrescriptions("2", (prescription) => {
+    console.log('New prescription received:', prescription); // 
+    // Here, push to frontend via WebSocket, or store in database, etc.
+});
+
+await consumePrescriptions("5", (prescription) => {
+    console.log('New prescription received:', prescription); // 
+    // Here, push to frontend via WebSocket, or store in database, etc.
+});
+
+await consumePrescriptions("7", (prescription) => {
+    console.log('New prescription received:', prescription); // 
+    // Here, push to frontend via WebSocket, or store in database, etc.
+});
+*/
 
 server.listen(3000, () => {
     console.log('Server is running on port 3000')

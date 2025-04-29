@@ -10,7 +10,7 @@ async function sendPrescription(pharmacyName, prescriptionData) {
     await channel.assertExchange(EXCHANGE_NAME, 'direct', { durable: true });
 
     const messageBuffer = Buffer.from(JSON.stringify(prescriptionData));
-    channel.publish(EXCHANGE_NAME, pharmacyName, messageBuffer);
+    await channel.publish(EXCHANGE_NAME, pharmacyName, messageBuffer);
     console.log(" [x] Sent %s: '%s'", pharmacyName, prescriptionData);
 
     await channel.close();
@@ -23,7 +23,7 @@ async function consumePrescriptions(pharmacyName, onMessage) {
     await channel.assertExchange(EXCHANGE_NAME, 'direct', { durable: true });
 
     const q = await channel.assertQueue('', { exclusive: true }); // random queue name
-    await channel.bindQueue(q.queue, EXCHANGE_NAME, pharmacyName);
+    await channel.bindQueue(q.queue, EXCHANGE_NAME, pharmacyName); // bind the queue to the exchange with the pharmacy name as the routing key -> problem?
 
     console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", q.queue);
     channel.consume(q.queue, (msg) => {
