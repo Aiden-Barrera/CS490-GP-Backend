@@ -141,7 +141,7 @@ export async function getDoctorSchedule(id, day, date) {
 
 export async function getPills() {
     try {
-    const [resultRows] = await pool.query(`SELECT Pill_ID, Pill_Name, Cost, Dosage, Pharm_ID FROM PillBank;`)
+    const [resultRows] = await pool.query(`SELECT Pill_ID, Pill_Name, Cost, Dosage, Quantity, Pharm_ID FROM PillBank;`)
     return resultRows
     }
     catch (err) {
@@ -498,6 +498,47 @@ export async function getAppointmentInfo(appt_id) {
     }
 }
 
+export async function getPaymentsForAppointments(patient_id) {
+    try {
+        const [resultRows] = await pool.query(`select P.Payment_ID, Concat(DB.First_Name, ' ', DB.Last_Name) as Doctor_Name, P.Payment_Type, A.Tier, T.Service, T.Cost, P.Payment_Status, P.Create_Date from payments as P, 
+            appointments as A, doctorBase as DB, tiers as T where P.payment_type = "Appointment" and P.patient_id = A.patient_id and P.Related_ID = A.appointment_id 
+            and A.doctor_id = DB.doctor_id and A.doctor_id = T.doctor_id and A.tier = T.tier and P.patient_id = ? order by A.Appt_Date desc;`, [patient_id])
+        console.log(resultRows)
+        return resultRows
+    } catch (err) {
+        console.log("Error Fetching Appointment Payments: ", err)
+        throw err
+    }
+}
+
+export async function getPaymentForPrescription(patientID) {
+    try {
+        const [resultRows] = await pool.query(`
+            SELECT 
+                P.Payment_ID,
+                CONCAT(DB.First_Name, ' ', DB.Last_Name) AS Doctor_Name,
+                PB.Pill_Name,
+                PB.Cost,
+                P.Payment_Type,
+                P.Payment_Status,
+                PB.Dosage,
+                PR.Quantity,
+                PR.Create_Date AS Create_Date
+            FROM payments AS P
+            JOIN prescription AS PR ON P.Related_ID = PR.Prescription_ID
+            JOIN pillbank AS PB ON PR.Pill_ID = PB.Pill_ID
+            JOIN doctorbase AS DB ON PR.Doctor_ID = DB.Doctor_ID
+            WHERE P.Payment_Type = 'Prescription' AND P.Patient_ID = ?
+            ORDER BY PR.Create_Date DESC;
+        `, [patientID]);
+
+        return resultRows;
+    } catch (err) {
+        console.error('Error fetching prescription payments:', err);
+        throw err;
+    }
+}
+
 //ADD DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with type POST
 // Add to db via a new id, can also be done with SET @valI = (SELECT COUNT(*) FROM table);
@@ -625,11 +666,11 @@ export async function createPharmacy(Company_Name,Address,Zip,Work_Hours,Email,P
       }
 }
 
-export async function createPill(Cost, Pill_Name, Pharm_ID, Dosage) {
+export async function createPill(Cost, Pill_Name, Pharm_ID, Dosage, Quantity) {
     try {
     const [resultPillCreate] = await pool.query(`
-        INSERT INTO pillbank (Cost, Pill_Name, Pharm_ID, Dosage) VALUES (?,?,?,?);`
-    , [Cost, Pill_Name, Pharm_ID, Dosage])
+        INSERT INTO pillbank (Cost, Pill_Name, Pharm_ID, Dosage, Quantity) VALUES (?,?,?,?, ?);`
+    , [Cost, Pill_Name, Pharm_ID, Dosage, Quantity])
     return resultPillCreate
     }
     catch (err) {
@@ -746,17 +787,72 @@ export async function createPreliminary(Patient_ID, Symptoms) {
     }
 }
 
-export async function createPrescription(Patient_ID, Pill_ID, Quantity, Doctor_ID) {
+export async function createPerscription(Patient_ID, Pill_ID, Quantity, Doctor_ID, Pharm_ID, Prescription_Status) {
     try {
-    const [resultPrescriptionCreate] = await pool.query(`INSERT INTO prescription (Patient_ID, Pill_ID, Quantity, Doctor_ID) 
-        VALUES (?, ?, ?, ?);`, [Patient_ID, Pill_ID, Quantity, Doctor_ID])
-    return resultPrescriptionCreate
+    const [result] = await pool.query(`INSERT INTO Prescription (Patient_ID, Pill_ID, Quantity, Doctor_ID, Pharm_ID, Prescription_Status) 
+        VALUES (?, ?, ?, ?, ?, ?);`, [Patient_ID, Pill_ID, Quantity, Doctor_ID, Pharm_ID, Prescription_Status])
+    return result.insertId
     }
     catch (err) {
         console.log("Error Creating Prescription: ", err)
         throw err
     }
 }
+
+export async function fetchPrescriptions(Pharm_ID) {
+    try {
+        const [resultRows] = await pool.query(`
+            SELECT 
+                p.Prescription_ID,
+                p.Patient_ID,
+                CONCAT(pb.First_Name, ' ', pb.Last_Name) AS Patient_Name,
+                p.Doctor_ID,
+                CONCAT(db.First_Name, ' ', db.Last_Name) AS Doctor_Name,
+                p.Pill_ID,
+                pill.Pill_Name,
+                p.Quantity,
+                p.Prescription_Status,
+                p.Create_Date,
+                p.Last_Update
+            FROM Prescription p
+            JOIN PatientBase pb ON p.Patient_ID = pb.Patient_ID
+            JOIN DoctorBase db ON p.Doctor_ID = db.Doctor_ID
+            JOIN PillBank pill ON p.Pill_ID = pill.Pill_ID
+            WHERE p.Pharm_ID = ?
+            ORDER BY p.Create_Date DESC;
+        `, [Pharm_ID]);
+
+        return resultRows;
+    } catch (err) {
+        console.log('Error Fetching Prescriptions by pharm_id: ', err)
+        throw err;
+    }
+}
+
+export async function getPrescriptionWithNamesById(prescriptionId) {
+    const [rows] = await pool.query(`
+        SELECT 
+            p.Prescription_ID,
+            p.Patient_ID,
+            CONCAT(pb.First_Name, ' ', pb.Last_Name) AS Patient_Name,
+            p.Doctor_ID,
+            CONCAT(db.First_Name, ' ', db.Last_Name) AS Doctor_Name,
+            p.Pill_ID,
+            pill.Pill_Name,
+            p.Quantity,
+            p.Prescription_Status,
+            p.Create_Date,
+            p.Last_Update
+        FROM Prescription p
+        JOIN PatientBase pb ON p.Patient_ID = pb.Patient_ID
+        JOIN DoctorBase db ON p.Doctor_ID = db.Doctor_ID
+        JOIN PillBank pill ON p.Pill_ID = pill.Pill_ID
+        WHERE p.Prescription_ID = ?
+    `, [prescriptionId]);
+
+    return rows[0];
+}
+
 
 export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
     const [check] = await pool.query(`select patient_id from patientBase 
