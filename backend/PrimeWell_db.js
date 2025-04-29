@@ -798,7 +798,7 @@ export async function createPreliminary(Patient_ID, Symptoms) {
 
 export async function createPerscription(Patient_ID, Pill_ID, Quantity, Doctor_ID) {
     try {
-    const [resultPrescriptionCreate] = await pool.query(`INSERT INTO perscription (Patient_ID, Pill_ID, Quantity, Doctor_ID) 
+    const [resultPrescriptionCreate] = await pool.query(`INSERT INTO Prescription (Patient_ID, Pill_ID, Quantity, Doctor_ID) 
         VALUES (?, ?, ?, ?);`, [Patient_ID, Pill_ID, Quantity, Doctor_ID])
     return resultPrescriptionCreate
     }

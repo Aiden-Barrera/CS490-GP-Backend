@@ -26,6 +26,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     fetchApptEndStatus, getPillsFromPharm, clearPatientRegiment,
     getPaymentsForAppointments, createPayment,
     UpdatePayment} from './PrimeWell_db.js'
+import { sendPrescription, consumePrescriptions } from './rabbitmq.js';  // import the RabbitMQ helper
 
 
 
@@ -84,6 +85,27 @@ io.on("connection", (socket) => {
     })
 })
 
+/* THE BELOW ARE THE CONSUMER FUNCTIONS, TO BE USED ON THE PHARMACY PAGE FRONTEND
+await consumePrescriptions("1", (prescription) => {
+    console.log('New prescription received:', prescription); // 
+    // Here, push to frontend via WebSocket, or store in database, etc.
+});
+
+await consumePrescriptions("2", (prescription) => {
+    console.log('New prescription received:', prescription); // 
+    // Here, push to frontend via WebSocket, or store in database, etc.
+});
+
+await consumePrescriptions("5", (prescription) => {
+    console.log('New prescription received:', prescription); // 
+    // Here, push to frontend via WebSocket, or store in database, etc.
+});
+
+await consumePrescriptions("7", (prescription) => {
+    console.log('New prescription received:', prescription); // 
+    // Here, push to frontend via WebSocket, or store in database, etc.
+});
+*/
 
 server.listen(3000, () => {
     console.log('Server is running on port 3000')
@@ -813,6 +835,7 @@ app.post("/preliminaries", async (req, res) => {
     }
 })
 
+// MAY NOT NEED BELOW BECAUSE ITS DONE IN /sendPrescription
 app.post("/prescription", async (req, res) => {
     const {Patient_ID, Doctor_ID, Pill_ID, Quantity} = req.body
     if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity) {
@@ -820,14 +843,45 @@ app.post("/prescription", async (req, res) => {
     }
 
     try {
-        const newAppt = await createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity)
-        const event_Details = 'Created new Appointment'
+        const newPrescription = await createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity)
+        const event_Details = 'Created new Prescription'
         const audit = await genereateAudit(Doctor_ID, 'Doctor', 'POST', event_Details)
-        res.status(201).send(newAppt)
+        res.status(201).send(newPrescription)
     } catch (error) {  
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
+
+// ENDPOINT USED WITH RABBITMQ, SO DOCTOR CAN CREATE AND SEND PRESCRIPTION TO QUEUE
+app.post('/sendPrescription', async (req, res) => {
+    const {Patient_ID, Doctor_ID, Pill_ID, Quantity, Pharm_ID} = req.body
+    if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+
+    try {      
+        // Create new prescription
+        const newPrescription = await createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity)
+        console.log(newPrescription)
+        const event_Details = 'Created new Prescription'
+        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'POST', event_Details)
+
+        // Then send to the appropriate pharmacy queue
+        const prescription = {
+            Patient_ID,
+            Doctor_ID,
+            Pill_ID,
+            Quantity
+        };
+        await sendPrescription(Pharm_ID.toString(), prescription);
+        res.status(200).json({ message: `Prescription sent to pharmacy ${Pharm_ID}!` });
+    } 
+    catch (error) 
+    {
+        console.error('Error sending prescription:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 // Ensure that Patient_ID and Doctor_ID are existing IDs in the PatientBase and DoctorBase tables, respectively } via frontend? - FI
 app.post("/reviews", async (req, res) => {
