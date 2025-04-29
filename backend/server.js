@@ -97,6 +97,12 @@ io.on("connection", (socket) => {
         }
     })
 
+    socket.on("leave_connection", (pharm_id) => {
+        socket.leave(pharm_id);
+        console.log(`Pharmacy ${socket.id} left pharmacy room: ${pharm_id}`);
+        activePharmacyConsumers.delete(pharm_id); // Optional if you're tracking
+    });
+
     // Handle disconnection
     socket.on("disconnect", () => {
         console.log("User disconnected:", socket.id);
