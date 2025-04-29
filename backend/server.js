@@ -25,7 +25,10 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     UpdateDoctorFeedback,
     fetchApptEndStatus, getPillsFromPharm, clearPatientRegiment,
     getPaymentsForAppointments, createPayment,
-    UpdatePayment} from './PrimeWell_db.js'
+    UpdatePayment,
+    fetchPrescriptions,
+    getPaymentForPrescription} from './PrimeWell_db.js'
+import { sendPrescription, consumePrescriptions } from './rabbitmq.js';  // import the RabbitMQ helper
 
 
 
@@ -78,11 +81,47 @@ io.on("connection", (socket) => {
         io.to(data.appt_id).emit("receive_msg", data)
     })
 
+    const activePharmacyConsumers = new Set();
+
+    socket.on("join_connection", (pharm_id) => {
+        socket.join(pharm_id)
+        console.log(`Pharmacy ${socket.id} joined pharmacy id: ${pharm_id}`)
+
+        if (!activePharmacyConsumers.has(pharm_id)) {
+            activePharmacyConsumers.add(pharm_id);
+    
+            consumePrescriptions(pharm_id, (prescription) => {
+                // Emit to everyone in the room
+                io.to(pharm_id).emit("new_prescription", prescription);
+            });
+        }
+    })
+
     // Handle disconnection
     socket.on("disconnect", () => {
         console.log("User disconnected:", socket.id);
     })
 })
+
+// await consumePrescriptions("1", (prescription) => {
+//     console.log('New prescription received:', prescription); // 
+//     // Here, push to frontend via WebSocket, or store in database, etc.
+// });
+
+// await consumePrescriptions("2", (prescription) => {
+//     console.log('New prescription received:', prescription); // 
+//     // Here, push to frontend via WebSocket, or store in database, etc.
+// });
+
+// await consumePrescriptions("5", (prescription) => {
+//     console.log('New prescription received:', prescription); // 
+//     // Here, push to frontend via WebSocket, or store in database, etc.
+// });
+
+// await consumePrescriptions("7", (prescription) => {
+//     console.log('New prescription received:', prescription); // 
+//     // Here, push to frontend via WebSocket, or store in database, etc.
+// });
 
 
 server.listen(3000, () => {
@@ -373,6 +412,24 @@ app.get("/paymentAppointments/:id", async (req, res) => {
     }
 })
 
+app.get("/paymentPrescriptions/:id", async (req, res) => {
+    try {
+        const rows = await getPaymentForPrescription(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        console.log('Failed Fetching Prescription Payments: ', err)
+    }
+})
+
+app.get("/fetchPrescriptions/:id", async (req, res) => {
+    try {
+        const rows = await fetchPrescriptions(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        console.log("Failed Fetching prescriptions: ", err)
+    }
+})
+
 app.post("/passAuthPatient", async (req, res) => {
     const { email, pw } = req.body;
     if (!email || !pw) {
@@ -573,13 +630,13 @@ app.post("/getPharmByZip", async (req, res) => {
 
 // Ensure that Pharm_ID passed into Pharm_ID field is an existing Pharmacy ID in the Pharmacies table } via frontend? - FI
 app.post("/pillbank", async (req, res) => {
-    const { Cost, Pill_Name, Pharm_ID, Dosage } = req.body
-    if (!Cost || !Pill_Name || !Pharm_ID || !Dosage) {
+    const { Cost, Pill_Name, Pharm_ID, Dosage, Quantity } = req.body
+    if (!Cost || !Pill_Name || !Pharm_ID || !Dosage || !Quantity) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
     try {
-        const newPill = await createPill(Cost, Pill_Name, Pharm_ID, Dosage)
+        const newPill = await createPill(Cost, Pill_Name, Pharm_ID, Dosage, Quantity)
         const event_Details = 'Created new Pill'
         const audit = await genereateAudit(0, 'Pharmacist', 'POST', event_Details)
         res.status(201).send(newPill)
@@ -813,6 +870,7 @@ app.post("/preliminaries", async (req, res) => {
     }
 })
 
+// MAY NOT NEED BELOW BECAUSE ITS DONE IN /sendPrescription
 app.post("/prescription", async (req, res) => {
     const {Patient_ID, Doctor_ID, Pill_ID, Quantity} = req.body
     if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity) {
@@ -820,14 +878,46 @@ app.post("/prescription", async (req, res) => {
     }
 
     try {
-        const newAppt = await createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity)
-        const event_Details = 'Created new Appointment'
+        const newPrescription = await createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity)
+        const event_Details = 'Created new Prescription'
         const audit = await genereateAudit(Doctor_ID, 'Doctor', 'POST', event_Details)
-        res.status(201).send(newAppt)
+        res.status(201).send(newPrescription)
     } catch (error) {  
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
+
+// ENDPOINT USED WITH RABBITMQ, SO DOCTOR CAN CREATE AND SEND PRESCRIPTION TO QUEUE
+app.post('/sendPrescription', async (req, res) => {
+    const {Patient_ID, Doctor_ID, Pill_ID, Quantity, Pharm_ID} = req.body
+    if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+
+    try {      
+        // Create new prescription
+        // const newPrescription = await createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity, Pharm_ID)
+        // console.log(newPrescription)
+        // const event_Details = 'Created new Prescription'
+        // const audit = await genereateAudit(Doctor_ID, 'Doctor', 'POST', event_Details)
+
+        // Then send to the appropriate pharmacy queue
+        const prescription = {
+            Patient_ID,
+            Doctor_ID,
+            Pill_ID,
+            Quantity, 
+            Pharm_ID
+        };
+        await sendPrescription(Pharm_ID.toString(), prescription);
+        res.status(200).json({ message: `Prescription sent to pharmacy ${Pharm_ID}!` });
+    } 
+    catch (error) 
+    {
+        console.error('Error sending prescription:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 // Ensure that Patient_ID and Doctor_ID are existing IDs in the PatientBase and DoctorBase tables, respectively } via frontend? - FI
 app.post("/reviews", async (req, res) => {
@@ -1148,7 +1238,7 @@ app.patch('/giveFeedback', async (req, res) => {
     }
 })
 
-app.patch("/makePaymentAppointment", async (req, res) => {
+app.patch("/makePayment", async (req, res) => {
     const {Payment_ID, Card_Number} = req.body
     if (!Payment_ID || !Card_Number) {
         return res.status(400).json({ error: "Missing Payment ID and/or Card_Number"});
