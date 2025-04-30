@@ -27,7 +27,9 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPaymentsForAppointments, createPayment,
     UpdatePayment,
     fetchPrescriptions,
-    getPaymentForPrescription} from './PrimeWell_db.js'
+    getPaymentForPrescription,
+    fetchPrescriptionPaid,
+    AcceptPrescription} from './PrimeWell_db.js'
 import { sendPrescription, consumePrescriptions } from './rabbitmq.js';  // import the RabbitMQ helper
 
 
@@ -96,6 +98,12 @@ io.on("connection", (socket) => {
             });
         }
     })
+
+    socket.on("leave_connection", (pharm_id) => {
+        socket.leave(pharm_id);
+        console.log(`Pharmacy ${socket.id} left pharmacy room: ${pharm_id}`);
+        activePharmacyConsumers.delete(pharm_id); // Optional if you're tracking
+    });
 
     // Handle disconnection
     socket.on("disconnect", () => {
@@ -427,6 +435,15 @@ app.get("/fetchPrescriptions/:id", async (req, res) => {
         res.send(rows)
     } catch (err) {
         console.log("Failed Fetching prescriptions: ", err)
+    }
+})
+
+app.get("/fetchPrescriptionPaid/:id", async (req, res) => {
+    try {
+        const rows = await fetchPrescriptionPaid(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        console.log("Failed to Fetch Prescription if paid: ", err)
     }
 })
 
@@ -890,7 +907,7 @@ app.post("/prescription", async (req, res) => {
 // ENDPOINT USED WITH RABBITMQ, SO DOCTOR CAN CREATE AND SEND PRESCRIPTION TO QUEUE
 app.post('/sendPrescription', async (req, res) => {
     const {Patient_ID, Doctor_ID, Pill_ID, Quantity, Pharm_ID} = req.body
-    if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity) {
+    if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity || !Pharm_ID) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
@@ -1247,6 +1264,20 @@ app.patch("/makePayment", async (req, res) => {
     try {
         const makePayment = await UpdatePayment(Payment_ID, Card_Number)
         res.status(201).send(makePayment)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
+    }
+})
+
+app.patch("/acceptPrescription", async (req, res) => {
+    const {Prescription_ID} = req.body
+    if (!Prescription_ID) {
+        return res.status(400).json({ error: "Missing Prescription ID"});
+    }
+
+    try {
+        const accept = await AcceptPrescription(Prescription_ID)
+        res.status(201).send(accept)
     } catch (err) {
         res.status(500).json({ error: err.message || "Internal server error" });
     }
