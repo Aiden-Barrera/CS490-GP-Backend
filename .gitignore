@@ -1,7 +1,7 @@
 #ignore .env file
-.env
+/backend/.env
 server2.js
 
 #ignore node_modules
-node_modules/
-coverage/
+/backend/node_modules/
+/backend/coverage/
