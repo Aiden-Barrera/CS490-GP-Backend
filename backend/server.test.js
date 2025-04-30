@@ -664,9 +664,6 @@ describe("/payment", ()=>{
 /*
 list of points to add to the test:
 
-ADD DATA
-/payment
-
 UPDATE DATA
 /patient/:id
 /patient/:id/addDoc
