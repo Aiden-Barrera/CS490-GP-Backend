@@ -908,8 +908,24 @@ export async function fetchPrescriptionPaid(prescription_id) {
 
 export async function fetchPrescriptionAccepted(patient_id){
     try {
-        const [resultRows] = await pool.query(`select * from prescription where 
-            patient_id = ? and prescription_status = "Accepted";`, [patient_id])
+        const [resultRows] = await pool.query(`SELECT 
+            p.Prescription_ID,
+            p.Patient_ID,
+            CONCAT(pb.First_Name, ' ', pb.Last_Name) AS Patient_Name,
+            p.Doctor_ID,
+            CONCAT(db.First_Name, ' ', db.Last_Name) AS Doctor_Name,
+            p.Pill_ID,
+            pill.Pill_Name,
+            p.Quantity,
+            p.Prescription_Status,
+            p.Create_Date,
+            p.Last_Update
+        FROM Prescription p
+        JOIN PatientBase pb ON p.Patient_ID = pb.Patient_ID
+        JOIN DoctorBase db ON p.Doctor_ID = db.Doctor_ID
+        JOIN PillBank pill ON p.Pill_ID = pill.Pill_ID
+        WHERE pb.patient_id = ? and Prescription_Status = 'Accepted';
+        ;`, [patient_id])
         return resultRows
     } catch (err) {
         console.log('Error Fetching Prescriptions by patient_id: ', err)
