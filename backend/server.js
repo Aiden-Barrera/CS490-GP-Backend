@@ -1,5 +1,5 @@
 import express from 'express'
-import { addPatientDoc, createAppointment, createChatMsg, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPrescription, createPharmacy, 
+import { addPatientDoc, createAppointment, createChatMsg, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPerscription, createPharmacy, 
     createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePrescription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getChatMesseges, getComments_id, getDoctorAuth, 
     getDoctorSchedule, 
     getExercises, getExerciseByClass, getForumPosts, getPatientAuth, getPatients, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
@@ -270,24 +270,6 @@ app.get("/prescription/:id", async (req, res) => { //based on patient -VC
     res.send(rows)
 })
 
-// FOR RABBIT MQ - VC
-/*app.post("/prescriptionDoc", async (req, res) => { //based on doctor -VC
-    const {Doctor_ID} = req.body;
-    if (!Doctor_ID) {
-        return res.status(400).json({ error: "Doctor_ID required" });
-    }
-    try {
-        const { Doctor_ID } = await getDocID(email, pw)
-        const rows = await getPrescriptionDoc(Doctor_ID)
-        const event_Details = 'retrieval of prescription'
-        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'GET', event_Details)
-        res.send(rows)
-    }
-    catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" })
-    }
-})*/
-
 // Why are the params weird?
 // MAKE THIS A POST REQUEST BECAUSE IT IS SENSITIVE - FI
 app.get("/preliminaries/:id", async (req, res) => {
@@ -299,12 +281,6 @@ app.get("/preliminaries/:id", async (req, res) => {
     catch (err) {
         console.log("Failed Fetching Preliminaries: ", err)
     }
-})
-
-// Change this to a post because it is senstitive
-app.get("/chatroomMsgs/:id", async (req, res) => { //by chatroom_id - VC
-    const rows = await getChatMesseges(req.params.id)
-    res.send(rows)
 })
 
 app.get("/reviewsTop", apiKeyMiddleware, async (req, res) => {
@@ -500,10 +476,10 @@ app.post("/doctor", async (req, res) => {
 
 app.post("/doctorSchedule", async (req, res) => {
     const {Doctor_ID, Doctor_Schedule} = req.body
+    console.log(Doctor_Schedule)
     if (!Doctor_ID || !Doctor_Schedule) {
         return res.status(400).json({ error: "Missing required information" });
     }
-
     try {
         const newDoctor = await createDoctorSchedule(Doctor_ID, Doctor_Schedule)
         const event_Details = 'Created new Doctor Schedule'
@@ -610,8 +586,6 @@ app.post("/fetchApptEndStatus", async (req, res) => {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
-// ----------------------------------------------- stop her for tests ----------------------------------------------------------- VC
-
 
 // Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
 app.post("/forumPosts", async (req, res) => {
@@ -670,23 +644,6 @@ app.post("/regiment", async (req, res) => {
     }
 })
 
-app.post("/messages", async (req, res) => { //chat room id, based on sender type and ID - VC
-    const {Appointment_ID, SenderID, SenderType, Message} = req.body
-    if(!Appointment_ID | !SenderID | !SenderType |  !Message){
-        return res.status(400).json({ error: "Missing required information" });
-    }
-
-    try{
-    const newMsg = await createChatMsg(Appointment_ID, SenderID, SenderType, Message)
-    const event_Details = 'Created message to Appointment Room'
-    const audit = await genereateAudit(SenderID, SenderType, 'POST', event_Details)
-    res.status(201).send(newMsg)
-    }catch (error) {  
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})
-
-
 // Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
 // Ensure that the Doctor_ID passed into the Doctor_ID field is an existing Doctor ID in the DoctorBase table } via frontend? - FI
 // Doctor Accepts the Patient's Request
@@ -725,7 +682,7 @@ app.post("/request", async (req, res) => { // We might not need this since it's 
     console.log(req.body)
     try {
         const patientsDoctor = await getPatientDoc(Patient_ID)
-        console.log("Patient Info: ", patientsDoctor, "DoctorID: ", Doctor_ID)
+        console.log("Patient Info: ", patientsDoctor.doctor_id, "DoctorID: ", Doctor_ID)
         //check if correct doctor
         if (patientsDoctor !== undefined && patientsDoctor?.doctor_id !== Doctor_ID) {
             return res.status(400).json({ error: "Patient already has a different doctor"});
@@ -764,23 +721,6 @@ app.post("/preliminaries", async (req, res) => {
         const event_Details = 'Created new Preliminary'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
         res.status(201).send(newAppt)
-    } catch (error) {  
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})
-
-// MAY NOT NEED BELOW BECAUSE ITS DONE IN /sendPrescription
-app.post("/prescription", async (req, res) => {
-    const {Patient_ID, Doctor_ID, Pill_ID, Quantity} = req.body
-    if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity) {
-        return res.status(400).json({ error: "Missing required information" });
-    }
-
-    try {
-        const newPrescription = await createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity)
-        const event_Details = 'Created new Prescription'
-        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'POST', event_Details)
-        res.status(201).send(newPrescription)
     } catch (error) {  
         res.status(500).json({ error: error.message || "Internal server error" });
     }
@@ -857,6 +797,9 @@ app.post("/patientsurvey", apiKeyMiddleware, async (req, res) => {
 
 app.post("/patientsurvey/date/", async (req, res) => {
     const {patient_id} = req.body
+    if (!patient_id) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
     const rows = await getSurveyLatestDate(patient_id)
     const today = new Date().toISOString().split('T')[0]
     if (rows[0]?.survey_date.toISOString().split('T')[0] != today) {
@@ -1155,16 +1098,6 @@ app.patch("/makePayment", async (req, res) => {
 // All below should have an addtional query to auditlog with type DELETE
 // delete based on a given id - VC
 
-/*ADDED: appointments, Doctorschedules, prescription, regiments, posts<-comments, audit logs*/
-
-app.delete("/patient", async(req, res) => {
-    const { Patient_ID } = req.body
-    const deleteResult = await deletePatient(Patient_ID)
-    const event_Details = 'Patient has been deleted'
-    const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})// delete any ties to first patient (regiments and appointments)
-
 app.delete("/appointment/patient", async(req, res) => { //Patient cancels appointment (appt_ID) - VC
     const deleteResult = await deleteAppointment(req.body.Appointment_ID)
     const event_Details = 'An appointment has been deleted'
@@ -1179,52 +1112,10 @@ app.delete("/appointment/doctor", async(req, res) => { //Doctor cancels appointm
     res.status(204).send(deleteResult)
 })
 
-app.delete("/regiment", async(req, res) => {
-    const deleteResult = await deleteRegiment(req.body.Regiment_ID)
-    const event_Details = 'A regiment has been deleted'
-    const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})
-
-app.delete("/doctor", async(req, res) => {
-    const deleteResult = await deleteDoctor(req.body.Doctor_ID)
-    const event_Details = 'Doctor has been deleted'
-    const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})
-
-app.delete("/doctorSchedule", async(req, res) => {
-    const deleteResult = await deleteDoctor(req.body.Doctor_ID)
-    const event_Details = 'Doctor Schedule has been deleted'
-    const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})
-
-app.delete("/prescription", async(req, res) => { //Doctor should manage perscriptions - VC
-    const deleteResult = await deletePrescription(req.body.Patient_ID)
-    const event_Details = 'Doctor has been deleted'
-    const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})
-
 app.delete("/pillbank", async(req, res) => {
     const deleteResult = await deletePill(req.body.Pill_ID)
     const event_Details = 'Pill has been deleted'
     const audit = await genereateAudit(0, 'Pharmacist', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})
-
-app.delete("/comments", async(req, res) => {
-    const deleteResult = await deleteComment(req.body.Comment_ID)
-    const event_Details = 'Comment has been deleted'
-    const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})
-
-app.delete("/forumPost", async(req, res) => { //delete all comment rows with this id (Fourm_ID) - VC
-    const deleteResult = await deleteForumPost(req.body.Forum_ID)
-    const event_Details = 'Post and its comments have been deleted'
-    const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'DELETE', event_Details)
     res.status(204).send(deleteResult)
 })
 

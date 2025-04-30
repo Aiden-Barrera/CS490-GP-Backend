@@ -1189,6 +1189,17 @@ export async function clearPatientRegiment(patientID) {
     }
 }
   
+export async function UpdatePayment(payment_id, card_number) {
+    try {
+        const [result] = await pool.query(`UPDATE Payments SET Card_Number = ?, Payment_Status = "Paid", Last_Update = CURRENT_TIMESTAMP where Payment_ID = ?`,
+            [card_number, payment_id]
+        )
+        return result
+    } catch (err) {
+        console.log("Error Making Payment: ", err)
+        throw err
+    }
+}
 
 //REMOVE DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with tyoe DELETE
