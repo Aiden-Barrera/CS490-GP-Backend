@@ -524,6 +524,18 @@ app.post("/patient", async (req, res) => {
     const event_Details = 'Created new Patient'
     const audit = await genereateAudit(newPatient['patient_id'], 'Patient', 'POST', event_Details)
     console.log(newPatient)
+    const newRegiment = await createRegiment(newPatient['patient_id'], JSON.stringify({
+        "Sunday":[],
+        "Monday":[],
+        "Tuesday": [],
+        "Wednesday": [],
+        "Thursday": [],
+        "Friday": [],
+        "Saturday":[]
+        }))
+    console.log(newRegiment)
+    const event_Details2 = 'Created new Regiment'
+    const audit2 = await genereateAudit(newPatient['patient_id'], 'Patient', 'POST', event_Details2)
     res.status(201).send(newPatient)
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
