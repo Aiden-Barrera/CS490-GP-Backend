@@ -906,9 +906,26 @@ export async function fetchPrescriptionPaid(prescription_id) {
     }
 }
 
+export async function fetchPrescriptionAccepted(patient_id){
+    try {
+        const [resultRows] = await pool.query(`select * from prescription where 
+            patient_id = ? and prescription_status = "Accepted";`, [patient_id])
+        return resultRows
+    } catch (err) {
+        console.log('Error Fetching Prescriptions by patient_id: ', err)
+        throw err;
+    }
+}
+
 export async function getAllPharmacyIds() {
-    const result = await pool.query('SELECT pharm_id FROM Pharmacies');
-    return result.rows.map(r => r.pharm_id);
+    try {
+        const result = await pool.query('SELECT pharm_id FROM Pharmacies');
+        console.log(result[0])
+        return result[0].map(r => r.pharm_id);
+    } catch (err) {
+        console.log("Error Getting all pharm ids: ", err)
+        throw err
+    }
 }
 
 

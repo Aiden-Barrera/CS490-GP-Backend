@@ -29,8 +29,9 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     fetchPrescriptions,
     getPaymentForPrescription,
     fetchPrescriptionPaid,
-    AcceptPrescription, getAllPharmacyIds} from './PrimeWell_db.js'
-import { sendPrescription, consumePrescriptions } from './rabbitmq.js';  // import the RabbitMQ helper
+    AcceptPrescription, getAllPharmacyIds,
+    fetchPrescriptionAccepted} from './PrimeWell_db.js'
+import { sendPrescription, consumePrescriptions, preCreatePharmacyQueue } from './rabbitmq.js';  // import the RabbitMQ helper
 
 
 
@@ -459,7 +460,16 @@ app.get("/fetchPrescriptionPaid/:id", async (req, res) => {
         const rows = await fetchPrescriptionPaid(req.params.id)
         res.send(rows)
     } catch (err) {
-        console.log("Failed to Fetch Prescription if paid: ", err)
+        res.status(500).json({ error: err.message || "Internal server error" });
+    }
+})
+
+app.get("/fetchPrescriptionAccepted/:id", async (req, res) => {
+    try {
+        const rows = await fetchPrescriptionAccepted(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
     }
 })
 
