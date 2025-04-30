@@ -867,27 +867,43 @@ export async function fetchPrescriptions(Pharm_ID) {
 }
 
 export async function getPrescriptionWithNamesById(prescriptionId) {
-    const [rows] = await pool.query(`
-        SELECT 
-            p.Prescription_ID,
-            p.Patient_ID,
-            CONCAT(pb.First_Name, ' ', pb.Last_Name) AS Patient_Name,
-            p.Doctor_ID,
-            CONCAT(db.First_Name, ' ', db.Last_Name) AS Doctor_Name,
-            p.Pill_ID,
-            pill.Pill_Name,
-            p.Quantity,
-            p.Prescription_Status,
-            p.Create_Date,
-            p.Last_Update
-        FROM Prescription p
-        JOIN PatientBase pb ON p.Patient_ID = pb.Patient_ID
-        JOIN DoctorBase db ON p.Doctor_ID = db.Doctor_ID
-        JOIN PillBank pill ON p.Pill_ID = pill.Pill_ID
-        WHERE p.Prescription_ID = ?
-    `, [prescriptionId]);
+    try {
+        const [rows] = await pool.query(`
+            SELECT 
+                p.Prescription_ID,
+                p.Patient_ID,
+                CONCAT(pb.First_Name, ' ', pb.Last_Name) AS Patient_Name,
+                p.Doctor_ID,
+                CONCAT(db.First_Name, ' ', db.Last_Name) AS Doctor_Name,
+                p.Pill_ID,
+                pill.Pill_Name,
+                p.Quantity,
+                p.Prescription_Status,
+                p.Create_Date,
+                p.Last_Update
+            FROM Prescription p
+            JOIN PatientBase pb ON p.Patient_ID = pb.Patient_ID
+            JOIN DoctorBase db ON p.Doctor_ID = db.Doctor_ID
+            JOIN PillBank pill ON p.Pill_ID = pill.Pill_ID
+            WHERE p.Prescription_ID = ?
+        `, [prescriptionId]);
+    
+        return rows[0];
+    } catch (err) {
+        console.log('Error Fetching Prescriptions by prescription_id: ', err)
+        throw err;
+    }
+}
 
-    return rows[0];
+export async function fetchPrescriptionPaid(prescription_id) {
+    try {
+        const [resultRows] = await pool.query(`select * from payments where payment_type = "Prescription" 
+            and related_id = ? and payment_status = "paid";`, [prescription_id])
+        return resultRows[0]
+    } catch (err) {
+        console.log('Error Fetching Prescriptions by prescription_id: ', err)
+        throw err;
+    }
 }
 
 
@@ -1234,6 +1250,17 @@ export async function UpdatePayment(payment_id, card_number) {
         return result
     } catch (err) {
         console.log("Error Making Payment: ", err)
+        throw err
+    }
+}
+
+export async function AcceptPrescription(prescription_id) {
+    try {
+        const [result] = await pool.query(`UPDATE Prescription SET Prescription_Status = "Accepted", Last_Update = CURRENT_TIMESTAMP where Prescription_ID = ?`,
+            [prescription_id])
+        return result
+    } catch (err) {
+        console.log("Error Accepting Prescription: ", err)
         throw err
     }
 }
