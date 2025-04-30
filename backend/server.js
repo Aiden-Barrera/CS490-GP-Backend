@@ -1219,3 +1219,5 @@ app.delete("/forumPost", async(req, res) => { //delete all comment rows with thi
     const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'DELETE', event_Details)
     res.status(204).send(deleteResult)
 })
+
+export default app
