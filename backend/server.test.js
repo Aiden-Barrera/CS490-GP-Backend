@@ -660,7 +660,6 @@ describe("/payment", ()=>{
 })
 
 //==================UPDATE===================
-
 /*
 list of points to add to the test:
 
