@@ -802,13 +802,13 @@ app.post("/preliminaries", async (req, res) => {
 })
 
 app.post("/prescription", async (req, res) => {
-    const {Patient_ID, Doctor_ID, Pill_ID, Quantity} = req.body
-    if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity) {
+    const {Patient_ID, Doctor_ID, Pill_ID, Quantity, Pharm_ID} = req.body
+    if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity || !Pharm_ID) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
     try {
-        const newAppt = await createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity)
+        const newAppt = await createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity, Pharm_ID)
         const event_Details = 'Created new Appointment'
         const audit = await genereateAudit(Doctor_ID, 'Doctor', 'POST', event_Details)
         res.status(201).send(newAppt)

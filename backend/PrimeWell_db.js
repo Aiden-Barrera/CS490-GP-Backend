@@ -242,7 +242,7 @@ export async function getForumPosts() {
 
 export async function getComments_id(id) { //comments for specific forum post -VC
     try {
-    const [resultRows] = await pool.query(`SELECT Comment_ID, Comment_Text, Patient_ID, Date_Posted FROM Comments WHERE Forum_ID = ?;`, [id])
+    const [resultRows] = await pool.query(`SELECT Comments.Comment_ID, Comments.Comment_Text, Comments.Patient_ID, CONCAT(PatientBase.First_Name, ' ', PatientBase.Last_Name) AS PatientName, Comments.Date_Posted FROM Comments, PatientBase WHERE Forum_ID = ? AND Comments.Patient_ID = PatientBase.Patient_ID;`, [id])
     return resultRows
     }
     catch (err) {
@@ -343,7 +343,7 @@ export async function getAuthSurvey(id) { // get patient's recent surveys by rec
 export async function getAppointmentsPatient(id) {
     try {
         const [resultRows] = await pool.query(`SELECT A.Appointment_ID, A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier, DB.first_name, DB.last_name, DB.specialty FROM Appointments as A, doctorbase as DB 
-            WHERE A.Patient_ID = ? and DB.doctor_id = A.doctor_id ORDER BY (Appt_Date >= CURDATE()) DESC, Appt_Date ASC;`, [id]) 
+            WHERE A.Patient_ID = ? and DB.doctor_id = A.doctor_id ORDER BY (Appt_End = false AND Appt_Date >= CURDATE()) DESC, Appt_End ASC, Appt_Date ASC;`, [id]) 
         return resultRows
     } catch (err) {
         console.log("Failed Fetching Appointments for Patient: ", err)
@@ -397,7 +397,8 @@ export async function getAppointmentsDoctor(id) {
     try {
     const [resultRows] = await pool.query(`SELECT PB.First_Name, PB.Last_Name, A.Appointment_ID, 
         A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier FROM Appointments as A, PatientBase as PB 
-        WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID and A.Appt_End = false;
+        WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID and A.Appt_End = false 
+        ORDER BY (A.Appt_End = false AND A.Appt_Date >= CURDATE()) DESC, A.Appt_Date ASC;
     `, [id]) 
     return resultRows
     }
@@ -780,10 +781,10 @@ export async function createPreliminary(Patient_ID, Symptoms) {
     }
 }
 
-export async function createPerscription(Patient_ID, Pill_ID, Quantity, Doctor_ID) {
+export async function createPerscription(Patient_ID, Pill_ID, Quantity, Doctor_ID, Pharm_ID) {
     try {
-    const [resultPrescriptionCreate] = await pool.query(`INSERT INTO perscription (Patient_ID, Pill_ID, Quantity, Doctor_ID) 
-        VALUES (?, ?, ?, ?);`, [Patient_ID, Pill_ID, Quantity, Doctor_ID])
+    const [resultPrescriptionCreate] = await pool.query(`INSERT INTO Prescription (Patient_ID, Pill_ID, Quantity, Doctor_ID, Pharm_id) 
+        VALUES (?, ?, ?, ?, ?);`, [Patient_ID, Pill_ID, Quantity, Doctor_ID, Pharm_ID])
     return resultPrescriptionCreate
     }
     catch (err) {
@@ -1265,3 +1266,4 @@ export async function deleteForumPost(id) {
         throw err
     }
 }
+

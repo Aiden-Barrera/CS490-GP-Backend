@@ -353,7 +353,7 @@ describe("/getDoctorSchedule", ()=>{
     })
 
     test("should result in an error", async ()=>{
-        const response = await request(app).post("/doctorSchedule").send({})
+        const response = await request(app).post("/getDoctorSchedule").send({})
         expect(response.statusCode).toBe(400)
     })
 })
@@ -660,28 +660,193 @@ describe("/payment", ()=>{
     })    
 })
 
+
 //==================UPDATE===================
-/*
-list of points to add to the test:
 
-UPDATE DATA
-/patient/:id
-/patient/:id/addDoc
-/patientDropDoctor/removeDoc
-/doctor/:id
-/doctorSchedule/:id
-/prescription/:doctor_id
-/pillbank/:pill_id
-/regiments/:id
-/regimentClear/:id
-/rejectRequest
-/startAppointment
-/endAppointment
-/giveFeedback
+// /patient/:id
+describe("/patient/:id", ()=>{
+    test("should edit entry", async ()=>{
+        const response = await request(app).patch("/patient/1").send({
+            "First_Name":"Fardeen",
+            "Last_Name":"I"
+        })
+        expect(response.statusCode).toBe(200)
+    })
 
-REMOVE DATA
-/appointment/patient
-/appointment/doctor
-/pillbank
+    test("should result in an error", async ()=>{
+        const response = await request(app).patch("/patient/1").send({
+            "Patient_ID":2
+        })
+        expect(response.statusCode).toBe(500)
+    })    
+})
 
-*/
+// /patient/:id/addDoc
+describe("/patient/:id/addDoc", ()=>{
+    test("should edit entry", async ()=>{
+        const response = await request(app).patch("/patient/4/addDoc").send({
+            "Doctor_ID":4
+        })
+        expect(response.statusCode).toBe(201)
+    })  
+})
+
+// /patientDropDoctor/removeDoc
+describe("/patientDropDoctor/removeDoc", ()=>{
+    test("should edit entry", async ()=>{
+        const response = await request(app).patch("/patientDropDoctor/removeDoc").send({
+            "Patient_ID":3
+        })
+        expect(response.statusCode).toBe(201)
+    })  
+})
+
+// /doctor/:id
+describe("/doctor/:id", ()=>{
+    test("should edit entry", async ()=>{
+        const response = await request(app).patch("/doctor/3").send({
+            "First_Name":"Fardeen"
+        })
+        expect(response.statusCode).toBe(200)
+    })
+
+    test("should result in an error", async ()=>{
+        const response = await request(app).patch("/doctor/6").send({
+            "PW":"random"
+        })
+        expect(response.statusCode).toBe(400)
+    })   
+})
+
+// /doctorSchedule/:id
+describe("/doctorSchedule/:id", ()=>{
+    test("should edit entry", async ()=>{
+        const response = await request(app).patch("/doctorSchedule/2").send({
+            "Doctor_Schedule":{"Monday":[], "Tuesday":[], "Wednesday":[], "Thursday":[], "Friday":[], "Saturday":[], "Sunday":[]} 
+        })
+        expect(response.statusCode).toBe(201)
+    })
+
+    test("should result in an error", async ()=>{
+        const response = await request(app).patch("/doctorSchedule/").send({
+        })
+        expect(response.statusCode).toBe(500)
+    })   
+})
+
+// /prescription/:doctor_id
+describe("/prescription/:doctor_id", ()=>{
+    test("should edit entry", async ()=>{
+        const response = await request(app).patch("/prescription/1").send({
+             "Quantity":10
+        })
+        expect(response.statusCode).toBe(201)
+    })
+
+    test("should result in an error", async ()=>{
+        const response = await request(app).patch("/prescription/1").send({
+            "Pharm_ID":2
+        })
+        expect(response.statusCode).toBe(400)
+    })   
+})
+
+// /pillbank/:pill_id
+describe("/pillbank/:pill_id", ()=>{
+    test("should edit entry", async ()=>{
+        const response = await request(app).patch("/pillbank/2").send({
+            "Cost":100.00
+        })
+        expect(response.statusCode).toBe(201)
+    })  
+})
+
+// /regiments/:id
+describe("/regiments/:id", ()=>{
+    test("should edit entry", async ()=>{
+        const response = await request(app).patch("/regiments/1").send({
+            "Regiment":{"Monday":["Lateral Raise"]}
+        })
+        expect(response.statusCode).toBe(200)
+    })  
+})
+
+// /regimentClear/:id
+describe("/regimentClear/:id", ()=>{
+    test("should edit entry", async ()=>{
+        const response = await request(app).patch("/regimentClear/1").send({
+        })
+        expect(response.statusCode).toBe(200)
+    })  
+})
+
+// /rejectRequest
+describe("/rejectRequest", ()=>{
+    test("should edit entry", async ()=>{
+        const response = await request(app).patch("/regimentClear/1").send({
+            "Patient_ID":1, "Doctor_ID":9, "Appt_Date":"2026-01-27", "Appt_Time":"8:30-9:30"
+        })
+        expect(response.statusCode).toBe(200)
+    })  
+})
+
+// /startAppointment
+describe("/startAppointment", ()=>{
+    test("should edit entry", async ()=>{
+        const response = await request(app).patch("/startAppointment").send({
+            "Appointment_ID":3, "Doctor_ID":4
+        })
+        expect(response.statusCode).toBe(201)
+    })  
+})
+
+// /endAppointment
+describe("/endAppointment", ()=>{
+    test("should edit entry", async ()=>{
+        const response = await request(app).patch("/endAppointment").send({
+            "Appointment_ID":3, "Doctor_ID":4
+        })
+        expect(response.statusCode).toBe(201)
+    })  
+})
+
+// /giveFeedback
+describe("/giveFeedback", ()=>{
+    test("should edit entry", async ()=>{
+        const response = await request(app).patch("/giveFeedback").send({
+            "appointment_id":1, "doctor_feedback":"good to see you", "doctor_id":5
+        })
+        expect(response.statusCode).toBe(201)
+    })  
+})
+
+//==================DELETE===================
+// /appointment/patient
+describe("/appointment/patient", ()=>{
+    test("should delete entry", async ()=>{
+        const response = await request(app).delete("/appointment/patient").send({
+            "Appointment_ID":5, "Patient_ID":5
+        })
+        expect(response.statusCode).toBe(204)
+    })  
+})
+
+// /appointment/doctor
+describe("/appointment/doctor", ()=>{
+    test("should delete entry", async ()=>{
+        const response = await request(app).delete("/appointment/doctor").send({
+            "Appointment_ID":5, "Doctor_ID":5
+        })
+        expect(response.statusCode).toBe(204)
+    })  
+})
+
+// /pillbank
+describe("/pillbank", ()=>{
+    test("should delete entry", async ()=>{
+        const response = await request(app).delete("/pillbank").send({
+            "Pill_ID":5
+        })
+        expect(response.statusCode).toBe(204)
+    })  
+})
