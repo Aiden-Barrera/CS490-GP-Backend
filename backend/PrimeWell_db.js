@@ -906,6 +906,11 @@ export async function fetchPrescriptionPaid(prescription_id) {
     }
 }
 
+export async function getAllPharmacyIds() {
+    const result = await pool.query('SELECT pharm_id FROM Pharmacies');
+    return result.rows.map(r => r.pharm_id);
+}
+
 
 export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
     const [check] = await pool.query(`select patient_id from patientBase 

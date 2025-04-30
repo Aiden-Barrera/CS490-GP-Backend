@@ -29,7 +29,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     fetchPrescriptions,
     getPaymentForPrescription,
     fetchPrescriptionPaid,
-    AcceptPrescription} from './PrimeWell_db.js'
+    AcceptPrescription, getAllPharmacyIds} from './PrimeWell_db.js'
 import { sendPrescription, consumePrescriptions } from './rabbitmq.js';  // import the RabbitMQ helper
 
 
@@ -111,6 +111,18 @@ io.on("connection", (socket) => {
     })
 })
 
+async function setupQueuesAtStartup() {
+    try {
+        const pharmacyIds = await getAllPharmacyIds(); // e.g., [101, 102, 103]
+        for (const id of pharmacyIds) {
+            await preCreatePharmacyQueue(String(id));
+        }
+        console.log("All pharmacy queues pre-created at startup.");
+    } catch (err) {
+        console.error("Error setting up queues:", err);
+    }
+}
+
 // await consumePrescriptions("1", (prescription) => {
 //     console.log('New prescription received:', prescription); // 
 //     // Here, push to frontend via WebSocket, or store in database, etc.
@@ -132,9 +144,13 @@ io.on("connection", (socket) => {
 // });
 
 
-server.listen(3000, () => {
-    console.log('Server is running on port 3000')
-})
+setupQueuesAtStartup().then(() => {
+    server.listen(3000, () => {
+        console.log('Server is running on port 3000');
+    });
+}).catch((err) => {
+    console.error("Failed to set up queues. Server not started:", err);
+});
 
 const apiKeyMiddleware = (req, res, next) => {
     const apiKey = req.headers['x-api-key']; // Or req.query.apiKey if you prefer query parameters
