@@ -2170,6 +2170,7 @@ app.post("/patientsurvey/date/", async (req, res) => {
  */
 app.post("/payment", async (req, res) => {
     const {Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status} = req.body
+    console.log("Payment Body: ", req.body)
     if (!Patient_ID | !Card_Number | !Related_ID | !Payment_Type | !Payment_Status) {
         return res.status(400).json({ error: "Missing required information" });
     }
