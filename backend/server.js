@@ -26,11 +26,14 @@ import { addPatientDoc, createAppointment, createChatMsg, createComment, createD
     UpdatePayment,
     fetchPrescriptions,
     getPaymentForPrescription,
-    UpdatePharmInfo} from './PrimeWell_db.js'
-import { sendPrescription, consumePrescriptions } from './rabbitmq.js';  // import the RabbitMQ helper
-
-
-
+    UpdatePharmInfo,
+    fetchPrescriptionPaid,
+    AcceptPrescription, getAllPharmacyIds,
+    fetchPrescriptionAccepted,
+    fetchPatient,
+    fetchDoctor,
+    fetchPharmacy} from './PrimeWell_db.js'
+import { sendPrescription, consumePrescriptions, preCreatePharmacyQueue } from './rabbitmq.js';  // import the RabbitMQ helper
 
 import cors from 'cors'
 import dotenv from 'dotenv'
@@ -89,11 +92,29 @@ io.on("connection", (socket) => {
         }
     })
 
+    socket.on("leave_connection", (pharm_id) => {
+        socket.leave(pharm_id);
+        console.log(`Pharmacy ${socket.id} left pharmacy room: ${pharm_id}`);
+        activePharmacyConsumers.delete(pharm_id); // Optional if you're tracking
+    });
+
     // Handle disconnection
     socket.on("disconnect", () => {
         console.log("User disconnected:", socket.id);
     })
 })
+
+async function setupQueuesAtStartup() {
+    try {
+        const pharmacyIds = await getAllPharmacyIds(); // e.g., [101, 102, 103]
+        for (const id of pharmacyIds) {
+            await preCreatePharmacyQueue(String(id));
+        }
+        console.log("All pharmacy queues pre-created at startup.");
+    } catch (err) {
+        console.error("Error setting up queues:", err);
+    }
+}
 
 // await consumePrescriptions("1", (prescription) => {
 //     console.log('New prescription received:', prescription); // 
@@ -116,9 +137,13 @@ io.on("connection", (socket) => {
 // });
 
 
-server.listen(3000, () => {
-    console.log('Server is running on port 3000')
-})
+setupQueuesAtStartup().then(() => {
+    server.listen(3000, () => {
+        console.log('Server is running on port 3000');
+    });
+}).catch((err) => {
+    console.error("Failed to set up queues. Server not started:", err);
+});
 
 const apiKeyMiddleware = (req, res, next) => {
     const apiKey = req.headers['x-api-key']; // Or req.query.apiKey if you prefer query parameters
@@ -344,6 +369,24 @@ app.get("/fetchPrescriptions/:id", async (req, res) => {
     }
 })
 
+app.get("/fetchPrescriptionPaid/:id", async (req, res) => {
+    try {
+        const rows = await fetchPrescriptionPaid(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
+    }
+})
+
+app.get("/fetchPrescriptionAccepted/:id", async (req, res) => {
+    try {
+        const rows = await fetchPrescriptionAccepted(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
+    }
+})
+
 app.post("/passAuthPatient", async (req, res) => {
     const { email, pw } = req.body;
     if (!email || !pw) {
@@ -364,6 +407,15 @@ app.post("/passAuthPatient", async (req, res) => {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 });
+
+app.get("/fetchPatient/:id", async (req, res) => {
+    try {
+        const rows = await fetchPatient(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
+    }
+})
 
 app.post("/passAuthDoctor", async (req, res) => {
     const { email, pw } = req.body;
@@ -386,6 +438,15 @@ app.post("/passAuthDoctor", async (req, res) => {
     }
 })
 
+app.get("/fetchDoctor/:id", async (req, res) => {
+    try {
+        const rows = await fetchDoctor(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
+    }
+})
+
 app.post("/passAuthPharm", async (req, res) => {
     const { email, pw } = req.body;
     console.log(req.body)
@@ -405,6 +466,15 @@ app.post("/passAuthPharm", async (req, res) => {
         }
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
+app.get("/fetchPharmacy/:id", async (req, res) => {
+    try {
+        const rows = await fetchPharmacy(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
     }
 })
 
@@ -448,6 +518,18 @@ app.post("/patient", async (req, res) => {
     const event_Details = 'Created new Patient'
     const audit = await genereateAudit(newPatient['patient_id'], 'Patient', 'POST', event_Details)
     console.log(newPatient)
+    const newRegiment = await createRegiment(newPatient['patient_id'], JSON.stringify({
+        "Sunday":[],
+        "Monday":[],
+        "Tuesday": [],
+        "Wednesday": [],
+        "Thursday": [],
+        "Friday": [],
+        "Saturday":[]
+        }))
+    console.log(newRegiment)
+    const event_Details2 = 'Created new Regiment'
+    const audit2 = await genereateAudit(newPatient['patient_id'], 'Patient', 'POST', event_Details2)
     res.status(201).send(newPatient)
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
@@ -730,7 +812,7 @@ app.post("/preliminaries", async (req, res) => {
 // ENDPOINT USED WITH RABBITMQ, SO DOCTOR CAN CREATE AND SEND PRESCRIPTION TO QUEUE
 app.post('/sendPrescription', async (req, res) => {
     const {Patient_ID, Doctor_ID, Pill_ID, Quantity, Pharm_ID} = req.body
-    if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity) {
+    if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity || !Pharm_ID) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
@@ -936,7 +1018,7 @@ app.patch('/doctor/:id', async (req, res) => {
         if (Object.keys(entry).length === 0) {
             return res.status(400).json({ error: "No valid fields to update." });
         }
-
+        console.log("Doctor ID: ", id)
         const updateResult = await UpdateDoctorInfo(id, entry);
         const event_Details = 'Edited Doctor info';
         const audit = await genereateAudit(id, 'Doctor', 'PATCH', event_Details);
@@ -1118,6 +1200,20 @@ app.patch("/makePayment", async (req, res) => {
     try {
         const makePayment = await UpdatePayment(Payment_ID, Card_Number)
         res.status(201).send(makePayment)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
+    }
+})
+
+app.patch("/acceptPrescription", async (req, res) => {
+    const {Prescription_ID} = req.body
+    if (!Prescription_ID) {
+        return res.status(400).json({ error: "Missing Prescription ID"});
+    }
+
+    try {
+        const accept = await AcceptPrescription(Prescription_ID)
+        res.status(201).send(accept)
     } catch (err) {
         res.status(500).json({ error: err.message || "Internal server error" });
     }
