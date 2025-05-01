@@ -343,8 +343,33 @@ export async function getAuthSurvey(id) { // get patient's recent surveys by rec
 // Make the below a POST because it is sensitive? - FI
 export async function getAppointmentsPatient(id) {
     try {
-        const [resultRows] = await pool.query(`SELECT A.Appointment_ID, A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier, DB.first_name, DB.last_name, DB.specialty FROM Appointments as A, doctorbase as DB 
-            WHERE A.Patient_ID = ? and DB.doctor_id = A.doctor_id ORDER BY (Appt_End = false AND Appt_Date >= CURDATE()) DESC, Appt_End ASC, Appt_Date ASC;`, [id]) 
+        const [resultRows] = await pool.query(`SELECT 
+            A.Appointment_ID, 
+            A.Date_Scheduled, 
+            A.Appt_Date, 
+            A.Appt_Time, 
+            A.Tier, 
+            DB.first_name, 
+            DB.last_name, 
+            DB.specialty 
+        FROM 
+            Appointments AS A
+        JOIN 
+            doctorbase AS DB ON DB.doctor_id = A.doctor_id
+        WHERE 
+            A.Patient_ID = ?
+        ORDER BY 
+            -- Sort upcoming appointments first
+            (Appt_End = false AND Appt_Date >= CURDATE()) DESC,
+            -- For upcoming: ASC Appt_Date, for past: DESC Appt_Date
+            CASE 
+                WHEN Appt_End = false AND Appt_Date >= CURDATE() THEN Appt_Date
+                ELSE NULL
+            END ASC,
+            CASE 
+                WHEN Appt_End = true OR Appt_Date < CURDATE() THEN Appt_Date
+                ELSE NULL
+            END DESC;`, [id]) 
         return resultRows
     } catch (err) {
         console.log("Failed Fetching Appointments for Patient: ", err)
