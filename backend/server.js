@@ -33,7 +33,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     fetchPrescriptionAccepted,
     fetchPatient,
     fetchDoctor,
-    fetchPharmacy} from './PrimeWell_db.js'
+    fetchPharmacy, UpdatePharmInfo} from './PrimeWell_db.js'
 import { sendPrescription, consumePrescriptions, preCreatePharmacyQueue } from './rabbitmq.js';  // import the RabbitMQ helper
 
 
@@ -1131,6 +1131,34 @@ app.patch('/patientDropDoctor/removeDoc', async(req, res)=>{ //Remove patient do
         res.status(201).send(updateResult)
         }
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
+})
+
+app.patch('/pharmacy/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        let entry = req.body;
+
+        // Fields that are NOT allowed to be updated
+        const restrictedFields = ['PW', 'Email', 'Work_Hours', 'Last_Update', 'Create_Date'];
+
+        // Remove restricted fields from the entry object
+        entry = Object.fromEntries(
+            Object.entries(entry).filter(([key]) => !restrictedFields.includes(key))
+        );
+
+        if (Object.keys(entry).length === 0) {
+            return res.status(400).json({ error: "No valid fields to update." });
+        }
+
+        const updateResult = await UpdatePharmInfo(id, entry);
+        const event_Details = 'Edited Pharmacy info';
+        const audit = await genereateAudit(id, 'Pharmacist', 'PATCH', event_Details);
+        
+        console.log(audit);
+        res.status(200).json(updateResult);
+    } catch (error) { 
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
 })
 
 // ONLY MAKE VISIBLE FROM DOCTOR PORTAL VIA FRONTEND OR ADD AUTHENTICATION- FI
