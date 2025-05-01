@@ -258,76 +258,21 @@ app.get("/regiment/:id", async (req, res) => { //based on patient -VC
     res.send(rows)
 })
 
-/**
- * @swagger
- * /forumPosts:
- *   get:
- *     summary: Get all forum posts
- *     tags: [Forum]
- *     responses:
- *       200:
- *         description: List of all forum posts
- */
 app.get("/forumPosts", async (req, res) => {
     const rows = await getForumPosts()
     res.send(rows)
 })
 
-
-/**
- * @swagger
- * /comments/{id}:
- *   get:
- *     summary: Get comments for a specific forum post
- *     tags: [Forum]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Forum post ID
- *     responses:
- *       200:
- *         description: List of comments for the post
- */
 app.get("/comments/:id", async (req, res) => { //by post - VC
     const rows = await getComments_id(req.params.id)
     res.send(rows)
 })
 
-/**
- * @swagger
- * /reviews:
- *   get:
- *     summary: Get all reviews
- *     tags: [Reviews]
- *     responses:
- *       200:
- *         description: List of all reviews
- */
 app.get("/reviews", async (req, res) => {
     const rows = await getReviews()
     res.send(rows)
 })
 
-/**
- * @swagger
- * /reviews/{id}:
- *   get:
- *     summary: Get reviews by ID
- *     tags: [Reviews]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Review ID
- *     responses:
- *       200:
- *         description: Review data
- */
 app.get("/reviews/:id", async (req, res) => {
     const rows = await getReviewsByID(req.params.id)
     res.send(rows)
@@ -584,7 +529,7 @@ app.get("/patientsurvey/:id", async (req, res) => {
  *         schema:
  *           type: integer
  *         description: Patient ID
- *     responses:
+ *     responses:s
  *       200:
  *         description: Date string if allowed, "false" otherwise
  */
@@ -598,23 +543,6 @@ app.get("/patientsurveyAuth/:id", async (req, res) => {  //returns true (if post
     //res.send(rows)
 })
 
-/**
- * @swagger
- * /appointmentInfo/{id}:
- *   get:
- *     summary: Get detailed information for a specific appointment
- *     tags: [Appointments]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Appointment ID
- *     responses:
- *       200:
- *         description: Detailed information about the appointment
- */
 app.get("/appointmentInfo/:id", async (req, res) => {  
     try {
     const rows = await getAppointmentInfo(req.params.id)
@@ -625,23 +553,6 @@ app.get("/appointmentInfo/:id", async (req, res) => {
     }
 })
 
-/**
- * @swagger
- * /pharmacyPills/{id}:
- *   get:
- *     summary: Get pill inventory or data from pharmacy by ID
- *     tags: [Pharmacy]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Pharmacy or request ID
- *     responses:
- *       200:
- *         description: List of pills from the pharmacy
- */
 app.get("/pharmacyPills/:id", async (req, res) => {  
     try {
     const rows = await getPillsFromPharm(req.params.id)
@@ -652,23 +563,6 @@ app.get("/pharmacyPills/:id", async (req, res) => {
     }
 })
 
-/**
- * @swagger
- * /paymentAppointments/{id}:
- *   get:
- *     summary: Get payment records for a specific appointment
- *     tags: [Payments]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Appointment ID
- *     responses:
- *       200:
- *         description: Appointment payment information
- */
 app.get("/paymentAppointments/:id", async (req, res) => {
     try {
         const rows = await getPaymentsForAppointments(req.params.id)
@@ -678,23 +572,6 @@ app.get("/paymentAppointments/:id", async (req, res) => {
     }
 })
 
-/**
- * @swagger
- * /paymentPrescriptions/{id}:
- *   get:
- *     summary: Get payment records for a specific prescription
- *     tags: [Payments]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Prescription ID
- *     responses:
- *       200:
- *         description: Prescription payment information
- */
 app.get("/paymentPrescriptions/:id", async (req, res) => {
     try {
         const rows = await getPaymentForPrescription(req.params.id)
@@ -704,23 +581,6 @@ app.get("/paymentPrescriptions/:id", async (req, res) => {
     }
 })
 
-/**
- * @swagger
- * /fetchPrescriptions/{id}:
- *   get:
- *     summary: Fetch all prescriptions related to an entity (e.g., patient or doctor)
- *     tags: [Prescriptions]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Entity ID (Patient or Doctor)
- *     responses:
- *       200:
- *         description: List of prescriptions
- */
 app.get("/fetchPrescriptions/:id", async (req, res) => {
     try {
         const rows = await fetchPrescriptions(req.params.id)
@@ -730,23 +590,6 @@ app.get("/fetchPrescriptions/:id", async (req, res) => {
     }
 })
 
-/**
- * @swagger
- * /fetchPrescriptionPaid/{id}:
- *   get:
- *     summary: Fetch all prescriptions that have been paid
- *     tags: [Prescriptions]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Entity ID (Patient or Doctor)
- *     responses:
- *       200:
- *         description: List of paid prescriptions
- */
 app.get("/fetchPrescriptionPaid/:id", async (req, res) => {
     try {
         const rows = await fetchPrescriptionPaid(req.params.id)
@@ -756,23 +599,6 @@ app.get("/fetchPrescriptionPaid/:id", async (req, res) => {
     }
 })
 
-/**
- * @swagger
- * /fetchPrescriptionAccepted/{id}:
- *   get:
- *     summary: Fetch all prescriptions that have been accepted
- *     tags: [Prescriptions]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Entity ID (Patient or Doctor)
- *     responses:
- *       200:
- *         description: List of accepted prescriptions
- */
 app.get("/fetchPrescriptionAccepted/:id", async (req, res) => {
     try {
         const rows = await fetchPrescriptionAccepted(req.params.id)
@@ -1004,6 +830,21 @@ app.post("/pharmacies", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /getPharmByZip:
+ *   get:
+ *     summary: Get pharmacy by Zip
+ *     tags: [Pharmacy]
+ *     parameters:
+ *       - in: path
+ *         schema:
+ *           type: string
+ *         description: Zip
+ *     responses:
+ *       200:
+ *         description: Get pharmacies based on zip code
+ */
 app.post("/getPharmByZip", async (req, res) => {
     const {Zip} = req.body
     if (!Zip) {
@@ -1018,6 +859,16 @@ app.post("/getPharmByZip", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /pillbank:
+ *   post:
+ *     summary: Create new Pill
+ *     tags: [Pill]
+ *     responses:
+ *       201:
+ *         description: Create new pill for Pharmacy
+ */
 // Ensure that Pharm_ID passed into Pharm_ID field is an existing Pharmacy ID in the Pharmacies table } via frontend? - FI
 app.post("/pillbank", async (req, res) => {
     const { Cost, Pill_Name, Pharm_ID, Dosage, Quantity } = req.body
@@ -1252,7 +1103,7 @@ app.post("/preliminaries", async (req, res) => {
  *         description: Patient ID
  *     responses:
  *       200:
- *         description: Create and send a prescription to right pharmacy
+ *         description: Create and send a prescription to right
  */
 // ENDPOINT USED WITH RABBITMQ, SO DOCTOR CAN CREATE AND SEND PRESCRIPTION TO QUEUE
 app.post('/sendPrescription', async (req, res) => {
