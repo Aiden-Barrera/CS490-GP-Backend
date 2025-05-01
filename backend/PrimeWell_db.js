@@ -954,6 +954,20 @@ export async function rmPatientAppt(patient_id, doctor_id) {
     }
 }
 
+export async function UpdatePharmInfo(id, entry) {
+    try {
+    const [returnResult] = await pool.query(`
+        UPDATE pharmacies SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Pharm_ID = ?;`
+    , [entry, id])
+    console.log("Database update result:", returnResult);
+    return returnResult
+    }
+    catch (err) {
+        console.log("Failed Updating Doctor Info: ", err)
+        throw err
+    }
+}
+
 export async function UpdateDoctorInfo(id, entry) {
     try {
     const [returnResult] = await pool.query(`
