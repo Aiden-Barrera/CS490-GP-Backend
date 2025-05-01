@@ -30,7 +30,10 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     getPaymentForPrescription,
     fetchPrescriptionPaid,
     AcceptPrescription, getAllPharmacyIds,
-    fetchPrescriptionAccepted} from './PrimeWell_db.js'
+    fetchPrescriptionAccepted,
+    fetchPatient,
+    fetchDoctor,
+    fetchPharmacy} from './PrimeWell_db.js'
 import { sendPrescription, consumePrescriptions, preCreatePharmacyQueue } from './rabbitmq.js';  // import the RabbitMQ helper
 
 
@@ -494,6 +497,15 @@ app.post("/passAuthPatient", async (req, res) => {
     }
 });
 
+app.get("/fetchPatient/:id", async (req, res) => {
+    try {
+        const rows = await fetchPatient(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
+    }
+})
+
 app.post("/passAuthDoctor", async (req, res) => {
     const { email, pw } = req.body;
     if (!email || !pw) {
@@ -512,6 +524,15 @@ app.post("/passAuthDoctor", async (req, res) => {
         }
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
+app.get("/fetchDoctor/:id", async (req, res) => {
+    try {
+        const rows = await fetchDoctor(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
     }
 })
 
@@ -534,6 +555,15 @@ app.post("/passAuthPharm", async (req, res) => {
         }
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
+app.get("/fetchPharmacy/:id", async (req, res) => {
+    try {
+        const rows = await fetchPharmacy(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
     }
 })
 
@@ -1120,7 +1150,7 @@ app.patch('/doctor/:id', async (req, res) => {
         if (Object.keys(entry).length === 0) {
             return res.status(400).json({ error: "No valid fields to update." });
         }
-
+        console.log("Doctor ID: ", id)
         const updateResult = await UpdateDoctorInfo(id, entry);
         const event_Details = 'Edited Doctor info';
         const audit = await genereateAudit(id, 'Doctor', 'PATCH', event_Details);

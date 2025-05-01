@@ -471,6 +471,19 @@ export async function getPatientAuth(email, pw) {
     }
 }
 
+export async function fetchPatient(patient_id) {
+    try {
+    const [resultRows] = await pool.query(`SELECT patient_id, First_Name, Last_Name, Email, Phone, Address, Zip, Doctor_ID FROM PatientBase WHERE patient_id = ?`,
+        [patient_id]
+    )
+    return resultRows[0]
+    }
+    catch (err) {
+        console.log("Error Fetching Patient Auth: ", err)
+        throw err
+    }
+}
+
 export async function getDoctorAuth(email, pw) {
     try {
     const [resultRows] = await pool.query(`SELECT doctor_id, First_Name, Last_Name, Specialty, Availability, License_Serial, Email, Phone  FROM DoctorBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
@@ -484,10 +497,37 @@ export async function getDoctorAuth(email, pw) {
     }
 }
 
+export async function fetchDoctor(doctor_id) {
+    try {
+    const [resultRows] = await pool.query(`SELECT doctor_id, First_Name, Last_Name, Specialty, Availability, License_Serial, Email, Phone  FROM DoctorBase WHERE doctor_id = ?`,
+        [doctor_id]
+    )
+    return resultRows[0]
+    }
+    catch (err) {
+        console.log("Error Fetching Doctor Auth: ", err)
+        throw err
+    }
+}
+
 export async function getPharmAuth(email, pw) {
     try {
     const [resultRows] = await pool.query(`SELECT pharm_id, Company_Name, Address, Zip, Work_Hours, Email FROM Pharmacies WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
         [email, pw]
+    )
+    console.log(resultRows)
+    return resultRows[0]
+    }
+    catch (err) {
+        console.log("Error Fetching Pharmacy Auth: ", err)
+        throw err
+    }
+}
+
+export async function fetchPharmacy(pharm_id) {
+    try {
+    const [resultRows] = await pool.query(`SELECT pharm_id, Company_Name, Address, Zip, Work_Hours, Email FROM Pharmacies WHERE pharm_id = ?`,
+        [pharm_id]
     )
     console.log(resultRows)
     return resultRows[0]
