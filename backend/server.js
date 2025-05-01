@@ -1610,6 +1610,56 @@ app.post("/payment", async (req, res) => {
 
 // BELOW IS CORRECTED
 // ONLY MAKE VISIBLE FROM PATIENT PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
+/**
+ * @swagger
+ * /patient/{id}:
+ *   patch:
+ *     summary: Update patient details
+ *     tags: [Patient]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Patient ID
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Pharm_ID:
+ *                 type: integer
+ *               First_Name:
+ *                 type: string
+ *               Last_Name:
+ *                 type: string
+ *               Email:
+ *                 type: string
+ *                 format: email
+ *               Phone:
+ *                 type: string
+ *               PW:
+ *                 type: string
+ *               Address:
+ *                 type: string
+ *               Zip:
+ *                 type: integer
+ *               Doctor_ID:
+ *                 type: integer
+ *                 nullable: true
+ *     responses:
+ *       200:
+ *         description: Patient updated
+ *       400:
+ *         description: Invalid input or missing required information
+ *       404:
+ *         description: Patient not found
+ *       500:
+ *         description: Internal server error
+ */
 app.patch('/patient/:id', async (req, res) => {
     try {
         const id = req.params.id;
@@ -1638,6 +1688,36 @@ app.patch('/patient/:id', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /patient/{id}/addDoc:
+ *   patch:
+ *     summary: Add a doctor to a patient's profile
+ *     tags: [Patient]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Patient ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Doctor_ID:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Doctor added to patient info
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */  
 // ONLY MAKE VISIBLE FROM Patient Portal VIA FRONTEND OR ADD AUTHENTICATION - FI
 app.patch('/patient/:id/addDoc', async(req, res)=>{ //Give patient a doctor -VC
     try {
@@ -1651,6 +1731,31 @@ app.patch('/patient/:id/addDoc', async(req, res)=>{ //Give patient a doctor -VC
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
+/**
+ * @swagger
+ * /patientDropDoctor/removeDoc:
+ *   patch:
+ *     summary: Remove a doctor from a patient's profile
+ *     tags: [Patient]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Patient_ID:
+ *                 type: integer
+ *               Doctor_ID:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Doctor removed from patient info
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */  
 // ONLY MAKE VISIBLE FROM PATIENT PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
 app.patch('/patientDropDoctor/removeDoc', async(req, res)=>{ //Remove patient doctor -VC
     try {
@@ -1665,6 +1770,49 @@ app.patch('/patientDropDoctor/removeDoc', async(req, res)=>{ //Remove patient do
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
+/**
+ * @swagger
+ * /pharmacies/{id}:
+ *   patch:
+ *     summary: Update pharmacy details
+ *     tags: [Pharmacy]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Pharmacy ID
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Company_Name:
+ *                 type: string
+ *               Address:
+ *                 type: string
+ *               Zip:
+ *                 type: integer
+ *               Work_Hours:
+ *                 type: string
+ *               Email:
+ *                 type: string
+ *                 format: email
+ *               PW:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Pharmacy updated
+ *       400:
+ *         description: Invalid input or missing required information
+ *       404:
+ *         description: Pharmacy not found
+ *       500:
+ *         description: Internal server error
+ */
 app.patch('/pharmacy/:id', async (req, res) => {
     try {
         const id = req.params.id;
@@ -1693,6 +1841,53 @@ app.patch('/pharmacy/:id', async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /doctor/{id}:
+ *   patch:
+ *     summary: Update doctor details
+ *     tags: [Doctor]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Doctor ID
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               License_Serial:
+ *                 type: string
+ *               First_Name:
+ *                 type: string
+ *               Last_Name:
+ *                 type: string
+ *               Specialty:
+ *                 type: string
+ *               Email:
+ *                 type: string
+ *                 format: email
+ *               Phone:
+ *                 type: string
+ *               PW:
+ *                 type: string
+ *               Availability:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Doctor updated
+ *       400:
+ *         description: Invalid input or missing required information
+ *       404:
+ *         description: Doctor not found
+ *       500:
+ *         description: Internal server error
+ */
 // ONLY MAKE VISIBLE FROM DOCTOR PORTAL VIA FRONTEND OR ADD AUTHENTICATION- FI
 app.patch('/doctor/:id', async (req, res) => {
     try {
@@ -1722,6 +1917,36 @@ app.patch('/doctor/:id', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /doctorSchedule/{id}:
+ *   patch:
+ *     summary: Update a doctor's schedule
+ *     tags: [Doctor]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Doctor ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Doctor_Schedule:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Doctor schedule updated
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */  
 // MAKE ONLY AVAILABLE TO A DOCTOR FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
 app.patch('/doctorSchedule/:id', async(req, res)=>{
     try {
@@ -1736,6 +1961,42 @@ app.patch('/doctorSchedule/:id', async(req, res)=>{
 })
 
 // MAKE ONLY AVAILABLE TO A DOCTOR FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
+/**
+ * @swagger
+ * /prescription/{doctor_id}:
+ *   patch:
+ *     summary: Update prescription information by doctor
+ *     tags: [Doctor]
+ *     parameters:
+ *       - in: path
+ *         name: doctor_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Doctor ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Perscription_ID:
+ *                 type: integer
+ *               Patient_ID:
+ *                 type: integer
+ *               Doctor_ID:
+ *                 type: integer
+ *               Other_Field:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Prescription updated
+ *       400:
+ *         description: Invalid input or missing required information
+ *       500:
+ *         description: Internal server error
+ */  
 app.patch('/prescription/:doctor_id', async(req, res)=>{ //Doctor's can change this - VC
     try {
         const id = req.body.Perscription_ID
@@ -1761,6 +2022,42 @@ app.patch('/prescription/:doctor_id', async(req, res)=>{ //Doctor's can change t
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
+/**
+ * @swagger
+ * /pillbank/{pill_id}:
+ *   patch:
+ *     summary: Update pill information by super admin
+ *     tags: [Pharmacy]
+ *     parameters:
+ *       - in: path
+ *         name: pill_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Pill ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Pill_Name:
+ *                 type: string
+ *               Cost:
+ *                 type: number
+ *               Pharmacy:
+ *                 type: string
+ *               Dosage:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Pill information updated
+ *       400:
+ *         description: Invalid input or missing required information
+ *       500:
+ *         description: Internal server error
+ */  
 // MAKE ONLY AVAILABLE TO SUPER ADMIN FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
 app.patch('/pillbank/:pill_id', async(req, res)=>{
     try {
@@ -1787,6 +2084,36 @@ app.patch('/pillbank/:pill_id', async(req, res)=>{
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
+/**
+ * @swagger
+ * /regiments/{id}:
+ *   patch:
+ *     summary: Update a patient's regiment
+ *     tags: [Patient]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Patient ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Regiment:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Regiment updated
+ *       400:
+ *         description: Invalid input or missing required information
+ *       500:
+ *         description: Internal server error
+ */  
 app.patch('/regiments/:id', async (req, res) => {
     try {
       const Patient_ID = req.params.id;
@@ -1802,7 +2129,26 @@ app.patch('/regiments/:id', async (req, res) => {
       res.status(500).json({ error: error.message || "Internal server error" });
     }
 });
-  
+
+/**
+ * @swagger
+ * /regimentClear/{id}:
+ *   patch:
+ *     summary: Clear a patient's regiment
+ *     tags: [Patient]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Regiment cleared
+ *       500:
+ *         description: Internal server error
+ */  
 app.patch('/regimentClear/:id', async (req, res) => {
     try {
         const Patient_ID = req.params.id
@@ -1816,6 +2162,35 @@ app.patch('/regimentClear/:id', async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /rejectRequest:
+ *   patch:
+ *     summary: Reject appointment request
+ *     tags: [Doctor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Patient_ID:
+ *                 type: integer
+ *               Doctor_ID:
+ *                 type: integer
+ *               Appt_Date:
+ *                 type: string
+ *               Appt_Time:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Appointment request rejected
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */  
 app.patch('/rejectRequest', async(req, res) => {
     const {Patient_ID, Doctor_ID, Appt_Date, Appt_Time} = req.body
     if (!Patient_ID || !Doctor_ID || !Appt_Date || !Appt_Time) {
@@ -1832,6 +2207,31 @@ app.patch('/rejectRequest', async(req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /startAppointment:
+ *   patch:
+ *     summary: Start an appointment
+ *     tags: [Doctor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Appointment_ID:
+ *                 type: integer
+ *               Doctor_ID:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Appointment started
+ *       400:
+ *         description: Missing Appointment ID and/or Doctor ID
+ *       500:
+ *         description: Internal server error
+ */  
 // MODIFY BELOW ST APPOINTMENT ACTUALLY EXISTS, AND DOCTOR IS THE ACTUAL DOCTOR FOR THE APPT
 app.patch('/startAppointment', async(req, res) => {
     const {Appointment_ID, Doctor_ID} = req.body
@@ -1849,6 +2249,31 @@ app.patch('/startAppointment', async(req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /endAppointment:
+ *   patch:
+ *     summary: End an appointment
+ *     tags: [Doctor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Appointment_ID:
+ *                 type: integer
+ *               Doctor_ID:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Appointment ended
+ *       400:
+ *         description: Missing Appointment ID and/or Doctor ID
+ *       500:
+ *         description: Internal server error
+ */  
 // MODIFY BELOW ST APPOINTMENT ACTUALLY EXISTS, AND DOCTOR IS THE ACTUAL DOCTOR FOR THE APPT
 app.patch('/endAppointment', async(req, res) => {
     const {Appointment_ID, Doctor_ID} = req.body
@@ -1866,6 +2291,33 @@ app.patch('/endAppointment', async(req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /giveFeedback:
+ *   patch:
+ *     summary: Give feedback for a doctor's appointment
+ *     tags: [Patient]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               appointment_id:
+ *                 type: integer
+ *               doctor_feedback:
+ *                 type: string
+ *               doctor_id:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Feedback given
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */  
 app.patch('/giveFeedback', async (req, res) => {
     const {appointment_id, doctor_feedback, doctor_id} = req.body
     if (!doctor_feedback || !appointment_id) {
@@ -1883,6 +2335,31 @@ app.patch('/giveFeedback', async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /makePayment:
+ *   patch:
+ *     summary: Make a payment for an appointment
+ *     tags: [Patient]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Payment_ID:
+ *                 type: integer
+ *               Card_Number:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Payment made
+ *       400:
+ *         description: Missing Payment ID or Card Number
+ *       500:
+ *         description: Internal server error
+ */  
 app.patch("/makePayment", async (req, res) => {
     const {Payment_ID, Card_Number} = req.body
     if (!Payment_ID || !Card_Number) {
@@ -1897,6 +2374,29 @@ app.patch("/makePayment", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /acceptPrescription:
+ *   patch:
+ *     summary: Accept a prescription
+ *     tags: [Patient]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Prescription_ID:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Prescription accepted
+ *       400:
+ *         description: Missing Prescription ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.patch("/acceptPrescription", async (req, res) => {
     const {Prescription_ID} = req.body
     if (!Prescription_ID) {
