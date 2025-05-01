@@ -133,6 +133,14 @@ describe("/appointment/doctor/:id", ()=>{
     })
 })
 
+describe("/appointment/patient/:id", ()=>{
+    test("should return rows", async ()=>{
+        const response = await request(app).get("/appointment/patient/4").send({})
+        expect(response.statusCode).toBe(200)
+        expect(response.body).toBeDefined()
+    })
+})
+
 describe("/request/:id", ()=>{
     test("should return rows", async ()=>{
         const response = await request(app).get("/request/1").send({})

@@ -32,7 +32,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createComment, createD
     fetchPrescriptionAccepted,
     fetchPatient,
     fetchDoctor,
-    fetchPharmacy, UpdatePharmInfo} from './PrimeWell_db.js'
+    fetchPharmacy,} from './PrimeWell_db.js'
 import { sendPrescription, consumePrescriptions, preCreatePharmacyQueue } from './rabbitmq.js';  // import the RabbitMQ helper
 
 import cors from 'cors'
