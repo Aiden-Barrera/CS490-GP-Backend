@@ -2169,13 +2169,13 @@ app.post("/patientsurvey/date/", async (req, res) => {
  *         description: Internal server error
  */
 app.post("/payment", async (req, res) => {
-    const {Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status} = req.body
-    if (!Patient_ID | !Card_Number | !Related_ID | !Payment_Type | !Payment_Status) {
+    const {Patient_ID, Related_ID, Payment_Type, Payment_Status} = req.body
+    if (!Patient_ID || !Related_ID || !Payment_Type || !Payment_Status) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
     try {
-    const newPayment = await createPayment(Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status)
+    const newPayment = await createPayment(Patient_ID, Related_ID, Payment_Type, Payment_Status)
     const event_Details = 'Patient has made a payment'
     const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
     res.status(201).send(newPayment)
