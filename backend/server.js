@@ -2417,6 +2417,29 @@ app.patch("/acceptPrescription", async (req, res) => {
 
 /*ADDED: appointments, Doctorschedules, perscription, regiments, posts<-comments, audit logs*/
 
+/**
+ * @swagger
+ * /patient:
+ *   delete:
+ *     summary: Delete a patient and associated data
+ *     tags: [Patient]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Patient_ID:
+ *                 type: integer
+ *     responses:
+ *       204:
+ *         description: Patient deleted successfully
+ *       400:
+ *         description: Missing Patient_ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.delete("/patient", async(req, res) => {
     const { Patient_ID } = req.body
     const deleteResult = await deletePatient(Patient_ID)
@@ -2425,6 +2448,31 @@ app.delete("/patient", async(req, res) => {
     res.status(204).send(deleteResult)
 })// delete any ties to first patient (regiments and appointments)
 
+/**
+ * @swagger
+ * /appointment/patient:
+ *   delete:
+ *     summary: Patient cancels an appointment
+ *     tags: [Appointment]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Appointment_ID:
+ *                 type: integer
+ *               Patient_ID:
+ *                 type: integer
+ *     responses:
+ *       204:
+ *         description: Appointment deleted successfully
+ *       400:
+ *         description: Missing Appointment_ID or Patient_ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.delete("/appointment/patient", async(req, res) => { //Patient cancels appointment (appt_ID) - VC
     const deleteResult = await deleteAppointment(req.body.Appointment_ID)
     const event_Details = 'An appointment has been deleted'
@@ -2432,6 +2480,31 @@ app.delete("/appointment/patient", async(req, res) => { //Patient cancels appoin
     res.status(204).send(deleteResult)
 })
 
+/**
+ * @swagger
+ * /appointment/doctor:
+ *   delete:
+ *     summary: Doctor cancels an appointment
+ *     tags: [Appointment]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Appointment_ID:
+ *                 type: integer
+ *               Doctor_ID:
+ *                 type: integer
+ *     responses:
+ *       204:
+ *         description: Appointment deleted successfully
+ *       400:
+ *         description: Missing Appointment_ID or Doctor_ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.delete("/appointment/doctor", async(req, res) => { //Doctor cancels appointment (appt_ID) - VC
     const deleteResult = await deleteAppointment(req.body.Appointment_ID)
     const event_Details = 'An appointment has been deleted'
@@ -2439,6 +2512,31 @@ app.delete("/appointment/doctor", async(req, res) => { //Doctor cancels appointm
     res.status(204).send(deleteResult)
 })
 
+/**
+ * @swagger
+ * /regiment:
+ *   delete:
+ *     summary: Delete a regiment
+ *     tags: [Patient]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Regiment_ID:
+ *                 type: integer
+ *               Patient_ID:
+ *                 type: integer
+ *     responses:
+ *       204:
+ *         description: Regiment deleted successfully
+ *       400:
+ *         description: Missing Regiment_ID or Patient_ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.delete("/regiment", async(req, res) => {
     const deleteResult = await deleteRegiment(req.body.Regiment_ID)
     const event_Details = 'A regiment has been deleted'
@@ -2446,6 +2544,29 @@ app.delete("/regiment", async(req, res) => {
     res.status(204).send(deleteResult)
 })
 
+/**
+ * @swagger
+ * /doctor:
+ *   delete:
+ *     summary: Delete a doctor
+ *     tags: [Doctor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Doctor_ID:
+ *                 type: integer
+ *     responses:
+ *       204:
+ *         description: Doctor deleted successfully
+ *       400:
+ *         description: Missing Doctor_ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.delete("/doctor", async(req, res) => {
     const deleteResult = await deleteDoctor(req.body.Doctor_ID)
     const event_Details = 'Doctor has been deleted'
@@ -2453,6 +2574,29 @@ app.delete("/doctor", async(req, res) => {
     res.status(204).send(deleteResult)
 })
 
+/**
+ * @swagger
+ * /tiers:
+ *   delete:
+ *     summary: Delete doctor tiers
+ *     tags: [Doctor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Doctor_ID:
+ *                 type: integer
+ *     responses:
+ *       204:
+ *         description: Doctor tiers deleted successfully
+ *       400:
+ *         description: Missing Doctor_ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.delete("/tiers", async(req, res) => {
     const deleteResult = await deleteDoctor(req.body.Doctor_ID)
     const event_Details = 'Doctor Tiers has been deleted'
@@ -2460,6 +2604,29 @@ app.delete("/tiers", async(req, res) => {
     res.status(204).send(deleteResult)
 })
 
+/**
+ * @swagger
+ * /doctorSchedule:
+ *   delete:
+ *     summary: Delete a doctor's schedule
+ *     tags: [Doctor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Doctor_ID:
+ *                 type: integer
+ *     responses:
+ *       204:
+ *         description: Doctor schedule deleted successfully
+ *       400:
+ *         description: Missing Doctor_ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.delete("/doctorSchedule", async(req, res) => {
     const deleteResult = await deleteDoctor(req.body.Doctor_ID)
     const event_Details = 'Doctor Schedule has been deleted'
@@ -2467,6 +2634,31 @@ app.delete("/doctorSchedule", async(req, res) => {
     res.status(204).send(deleteResult)
 })
 
+/**
+ * @swagger
+ * /perscription:
+ *   delete:
+ *     summary: Delete a prescription
+ *     tags: [Doctor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Patient_ID:
+ *                 type: integer
+ *               Doctor_ID:
+ *                 type: integer
+ *     responses:
+ *       204:
+ *         description: Prescription deleted successfully
+ *       400:
+ *         description: Missing Patient_ID or Doctor_ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.delete("/perscription", async(req, res) => { //Doctor should manage perscriptions - VC
     const deleteResult = await deletePerscription(req.body.Patient_ID)
     const event_Details = 'Doctor has been deleted'
@@ -2474,6 +2666,29 @@ app.delete("/perscription", async(req, res) => { //Doctor should manage perscrip
     res.status(204).send(deleteResult)
 })
 
+/**
+ * @swagger
+ * /pillbank:
+ *   delete:
+ *     summary: Delete a pill from the pill bank
+ *     tags: [Pharmacy]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Pill_ID:
+ *                 type: integer
+ *     responses:
+ *       204:
+ *         description: Pill deleted successfully
+ *       400:
+ *         description: Missing Pill_ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.delete("/pillbank", async(req, res) => {
     const deleteResult = await deletePill(req.body.Pill_ID)
     const event_Details = 'Pill has been deleted'
@@ -2481,6 +2696,31 @@ app.delete("/pillbank", async(req, res) => {
     res.status(204).send(deleteResult)
 })
 
+/**
+ * @swagger
+ * /comments:
+ *   delete:
+ *     summary: Delete a comment
+ *     tags: [Patient]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Comment_ID:
+ *                 type: integer
+ *               Patient_ID:
+ *                 type: integer
+ *     responses:
+ *       204:
+ *         description: Comment deleted successfully
+ *       400:
+ *         description: Missing Comment_ID or Patient_ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.delete("/comments", async(req, res) => {
     const deleteResult = await deleteComment(req.body.Comment_ID)
     const event_Details = 'Comment has been deleted'
@@ -2488,6 +2728,31 @@ app.delete("/comments", async(req, res) => {
     res.status(204).send(deleteResult)
 })
 
+/**
+ * @swagger
+ * /forumPost:
+ *   delete:
+ *     summary: Delete a forum post and its comments
+ *     tags: [Forum]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Forum_ID:
+ *                 type: integer
+ *               Patient_ID:
+ *                 type: integer
+ *     responses:
+ *       204:
+ *         description: Post and its comments deleted successfully
+ *       400:
+ *         description: Missing Forum_ID or Patient_ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.delete("/forumPost", async(req, res) => { //delete all comment rows with this id (Fourm_ID) - VC
     const deleteResult = await deleteForumPost(req.body.Forum_ID)
     const event_Details = 'Post and its comments have been deleted'
