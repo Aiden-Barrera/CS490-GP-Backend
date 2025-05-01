@@ -491,7 +491,7 @@ describe("/regiment", ()=>{
     test("should make entry", async ()=>{
         const response = await request(app).post("/regiment").send({
             "Patient_ID":"21", 
-            "Regiment":"{\"Sunday\":[], \"Monday\":[\"Bench Press\", \"Rope Pushdown\"], \"Tuesday\":[\"Leg Press\", \"Bicycle crunches\", \"Calf raises\"], \"Wednesday\":[\"Cable Row\", \"Lateral Raises\"], \"Thursday\":[\"Battle ropes\", \"Mountain climbers\"], \"Friday\": [\"Pull-ups\"], \"Saturday\":[]}"
+            "Regiment":'{"Sunday":[], "Monday":["Bench Press", "Rope Pushdown"], "Tuesday":["Leg Press", "Bicycle crunches", "Calf raises"], "Wednesday":["Cable Row", "Lateral Raises"], "Thursday":["Battle ropes", "Mountain climbers"], "Friday": ["Pull-ups"], "Saturday":[]}'
         })
         expect(response.statusCode).toBe(201)
     })

@@ -6,6 +6,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createComment, createD
     getReviewsTop, getReviewsByID, 
     getReviewsComments,  getSurvey, LogAttempt, rmPatientDoc, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePrescriptionInfo, UpdatePillInfo,
     UpdateRegiment,
+    getAppointmentsPatient,
     getPatientDoc,
     createApptRequest,
     getApptRequest,
