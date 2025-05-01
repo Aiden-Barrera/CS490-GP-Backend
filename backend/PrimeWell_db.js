@@ -471,6 +471,19 @@ export async function getPatientAuth(email, pw) {
     }
 }
 
+export async function fetchPatient(patient_id) {
+    try {
+    const [resultRows] = await pool.query(`SELECT patient_id, First_Name, Last_Name, Email, Phone, Address, Zip, Doctor_ID FROM PatientBase WHERE patient_id = ?`,
+        [patient_id]
+    )
+    return resultRows[0]
+    }
+    catch (err) {
+        console.log("Error Fetching Patient Auth: ", err)
+        throw err
+    }
+}
+
 export async function getDoctorAuth(email, pw) {
     try {
     const [resultRows] = await pool.query(`SELECT doctor_id, First_Name, Last_Name, Specialty, Availability, License_Serial, Email, Phone  FROM DoctorBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
@@ -484,10 +497,37 @@ export async function getDoctorAuth(email, pw) {
     }
 }
 
+export async function fetchDoctor(doctor_id) {
+    try {
+    const [resultRows] = await pool.query(`SELECT doctor_id, First_Name, Last_Name, Specialty, Availability, License_Serial, Email, Phone  FROM DoctorBase WHERE doctor_id = ?`,
+        [doctor_id]
+    )
+    return resultRows[0]
+    }
+    catch (err) {
+        console.log("Error Fetching Doctor Auth: ", err)
+        throw err
+    }
+}
+
 export async function getPharmAuth(email, pw) {
     try {
     const [resultRows] = await pool.query(`SELECT pharm_id, Company_Name, Address, Zip, Work_Hours, Email FROM Pharmacies WHERE Email = ? AND PW = SHA2(CONCAT(?),256)`,
         [email, pw]
+    )
+    console.log(resultRows)
+    return resultRows[0]
+    }
+    catch (err) {
+        console.log("Error Fetching Pharmacy Auth: ", err)
+        throw err
+    }
+}
+
+export async function fetchPharmacy(pharm_id) {
+    try {
+    const [resultRows] = await pool.query(`SELECT pharm_id, Company_Name, Address, Zip, Work_Hours, Email FROM Pharmacies WHERE pharm_id = ?`,
+        [pharm_id]
     )
     console.log(resultRows)
     return resultRows[0]
@@ -906,6 +946,44 @@ export async function fetchPrescriptionPaid(prescription_id) {
     }
 }
 
+export async function fetchPrescriptionAccepted(patient_id){
+    try {
+        const [resultRows] = await pool.query(`SELECT 
+            p.Prescription_ID,
+            p.Patient_ID,
+            CONCAT(pb.First_Name, ' ', pb.Last_Name) AS Patient_Name,
+            p.Doctor_ID,
+            CONCAT(db.First_Name, ' ', db.Last_Name) AS Doctor_Name,
+            p.Pill_ID,
+            pill.Pill_Name,
+            p.Quantity,
+            p.Prescription_Status,
+            p.Create_Date,
+            p.Last_Update
+        FROM Prescription p
+        JOIN PatientBase pb ON p.Patient_ID = pb.Patient_ID
+        JOIN DoctorBase db ON p.Doctor_ID = db.Doctor_ID
+        JOIN PillBank pill ON p.Pill_ID = pill.Pill_ID
+        WHERE pb.patient_id = ? and Prescription_Status = 'Accepted';
+        ;`, [patient_id])
+        return resultRows
+    } catch (err) {
+        console.log('Error Fetching Prescriptions by patient_id: ', err)
+        throw err;
+    }
+}
+
+export async function getAllPharmacyIds() {
+    try {
+        const result = await pool.query('SELECT pharm_id FROM Pharmacies');
+        console.log(result[0])
+        return result[0].map(r => r.pharm_id);
+    } catch (err) {
+        console.log("Error Getting all pharm ids: ", err)
+        throw err
+    }
+}
+
 
 export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
     const [check] = await pool.query(`select patient_id from patientBase 
@@ -999,7 +1077,7 @@ export async function rmPatientDoc(id) {
 export async function rmPatientAppt(patient_id, doctor_id) {
     try {
         const [returnResult] = await pool.query(`delete from appointments where patient_id = ? and doctor_id = ? 
-            and (Appt_Date > CURDATE() OR (Appt_Date = CURDATE() AND Appt_Time > CURTIME()))`, [patient_id, doctor_id])
+            and Appt_End = false and (Appt_Date > CURDATE() OR (Appt_Date = CURDATE() AND Appt_Time > CURTIME()))`, [patient_id, doctor_id])
         return returnResult
     } catch (err) {
         console.log("Failed Removing Patient Appointments: ", err)

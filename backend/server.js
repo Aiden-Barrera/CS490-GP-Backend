@@ -29,8 +29,12 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     fetchPrescriptions,
     getPaymentForPrescription,
     fetchPrescriptionPaid,
-    AcceptPrescription} from './PrimeWell_db.js'
-import { sendPrescription, consumePrescriptions } from './rabbitmq.js';  // import the RabbitMQ helper
+    AcceptPrescription, getAllPharmacyIds,
+    fetchPrescriptionAccepted,
+    fetchPatient,
+    fetchDoctor,
+    fetchPharmacy} from './PrimeWell_db.js'
+import { sendPrescription, consumePrescriptions, preCreatePharmacyQueue } from './rabbitmq.js';  // import the RabbitMQ helper
 
 
 
@@ -111,6 +115,18 @@ io.on("connection", (socket) => {
     })
 })
 
+async function setupQueuesAtStartup() {
+    try {
+        const pharmacyIds = await getAllPharmacyIds(); // e.g., [101, 102, 103]
+        for (const id of pharmacyIds) {
+            await preCreatePharmacyQueue(String(id));
+        }
+        console.log("All pharmacy queues pre-created at startup.");
+    } catch (err) {
+        console.error("Error setting up queues:", err);
+    }
+}
+
 // await consumePrescriptions("1", (prescription) => {
 //     console.log('New prescription received:', prescription); // 
 //     // Here, push to frontend via WebSocket, or store in database, etc.
@@ -132,9 +148,13 @@ io.on("connection", (socket) => {
 // });
 
 
-server.listen(3000, () => {
-    console.log('Server is running on port 3000')
-})
+setupQueuesAtStartup().then(() => {
+    server.listen(3000, () => {
+        console.log('Server is running on port 3000');
+    });
+}).catch((err) => {
+    console.error("Failed to set up queues. Server not started:", err);
+});
 
 const apiKeyMiddleware = (req, res, next) => {
     const apiKey = req.headers['x-api-key']; // Or req.query.apiKey if you prefer query parameters
@@ -443,7 +463,16 @@ app.get("/fetchPrescriptionPaid/:id", async (req, res) => {
         const rows = await fetchPrescriptionPaid(req.params.id)
         res.send(rows)
     } catch (err) {
-        console.log("Failed to Fetch Prescription if paid: ", err)
+        res.status(500).json({ error: err.message || "Internal server error" });
+    }
+})
+
+app.get("/fetchPrescriptionAccepted/:id", async (req, res) => {
+    try {
+        const rows = await fetchPrescriptionAccepted(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
     }
 })
 
@@ -468,6 +497,15 @@ app.post("/passAuthPatient", async (req, res) => {
     }
 });
 
+app.get("/fetchPatient/:id", async (req, res) => {
+    try {
+        const rows = await fetchPatient(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
+    }
+})
+
 app.post("/passAuthDoctor", async (req, res) => {
     const { email, pw } = req.body;
     if (!email || !pw) {
@@ -486,6 +524,15 @@ app.post("/passAuthDoctor", async (req, res) => {
         }
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
+app.get("/fetchDoctor/:id", async (req, res) => {
+    try {
+        const rows = await fetchDoctor(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
     }
 })
 
@@ -508,6 +555,15 @@ app.post("/passAuthPharm", async (req, res) => {
         }
     } catch (error) {
         res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
+app.get("/fetchPharmacy/:id", async (req, res) => {
+    try {
+        const rows = await fetchPharmacy(req.params.id)
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: err.message || "Internal server error" });
     }
 })
 
@@ -1094,7 +1150,7 @@ app.patch('/doctor/:id', async (req, res) => {
         if (Object.keys(entry).length === 0) {
             return res.status(400).json({ error: "No valid fields to update." });
         }
-
+        console.log("Doctor ID: ", id)
         const updateResult = await UpdateDoctorInfo(id, entry);
         const event_Details = 'Edited Doctor info';
         const audit = await genereateAudit(id, 'Doctor', 'PATCH', event_Details);
