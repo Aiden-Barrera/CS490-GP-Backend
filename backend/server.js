@@ -1,10 +1,10 @@
 import express from 'express'
-import { addPatientDoc, createAppointment, createChatMsg, createChatroom, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPerscription, createPharmacy, 
-    createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePerscription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getAppointmentsPatient, getChatMesseges, getComments_id, getDoctorAuth, getDoctors, 
+import { addPatientDoc, createAppointment, createChatMsg, createComment, createDoctor, createDoctorSchedule, createDoctorTiers, createExercise, createForumPost, createPatient, createPerscription, createPharmacy, 
+    createPill, createPreliminary, createRegiment, createReveiw, createSurvey, deleteAppointment, deleteComment, deleteDoctor, deleteForumPost, deletePatient, deletePrescription, deletePill, deleteRegiment, genereateAudit, getAppointmentsDoctor, getChatMesseges, getComments_id, getDoctorAuth, 
     getDoctorSchedule, 
-    getExercises, getExerciseByClass, getForumPosts, getPatientAuth, getPatients, getPharmacies, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
+    getExercises, getExerciseByClass, getForumPosts, getPatientAuth, getPatients, getPharmAuth, getPills, getPreliminaries, getPrescription, getRegiment, getReviews, 
     getReviewsTop, getReviewsByID, 
-    getReviewsComments,  getSurvey, getTiers, LogAttempt, rmPatientDoc, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePerscriptionInfo, UpdatePillInfo,
+    getReviewsComments,  getSurvey, LogAttempt, rmPatientDoc, UpdateDoctorInfo, UpdateDoctorSchedule, UpdatePatientInfo, UpdatePrescriptionInfo, UpdatePillInfo,
     UpdateRegiment,
     getPatientDoc,
     createApptRequest,
@@ -12,8 +12,6 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     UpdateApptStat,
     UpdateRequest,
     getDocPatients,
-    getPrescriptionDoc,
-    getAuthSurvey,
     getSurveyLatestDate,
     getAllDoctors,
     getPatientInfo,
@@ -28,6 +26,7 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     UpdatePayment,
     fetchPrescriptions,
     getPaymentForPrescription,
+    UpdatePharmInfo,
     fetchPrescriptionPaid,
     AcceptPrescription, getAllPharmacyIds,
     fetchPrescriptionAccepted,
@@ -36,21 +35,11 @@ import { addPatientDoc, createAppointment, createChatMsg, createChatroom, create
     fetchPharmacy} from './PrimeWell_db.js'
 import { sendPrescription, consumePrescriptions, preCreatePharmacyQueue } from './rabbitmq.js';  // import the RabbitMQ helper
 
-
-
-
 import cors from 'cors'
-import multer from 'multer'
 import dotenv from 'dotenv'
 import http from "http"
 import {Server} from "socket.io"
 dotenv.config()
-
-//import socket from 'socket.io'
-/*
-const server = http.createServer(app);
-const io = new socket(server);
-*/
 
 const app = express()
 app.use(express.json())
@@ -173,19 +162,6 @@ const apiKeyMiddleware = (req, res, next) => {
 
 // app.use(apiKeyMiddleware)
 
-const store = multer.diskStorage({
-    destination: (req, file, cb) => { //where to store (folder name ExerciseBankImages)
-        cb(null, './ExerciseBankImages') //cb = call back function
-    }, 
-
-    filename: (req, file, cb) => { //file name
-        console.log(file);
-        cb(null, path.extname(file.originalname))
-
-    }
-})
-const upload = multer({storage: store})
-
 app.use((err, req, res, next) => {
     console.error(err.stack)
     res.status(500).send('Something broke!')
@@ -238,14 +214,6 @@ app.get("/doctor/listAll", async (req, res) => {
     res.send(rows)
 })
 
-app.get("/doctor/:id", async (req, res) => {
-    const rows = await getDoctors(req.params.id)
-    console.log("Doctor Fetched: ", rows)
-    const event_Details = 'retrieval of doctor data'
-    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
-    res.send(rows)
-})
-
 app.post("/doctorPatients", async (req, res) => {
     const {Doctor_ID} = req.body;
     if (!Doctor_ID) {
@@ -262,28 +230,10 @@ app.post("/doctorPatients", async (req, res) => {
     }
 })
 
-
-app.get("/pharmacies", async (req, res) => {
-    const rows = await getPharmacies()
-    const event_Details = 'retrieval of pharmacy data'
-    const audit = await genereateAudit(0, 'Pharmacist', 'GET', event_Details)
-    res.send(rows)
-})
-
 app.get("/pillbank", async (req, res) => {
     const rows = await getPills()
     const event_Details = 'retrieval of pill data'
     const audit = await genereateAudit(0, 'Pharmacist', 'GET', event_Details)
-    res.send(rows)
-})
-
-app.get("/tiers/:id", async (req, res) => { //tiers by doctor - VC
-    const rows = await getTiers(req.params.id)
-    res.send(rows)
-})
-
-app.get("/exercisebank", async (req, res) => {
-    const rows = await getExercises()
     res.send(rows)
 })
 
@@ -324,17 +274,6 @@ app.get("/reviews/:id", async (req, res) => {
     const rows = await getReviewsByID(req.params.id)
     res.send(rows)
 })
-    
-app.get("/appointment/patient/:id", async (req, res) => {
-    try {
-        const rows = await getAppointmentsPatient(req.params.id)
-        const event_Details = 'retrieval of appointment data'
-        const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
-        res.send(rows)
-    } catch (err) {
-        console.log("Failed Fetching Appointments for Patient: ", err)
-    }
-})
 
 app.get("/appointment/doctor/:id", async (req, res) => {
     const rows = await getAppointmentsDoctor(req.params.id)
@@ -352,15 +291,8 @@ app.get("/request/:id", async (req, res) => { // Used for retrieving a given doc
 
 app.get("/prescription/:id", async (req, res) => { //based on patient -VC
     const rows = await getPrescription(req.params.id)
-    const event_Details = 'retrieval of perscription'
+    const event_Details = 'retrieval of prescription'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
-    res.send(rows)
-})
-
-app.get("/prescriptionDoc/:id", async (req, res) => { //based on doctor -VC
-    const rows = await getPrescriptionDoc(req.params.id)
-    const event_Details = 'retrieval of perscription'
-    const audit = await genereateAudit(req.params.id, 'Doctor', 'GET', event_Details)
     res.send(rows)
 })
 
@@ -377,19 +309,8 @@ app.get("/preliminaries/:id", async (req, res) => {
     }
 })
 
-// Change this to a post because it is senstitive
-app.get("/chatroomMsgs/:id", async (req, res) => { //by chatroom_id - VC
-    const rows = await getChatMesseges(req.params.id)
-    res.send(rows)
-})
-
 app.get("/reviewsTop", apiKeyMiddleware, async (req, res) => {
     const rows = await getReviewsTop()
-    res.send(rows)
-})
-
-app.get("/reviews/comments/:id", async (req, res) => {
-    const rows = await getReviewsComments(req.params.id)
     res.send(rows)
 })
 
@@ -399,16 +320,6 @@ app.get("/patientsurvey/:id", async (req, res) => {
     const event_Details = 'retrieval of Patient data for graph'
     const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
     res.send(rows)
-})
-
-app.get("/patientsurveyAuth/:id", async (req, res) => {  //returns true (if posting is ok) or false
-    const rows = await getAuthSurvey(req.params.id)
-    const event_Details = 'check to see if patient can post survey'
-    const audit = await genereateAudit(req.params.id, 'Patient', 'GET', event_Details)
-    const tday = new Date();
-    if (tday.toISOString().substring(0, 10) != rows[0]?.Survey_Date.toISOString().substring(0, 10)) res.send(tday)
-        else res.send('false')
-    //res.send(rows)
 })
 
 app.get("/appointmentInfo/:id", async (req, res) => {  
@@ -591,7 +502,7 @@ app.post("/fetchApptMessages", async (req, res) => {
 // Ensure that the Pharm_ID passed in the Pharm_ID field of the request body is an EXISTING Pharm_ID in the Pharmacies table } via frontend? - FI
 // Ensure that Email holds the form of an email address, Phone holds the form of a phone number, and Address holds the form of a Street address } via frontend? - FI 
 
-/* ADDED: appointments, Doctor schedule, perscription, preliminaries, survey, regiments, chat rooms<-messages, authattempts, 
+/* ADDED: appointments, Doctor schedule, prescription, preliminaries, survey, regiments, chat rooms<-messages, authattempts, 
 payments, audit logs*/
 
 app.post("/patient", async (req, res) => {
@@ -648,11 +559,10 @@ app.post("/doctor", async (req, res) => {
 
 app.post("/doctorSchedule", async (req, res) => {
     const {Doctor_ID, Doctor_Schedule} = req.body
-
-    if (!Doctor_ID |!Doctor_Schedule) {
+    console.log(Doctor_Schedule)
+    if (!Doctor_ID || !Doctor_Schedule) {
         return res.status(400).json({ error: "Missing required information" });
     }
-
     try {
         const newDoctor = await createDoctorSchedule(Doctor_ID, Doctor_Schedule)
         const event_Details = 'Created new Doctor Schedule'
@@ -759,29 +669,6 @@ app.post("/fetchApptEndStatus", async (req, res) => {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
-/*
-for this function to work each entry should be labeled as such:
-<form method="POST" action="/upload" enctype="multipart/form-data"> <!--post, /upload-->
-        <input type="text" name="desc">  ------- req.body (each attribute has it's proper label)
-        <input type="file" name="image"> ------- req.file.originalname
-        <input type="submit">
-</form>
-*/
-// -VC
-app.post("/exercisebank", upload.single('image'), async (req, res) => { //User created exercise from post - VC
-    const { Patient_ID, Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps } = req.body
-    if (!Patient_ID || !Exercise_Name || !Muscle_Group || !Exercise_Description || !Exercise_Class || !Sets || !Reps) {
-        return res.status(400).json({ error: "Missing required information" });
-    }
-    try {
-        const newExercise = await createExercise(Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps)
-        const event_Details = 'Created new exercise'
-        const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
-        res.status(201).send(newExercise)
-    } catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})
 
 // Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
 app.post("/forumPosts", async (req, res) => {
@@ -808,7 +695,6 @@ app.post("/forumPosts", async (req, res) => {
 // Ensure that the Forum_ID passed into the Forum_ID field is an existing Forum ID in the ForumPosts table } via frontend? - FI
 app.post("/comments", async (req, res) => {
     const { Patient_ID, Forum_ID, Comment_Text } = req.body
-    console.log("Comment Body: ", req.body)
     if (!Patient_ID || !Forum_ID | !Comment_Text) {
         return res.status(400).json({ error: "Missing required information" });
     }
@@ -840,38 +726,6 @@ app.post("/regiment", async (req, res) => {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
-
-app.post("/chatrooms", async (req, res) => { //Chatroom maker is determined by front end in req.body -VC
-    if(req.body.Chatroom_Name){
-        return res.status(400).json({ error: "Missing required information" });
-    }
-
-    try {
-    const newChatroom = await createChatroom(req.body.Chatroom_Name)
-    const event_Details = 'Created new chatroom'
-    const audit = await genereateAudit(req.body.UserID, req.body.UserType, 'POST', event_Details)
-    res.status(201).send(newChatroom)
-    }catch (error) {  
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})
-
-app.post("/messages", async (req, res) => { //chat room id, based on sender type and ID - VC
-    const {Appointment_ID, SenderID, SenderType, Message} = req.body
-    if(!Appointment_ID | !SenderID | !SenderType |  !Message){
-        return res.status(400).json({ error: "Missing required information" });
-    }
-
-    try{
-    const newMsg = await createChatMsg(Appointment_ID, SenderID, SenderType, Message)
-    const event_Details = 'Created message to Appointment Room'
-    const audit = await genereateAudit(SenderID, SenderType, 'POST', event_Details)
-    res.status(201).send(newMsg)
-    }catch (error) {  
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})
-
 
 // Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
 // Ensure that the Doctor_ID passed into the Doctor_ID field is an existing Doctor ID in the DoctorBase table } via frontend? - FI
@@ -911,7 +765,7 @@ app.post("/request", async (req, res) => { // We might not need this since it's 
     console.log(req.body)
     try {
         const patientsDoctor = await getPatientDoc(Patient_ID)
-        console.log("Patient Info: ", patientsDoctor, "DoctorID: ", Doctor_ID)
+        console.log("Patient Info: ", patientsDoctor.doctor_id, "DoctorID: ", Doctor_ID)
         //check if correct doctor
         if (patientsDoctor !== undefined && patientsDoctor?.doctor_id !== Doctor_ID) {
             return res.status(400).json({ error: "Patient already has a different doctor"});
@@ -950,23 +804,6 @@ app.post("/preliminaries", async (req, res) => {
         const event_Details = 'Created new Preliminary'
         const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
         res.status(201).send(newAppt)
-    } catch (error) {  
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})
-
-// MAY NOT NEED BELOW BECAUSE ITS DONE IN /sendPrescription
-app.post("/prescription", async (req, res) => {
-    const {Patient_ID, Doctor_ID, Pill_ID, Quantity} = req.body
-    if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity) {
-        return res.status(400).json({ error: "Missing required information" });
-    }
-
-    try {
-        const newPrescription = await createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity)
-        const event_Details = 'Created new Prescription'
-        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'POST', event_Details)
-        res.status(201).send(newPrescription)
     } catch (error) {  
         res.status(500).json({ error: error.message || "Internal server error" });
     }
@@ -1043,6 +880,9 @@ app.post("/patientsurvey", apiKeyMiddleware, async (req, res) => {
 
 app.post("/patientsurvey/date/", async (req, res) => {
     const {patient_id} = req.body
+    if (!patient_id) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
     const rows = await getSurveyLatestDate(patient_id)
     const today = new Date().toISOString().split('T')[0]
     if (rows[0]?.survey_date.toISOString().split('T')[0] != today) {
@@ -1052,13 +892,13 @@ app.post("/patientsurvey/date/", async (req, res) => {
 })
 
 app.post("/payment", async (req, res) => {
-    const {Patient_ID, Related_ID, Payment_Type, Payment_Status} = req.body
-    if (!Patient_ID || !Related_ID || !Payment_Type || !Payment_Status) {
+    const {Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status} = req.body
+    if (!Patient_ID | !Card_Number | !Related_ID | !Payment_Type | !Payment_Status) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
     try {
-    const newPayment = await createPayment(Patient_ID, Related_ID, Payment_Type, Payment_Status)
+    const newPayment = await createPayment(Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status)
     const event_Details = 'Patient has made a payment'
     const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
     res.status(201).send(newPayment)
@@ -1071,7 +911,7 @@ app.post("/payment", async (req, res) => {
 // All below should have an addtional query to auditlog with tyoe PATCH
 //update based on a given id - VC
 
-/*ADDED: regiment, appointments, perscription, audit logs*/
+/*ADDED: regiment, appointments, prescription, audit logs*/
 
 
 // FIX ALL USAGES OF req.body AND req.params BELOW - FI
@@ -1133,6 +973,34 @@ app.patch('/patientDropDoctor/removeDoc', async(req, res)=>{ //Remove patient do
     catch(error) { res.status(500).json({ error: error.message || "Internal server error" }) }
 })
 
+app.patch('/pharmacy/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        let entry = req.body;
+
+        // Fields that are NOT allowed to be updated
+        const restrictedFields = ['PW', 'Email', 'Work_Hours', 'Last_Update', 'Create_Date'];
+
+        // Remove restricted fields from the entry object
+        entry = Object.fromEntries(
+            Object.entries(entry).filter(([key]) => !restrictedFields.includes(key))
+        );
+
+        if (Object.keys(entry).length === 0) {
+            return res.status(400).json({ error: "No valid fields to update." });
+        }
+
+        const updateResult = await UpdatePharmInfo(id, entry);
+        const event_Details = 'Edited Pharmacy info';
+        const audit = await genereateAudit(id, 'Pharmacist', 'PATCH', event_Details);
+        
+        console.log(audit);
+        res.status(200).json(updateResult);
+    } catch (error) { 
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
 // ONLY MAKE VISIBLE FROM DOCTOR PORTAL VIA FRONTEND OR ADD AUTHENTICATION- FI
 app.patch('/doctor/:id', async (req, res) => {
     try {
@@ -1178,11 +1046,11 @@ app.patch('/doctorSchedule/:id', async(req, res)=>{
 // MAKE ONLY AVAILABLE TO A DOCTOR FROM THEIR OWN PORTAL VIA FRONTEND OR ADD AUTHENTICATION - FI
 app.patch('/prescription/:doctor_id', async(req, res)=>{ //Doctor's can change this - VC
     try {
-        const id = req.body.Perscription_ID
+        const id = req.body.Prescription_ID
         const entry = req.body
 
         // Fields that are NOT allowed to be updated
-        const restrictedFields = ['Perscription_ID', 'Patient_ID', 'Doctor_ID'];
+        const restrictedFields = ['Prescription_ID', 'Patient_ID', 'Doctor_ID'];
 
         // Remove restricted fields from the entry object
         entry = Object.fromEntries(
@@ -1193,8 +1061,8 @@ app.patch('/prescription/:doctor_id', async(req, res)=>{ //Doctor's can change t
             return res.status(400).json({ error: "No valid fields to update." });
         }
 
-        const updateResult = await UpdatePerscriptionInfo(id, entry)
-        const event_Details = 'Edited perscription info'
+        const updateResult = await UpdatePrescriptionInfo(id, entry)
+        const event_Details = 'Edited prescription info'
         const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'PATCH', event_Details)
         res.status(201).send(updateResult)
         }
@@ -1355,16 +1223,6 @@ app.patch("/acceptPrescription", async (req, res) => {
 // All below should have an addtional query to auditlog with type DELETE
 // delete based on a given id - VC
 
-/*ADDED: appointments, Doctorschedules, perscription, regiments, posts<-comments, audit logs*/
-
-app.delete("/patient", async(req, res) => {
-    const { Patient_ID } = req.body
-    const deleteResult = await deletePatient(Patient_ID)
-    const event_Details = 'Patient has been deleted'
-    const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})// delete any ties to first patient (regiments and appointments)
-
 app.delete("/appointment/patient", async(req, res) => { //Patient cancels appointment (appt_ID) - VC
     const deleteResult = await deleteAppointment(req.body.Appointment_ID)
     const event_Details = 'An appointment has been deleted'
@@ -1379,41 +1237,6 @@ app.delete("/appointment/doctor", async(req, res) => { //Doctor cancels appointm
     res.status(204).send(deleteResult)
 })
 
-app.delete("/regiment", async(req, res) => {
-    const deleteResult = await deleteRegiment(req.body.Regiment_ID)
-    const event_Details = 'A regiment has been deleted'
-    const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})
-
-app.delete("/doctor", async(req, res) => {
-    const deleteResult = await deleteDoctor(req.body.Doctor_ID)
-    const event_Details = 'Doctor has been deleted'
-    const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})
-
-app.delete("/tiers", async(req, res) => {
-    const deleteResult = await deleteDoctor(req.body.Doctor_ID)
-    const event_Details = 'Doctor Tiers has been deleted'
-    const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})
-
-app.delete("/doctorSchedule", async(req, res) => {
-    const deleteResult = await deleteDoctor(req.body.Doctor_ID)
-    const event_Details = 'Doctor Schedule has been deleted'
-    const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})
-
-app.delete("/perscription", async(req, res) => { //Doctor should manage perscriptions - VC
-    const deleteResult = await deletePerscription(req.body.Patient_ID)
-    const event_Details = 'Doctor has been deleted'
-    const audit = await genereateAudit(req.body.Doctor_ID, 'Doctor', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})
-
 app.delete("/pillbank", async(req, res) => {
     const deleteResult = await deletePill(req.body.Pill_ID)
     const event_Details = 'Pill has been deleted'
@@ -1421,16 +1244,4 @@ app.delete("/pillbank", async(req, res) => {
     res.status(204).send(deleteResult)
 })
 
-app.delete("/comments", async(req, res) => {
-    const deleteResult = await deleteComment(req.body.Comment_ID)
-    const event_Details = 'Comment has been deleted'
-    const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})
-
-app.delete("/forumPost", async(req, res) => { //delete all comment rows with this id (Fourm_ID) - VC
-    const deleteResult = await deleteForumPost(req.body.Forum_ID)
-    const event_Details = 'Post and its comments have been deleted'
-    const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'DELETE', event_Details)
-    res.status(204).send(deleteResult)
-})
+export default app

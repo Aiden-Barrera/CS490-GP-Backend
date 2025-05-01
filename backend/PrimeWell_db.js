@@ -88,17 +88,6 @@ export async function getAllDoctors() {
     }
 }
 
-export async function getDoctors(id) {
-    try {
-    const [resultRows] = await pool.query(`SELECT First_Name, Last_Name, Specialty, Availability, License_Serial FROM DoctorBase WHERE Doctor_ID = ?;`, [id]) 
-    return resultRows[0]
-    } 
-    catch (err) {
-        console.log("Error All Fetching Doctor Info: ", err)
-        throw err
-    }
-}
-
 export async function getDocPatients(Doctor_ID) { //patient info for doc
     try {
     const [resultRows] = await pool.query(`SELECT patientbase.First_Name, patientbase.Last_Name, 
@@ -146,17 +135,6 @@ export async function getDoctorSchedule(id, day, date) {
         return availableSlots
     } catch (err) {
         console.log("Error Fetching Available Slots: ", err)
-        throw err
-    }
-}
-
-export async function getPharmacies() {
-    try {
-    const [resultRows] = await pool.query(`SELECT Pharm_ID, Company_Name, Address, Zip, Work_Hours FROM Pharmacies;`)
-    return resultRows
-    }
-    catch (err) {
-        console.log("Error Fetching Pharmacies: ", err)
         throw err
     }
 }
@@ -242,7 +220,7 @@ export async function getForumPosts() {
 
 export async function getComments_id(id) { //comments for specific forum post -VC
     try {
-    const [resultRows] = await pool.query(`SELECT Comments.Comment_ID, Comments.Comment_Text, Comments.Patient_ID, CONCAT(PatientBase.First_Name, ' ', PatientBase.Last_Name) AS PatientName, Comments.Date_Posted FROM Comments, PatientBase WHERE Forum_ID = ? AND Comments.Patient_ID = PatientBase.Patient_ID;`, [id])
+    const [resultRows] = await pool.query(`SELECT Comment_ID, Comment_Text, Patient_ID, Date_Posted FROM Comments WHERE Forum_ID = ?;`, [id])
     return resultRows
     }
     catch (err) {
@@ -309,7 +287,6 @@ export async function getReviewsTop() { //top 3 reviews for splash page - VC
 export async function getSurvey(id) { // get patient's recent surveys by recent date
     try {
     const [resultRows] = await pool.query(`SELECT Weight, Caloric_Intake, Water_Intake, Mood, Survey_Date FROM PatientDailySurvey WHERE Patient_ID = ? ORDER BY Survey_Date DESC;`, [id]) 
-    console.log(resultRows)
     return resultRows
     }
     catch (err) {
@@ -341,7 +318,7 @@ export async function getAuthSurvey(id) { // get patient's recent surveys by rec
 }
 
 // Make the below a POST because it is sensitive? - FI
-export async function getAppointmentsPatient(id) {
+/*export async function getAppointmentsPatient(id) {
     try {
         const [resultRows] = await pool.query(`SELECT 
             A.Appointment_ID, 
@@ -375,7 +352,7 @@ export async function getAppointmentsPatient(id) {
         console.log("Failed Fetching Appointments for Patient: ", err)
         throw err
     }
-}
+}*/
 
 export async function getTimeslot(Doctor_ID, Appt_Date, Appt_Time) {
     try {
@@ -423,8 +400,7 @@ export async function getAppointmentsDoctor(id) {
     try {
     const [resultRows] = await pool.query(`SELECT PB.First_Name, PB.Last_Name, A.Appointment_ID, 
         A.Date_Scheduled, A.Appt_Date, A.Appt_Time, A.Tier FROM Appointments as A, PatientBase as PB 
-        WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID and A.Appt_End = false 
-        ORDER BY (A.Appt_End = false AND A.Appt_Date >= CURDATE()) DESC, A.Appt_Date ASC;
+        WHERE A.Doctor_ID = ? and PB.Patient_ID = A.Patient_ID and A.Appt_End = false;
     `, [id]) 
     return resultRows
     }
@@ -574,13 +550,12 @@ export async function getNearestPharms(zip) {
     }
 }
 
-export async function getAppointmentInfo(patient_id) {
+export async function getAppointmentInfo(appt_id) {
     try {
-    const [resultRows] = await pool.query(`SELECT Appointments.Appt_Date, Appointments.Appt_Time, CONCAT(DoctorBase.First_Name, ' ', DoctorBase.Last_Name) AS Doctor, Appointments.Doctors_Feedback FROM Appointments, DoctorBase WHERE Appointments.Doctor_ID = DoctorBase.Doctor_ID AND Appointments.Patient_ID = ? and Appointments.Appt_End = true
-        ORDER BY Appointments.Appt_Date DESC;`,
-        [patient_id])
+    const [resultRows] = await pool.query(`SELECT Appointments.Appt_Date, Appointments.Appt_Time, CONCAT(DoctorBase.First_Name, ' ', DoctorBase.Last_Name) AS Doctor, Appointments.Doctors_Feedback FROM Appointments, DoctorBase WHERE Appointments.Doctor_ID = DoctorBase.Doctor_ID AND Appointments.Appointment_ID = ?;`,
+        [appt_id])
     console.log(resultRows)
-    return resultRows
+    return resultRows[0]
     }
     catch (err) {
         console.log("Error Fetching Appointment Info: ", err)
@@ -821,18 +796,6 @@ export async function createComment(Patient_ID, Forum_ID, Comment_Text) { //for 
     }
 }
 
-//same idea for chatroom and messages should apply for above - VC
-export async function createChatroom(Chatroom_Name) {
-    try {
-    const [resultChatCreate] = await pool.query(`INSERT INTO chatrooms (Chatroom_Name) VALUES (?);`, [Chatroom_Name])
-    return resultChatCreate
-    }
-    catch (err) {
-        console.log("Error Creating Chatroom: ", err)
-        throw err
-    }
-}
-
 export async function createChatMsg(Appointment_ID, SenderID, SenderName, SenderType, Message) { //for chatroom above -VC
     try {
     const [resultMsgCreate] = await pool.query(`INSERT INTO messages (Appointment_ID, SenderID, SenderName, SenderType, Message) 
@@ -1041,10 +1004,10 @@ export async function createSurvey(Patient_ID, Weight, Caloric_Intake, Water_Int
     }
 }
 
-export async function createPayment(Patient_ID, Related_ID, Payment_Type, Payment_Status) {
+export async function createPayment(Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status) {
     try {
-    const [resultPaymentCreate] = await pool.query(`INSERT INTO payments (Patient_ID, Related_ID, Payment_Type, Payment_Status)
-        VALUES (?, ?, ?, ?);`, [Patient_ID, Related_ID, Payment_Type, Payment_Status])
+    const [resultPaymentCreate] = await pool.query(`INSERT INTO payments (Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status)
+        VALUES (?, ?, ?, ?, ?);`, [Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status])
     return resultPaymentCreate
     }
     catch (err) {
@@ -1106,6 +1069,20 @@ export async function rmPatientAppt(patient_id, doctor_id) {
         return returnResult
     } catch (err) {
         console.log("Failed Removing Patient Appointments: ", err)
+        throw err
+    }
+}
+
+export async function UpdatePharmInfo(id, entry) {
+    try {
+    const [returnResult] = await pool.query(`
+        UPDATE pharmacies SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Pharm_ID = ?;`
+    , [entry, id])
+    console.log("Database update result:", returnResult);
+    return returnResult
+    }
+    catch (err) {
+        console.log("Failed Updating Doctor Info: ", err)
         throw err
     }
 }
@@ -1230,7 +1207,7 @@ export async function UpdateDoctorFeedback(appointment_id, doctor_feedback) {
 }
 
 // THIS IS INSECURE BECAUSE ENTRY CAN MODIFY ANYTHING (fixed for IDs)
-export async function UpdatePerscriptionInfo(id, entry) {
+export async function UpdatePrescriptionInfo(id, entry) {
     try {
     const [returnResult] = await pool.query(`
         UPDATE prescription SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Prescription_ID = ?;`
@@ -1344,7 +1321,7 @@ export async function clearPatientRegiment(patientID) {
         throw err
     }
 }
-
+  
 export async function UpdatePayment(payment_id, card_number) {
     try {
         const [result] = await pool.query(`UPDATE Payments SET Card_Number = ?, Payment_Status = "Paid", Last_Update = CURRENT_TIMESTAMP where Payment_ID = ?`,
@@ -1367,7 +1344,6 @@ export async function AcceptPrescription(prescription_id) {
         throw err
     }
 }
-  
 
 //REMOVE DATA ----------------------------------------------------------------------------------------------
 // All below should have an addtional query to auditlog with tyoe DELETE
@@ -1452,7 +1428,7 @@ export async function deleteDoctorSchedule(id) {
     }
 }
 
-export async function deletePerscription(id) {
+export async function deletePrescription(id) {
     
     try {
     const [deleteResult] = await pool.query(`DELETE FROM prescription WHERE Prescription_ID = ?;`
@@ -1506,4 +1482,3 @@ export async function deleteForumPost(id) {
         throw err
     }
 }
-
