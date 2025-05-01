@@ -381,6 +381,23 @@ app.get("/appointment/doctor/:id", async (req, res) => {
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /request/{id}:
+ *   get:
+ *     summary: Retrieve appointment requests for a doctor
+ *     tags: [Appointments]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Doctor ID
+ *     responses:
+ *       200:
+ *         description: Appointment requests for the doctor
+ */
 app.get("/request/:id", async (req, res) => { // Used for retrieving a given doctor's appointments, using their Doctor_ID
     const rows = await getApptRequest(req.params.id)
     const event_Details = 'retrieval of appointment requests'
@@ -388,6 +405,23 @@ app.get("/request/:id", async (req, res) => { // Used for retrieving a given doc
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /prescription/{id}:
+ *   get:
+ *     summary: Get all prescriptions for a patient
+ *     tags: [Prescriptions]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: List of prescriptions for the patient
+ */
 app.get("/prescription/:id", async (req, res) => { //based on patient -VC
     const rows = await getPrescription(req.params.id)
     const event_Details = 'retrieval of perscription'
@@ -395,6 +429,23 @@ app.get("/prescription/:id", async (req, res) => { //based on patient -VC
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /prescriptionDoc/{id}:
+ *   get:
+ *     summary: Get all prescriptions written by a doctor
+ *     tags: [Prescriptions]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Doctor ID
+ *     responses:
+ *       200:
+ *         description: List of prescriptions from the doctor
+ */
 app.get("/prescriptionDoc/:id", async (req, res) => { //based on doctor -VC
     const rows = await getPrescriptionDoc(req.params.id)
     const event_Details = 'retrieval of perscription'
@@ -402,8 +453,23 @@ app.get("/prescriptionDoc/:id", async (req, res) => { //based on doctor -VC
     res.send(rows)
 })
 
-// Why are the params weird?
-// MAKE THIS A POST REQUEST BECAUSE IT IS SENSITIVE - FI
+/**
+ * @swagger
+ * /preliminaries/{id}:
+ *   get:
+ *     summary: Retrieve preliminary patient data (Sensitive - consider POST)
+ *     tags: [Preliminaries]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Preliminary data for the patient
+ */
 app.get("/preliminaries/:id", async (req, res) => {
     try {
         const rows = await getPreliminaries(req.params.id)
@@ -415,23 +481,84 @@ app.get("/preliminaries/:id", async (req, res) => {
     }
 })
 
-// Change this to a post because it is senstitive
+/**
+ * @swagger
+ * /chatroomMsgs/{id}:
+ *   get:
+ *     summary: Get chatroom messages by Chatroom ID (Sensitive - consider POST)
+ *     tags: [Chat]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Chatroom ID
+ *     responses:
+ *       200:
+ *         description: List of messages in the chatroom
+ */
 app.get("/chatroomMsgs/:id", async (req, res) => { //by chatroom_id - VC
     const rows = await getChatMesseges(req.params.id)
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /reviewsTop:
+ *   get:
+ *     summary: Get top-rated reviews (API Key required)
+ *     tags: [Reviews]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     responses:
+ *       200:
+ *         description: Top reviews
+ */
 app.get("/reviewsTop", apiKeyMiddleware, async (req, res) => {
     const rows = await getReviewsTop()
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /reviews/comments/{id}:
+ *   get:
+ *     summary: Get comments for a specific review
+ *     tags: [Reviews]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Review ID
+ *     responses:
+ *       200:
+ *         description: List of comments for the review
+ */
 app.get("/reviews/comments/:id", async (req, res) => {
     const rows = await getReviewsComments(req.params.id)
     res.send(rows)
 })
 
-// Make post because it is sensitive
+/**
+ * @swagger
+ * /patientsurvey/{id}:
+ *   get:
+ *     summary: Retrieve patient survey data (Sensitive - consider POST)
+ *     tags: [Surveys]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Survey data for graphing
+ */
 app.get("/patientsurvey/:id", async (req, res) => {
     const rows = await getSurvey(req.params.id)
     const event_Details = 'retrieval of Patient data for graph'
@@ -439,6 +566,23 @@ app.get("/patientsurvey/:id", async (req, res) => {
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /patientsurveyAuth/{id}:
+ *   get:
+ *     summary: Check if patient is allowed to post a survey
+ *     tags: [Surveys]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Date string if allowed, "false" otherwise
+ */
 app.get("/patientsurveyAuth/:id", async (req, res) => {  //returns true (if posting is ok) or false
     const rows = await getAuthSurvey(req.params.id)
     const event_Details = 'check to see if patient can post survey'
