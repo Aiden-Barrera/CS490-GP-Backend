@@ -976,7 +976,23 @@ app.post("/appointment", async (req, res) => {
     }
 })
 
-
+/**
+ * @swagger
+ * /request:
+ *   get:
+ *     summary: Create a request for patient if needs are met
+ *     tags: [Appointments]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Make appointment request for patient
+ */
 app.post("/request", async (req, res) => { // We might not need this since it's in appointments - VC
     const {Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier} = req.body
     if (!Patient_ID || !Doctor_ID) {
@@ -1014,6 +1030,23 @@ app.post("/request", async (req, res) => { // We might not need this since it's 
     }
 })
 
+/**
+ * @swagger
+ * /appointment/patient/{id}:
+ *   get:
+ *     summary: Create premlinary forum patient
+ *     tags: [Patient]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Create preliminary forum for the patient
+ */
 app.post("/preliminaries", async (req, res) => {
     const {Patient_ID, Symptoms} = req.body
     if (!Patient_ID | !Symptoms) {
@@ -1030,6 +1063,23 @@ app.post("/preliminaries", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /appointment/patient/{id}:
+ *   get:
+ *     summary: Send a prescription to pharmacy with rabbitMQ
+ *     tags: [Pharmacy]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Create and send a prescription to right pharmacy
+ */
 // ENDPOINT USED WITH RABBITMQ, SO DOCTOR CAN CREATE AND SEND PRESCRIPTION TO QUEUE
 app.post('/sendPrescription', async (req, res) => {
     const {Patient_ID, Doctor_ID, Pill_ID, Quantity, Pharm_ID} = req.body
