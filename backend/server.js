@@ -897,7 +897,7 @@ app.patch('/pharmacy/:id', async (req, res) => {
         let entry = req.body;
 
         // Fields that are NOT allowed to be updated
-        const restrictedFields = ['PW', 'Email', 'Work_Hours', 'Last_Update', 'Create_Date'];
+        const restrictedFields = ['PW', 'Pharm_ID', 'Email', 'Work_Hours', 'Last_Update', 'Create_Date'];
 
         // Remove restricted fields from the entry object
         entry = Object.fromEntries(
