@@ -44,6 +44,8 @@ import multer from 'multer'
 import dotenv from 'dotenv'
 import http from "http"
 import {Server} from "socket.io"
+import swaggerUi from "swagger-ui-express"
+import swaggerSpec from './swagger.js';
 dotenv.config()
 
 //import socket from 'socket.io'
@@ -60,6 +62,7 @@ app.use((err, req, res, next) => {
     console.error(err.stack)
     res.status(500).send('Something broke!')
 })
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const server = http.createServer(app)
 const io = new Server(server, {
@@ -325,6 +328,23 @@ app.get("/reviews/:id", async (req, res) => {
     res.send(rows)
 })
     
+/**
+ * @swagger
+ * /appointment/patient/{id}:
+ *   get:
+ *     summary: Get all appointments for a patient
+ *     tags: [Appointments]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: List of appointments for the patient
+ */
 app.get("/appointment/patient/:id", async (req, res) => {
     try {
         const rows = await getAppointmentsPatient(req.params.id)
@@ -336,6 +356,24 @@ app.get("/appointment/patient/:id", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /appointment/doctor/{id}:
+ *   get:
+ *     summary: Get all appointments for a doctor
+ *     tags: [Appointments]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Doctor ID
+ *     responses:
+ *       200:
+ *         description: List of appointments for the Doctor
+ * 
+ */
 app.get("/appointment/doctor/:id", async (req, res) => {
     const rows = await getAppointmentsDoctor(req.params.id)
     const event_Details = 'retrieval of appointment data'
@@ -1168,7 +1206,7 @@ app.patch('/doctor/:id', async (req, res) => {
         let entry = req.body;
 
         // Fields that are NOT allowed to be updated
-        const restrictedFields = ['PW', 'Doctor_ID', 'License_Serial', 'Specialty', 'Last_Update', 'Create_Date'];
+        const restrictedFields = ['PW', 'Doctor_ID', 'License_Serial', 'Specialty', 'Availability', 'Last_Update', 'Create_Date'];
 
         // Remove restricted fields from the entry object
         entry = Object.fromEntries(
