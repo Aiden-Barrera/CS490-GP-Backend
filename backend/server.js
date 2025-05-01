@@ -199,6 +199,27 @@ app.use((err, req, res, next) => {
 /*ADDED: Gets for appointments, doctor schedule, perscription, preliminaries, survey, regiments, chat rooms<-messages, 
 and their (1st draft of) audit log entries*/
 
+/**
+ * @swagger
+ * /patient/{id}:
+ *   get:
+ *     summary: Retrieve patient data by ID
+ *     tags: [Patient]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the patient
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Patient data retrieved successfully
+ *       400:
+ *         description: Invalid patient ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.get("/patient/:id", async (req, res) => {
     const rows = await getPatients(req.params.id)
     console.log("Patient Fetched: ", rows)
@@ -207,6 +228,27 @@ app.get("/patient/:id", async (req, res) => {
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /patientInfo/{id}:
+ *   get:
+ *     summary: Retrieve detailed patient profile
+ *     tags: [Patient]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the patient
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Patient profile retrieved successfully
+ *       400:
+ *         description: Invalid patient ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.get("/patientInfo/:id", async (req, res) => {
     const rows = await getPatientInfo(req.params.id)
     const event_Details = 'retrieval of patient profile'
@@ -214,6 +256,27 @@ app.get("/patientInfo/:id", async (req, res) => {
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /doctorInfo/{id}:
+ *   get:
+ *     summary: Retrieve detailed doctor profile
+ *     tags: [Doctor]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the doctor
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Doctor profile retrieved successfully
+ *       400:
+ *         description: Invalid doctor ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.get("/doctorInfo/:id", async (req, res) => {
     const rows = await getDoctorInfo(req.params.id)
     const event_Details = 'retrieval of patient profile'
@@ -221,6 +284,27 @@ app.get("/doctorInfo/:id", async (req, res) => {
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /pharmInfo/{id}:
+ *   get:
+ *     summary: Retrieve detailed pharmacy profile
+ *     tags: [Pharmacy]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the pharmacy
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Pharmacy profile retrieved successfully
+ *       400:
+ *         description: Invalid pharmacy ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.get("/pharmInfo/:id", async (req, res) => {
     const rows = await getPharmInfo(req.params.id)
     const event_Details = 'retrieval of patient profile'
@@ -228,6 +312,27 @@ app.get("/pharmInfo/:id", async (req, res) => {
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /patientDoc/{id}:
+ *   post:
+ *     summary: Retrieve a patient's doctor
+ *     tags: [Patient]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the patient
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Patient's doctor retrieved successfully
+ *       400:
+ *         description: Invalid patient ID
+ *       500:
+ *         description: Internal server error
+ */  
 // MAKE THIS A POST REQUEST BECAUSE IT IS SENSITIVE - FI
 app.get("/patientDoc/:id", async (req, res) => {
     const rows = await getPatientDoc(req.params.id)
@@ -236,11 +341,44 @@ app.get("/patientDoc/:id", async (req, res) => {
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /doctor/listAll:
+ *   get:
+ *     summary: Retrieve a list of all doctors
+ *     tags: [Doctor]
+ *     responses:
+ *       200:
+ *         description: List of all doctors retrieved successfully
+ *       500:
+ *         description: Internal server error
+ */  
 app.get("/doctor/listAll", async (req, res) => {
     const rows = await getAllDoctors()
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /doctor/{id}:
+ *   get:
+ *     summary: Retrieve doctor data by ID
+ *     tags: [Doctor]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the doctor
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Doctor data retrieved successfully
+ *       400:
+ *         description: Invalid doctor ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.get("/doctor/:id", async (req, res) => {
     const rows = await getDoctors(req.params.id)
     console.log("Doctor Fetched: ", rows)
@@ -249,6 +387,29 @@ app.get("/doctor/:id", async (req, res) => {
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /doctorPatients:
+ *   post:
+ *     summary: Retrieve a doctor's patients
+ *     tags: [Doctor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Doctor_ID:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Doctor's patients retrieved successfully
+ *       400:
+ *         description: Invalid Doctor_ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.post("/doctorPatients", async (req, res) => {
     const {Doctor_ID} = req.body;
     if (!Doctor_ID) {
@@ -265,7 +426,18 @@ app.post("/doctorPatients", async (req, res) => {
     }
 })
 
-
+/**
+ * @swagger
+ * /pharmacies:
+ *   get:
+ *     summary: Retrieve a list of all pharmacies
+ *     tags: [Pharmacy]
+ *     responses:
+ *       200:
+ *         description: List of pharmacies retrieved successfully
+ *       500:
+ *         description: Internal server error
+ */  
 app.get("/pharmacies", async (req, res) => {
     const rows = await getPharmacies()
     const event_Details = 'retrieval of pharmacy data'
@@ -273,6 +445,18 @@ app.get("/pharmacies", async (req, res) => {
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /pillbank:
+ *   get:
+ *     summary: Retrieve a list of pills from the pill bank
+ *     tags: [Pharmacy]
+ *     responses:
+ *       200:
+ *         description: List of pills retrieved successfully
+ *       500:
+ *         description: Internal server error
+ */  
 app.get("/pillbank", async (req, res) => {
     const rows = await getPills()
     const event_Details = 'retrieval of pill data'
@@ -280,16 +464,72 @@ app.get("/pillbank", async (req, res) => {
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /tiers/{id}:
+ *   get:
+ *     summary: Retrieve tiers for a doctor
+ *     tags: [Doctor]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the doctor
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Tiers data retrieved successfully
+ *       400:
+ *         description: Invalid doctor ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.get("/tiers/:id", async (req, res) => { //tiers by doctor - VC
     const rows = await getTiers(req.params.id)
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /exercisebank:
+ *   get:
+ *     summary: Retrieve a list of all exercises
+ *     tags: [Exercise]
+ *     responses:
+ *       200:
+ *         description: List of exercises retrieved successfully
+ *       500:
+ *         description: Internal server error
+ */  
 app.get("/exercisebank", async (req, res) => {
     const rows = await getExercises()
     res.send(rows)
 })
 
+/**
+ * @swagger
+ * /exerciseByClass:
+ *   post:
+ *     summary: Retrieve exercises by class
+ *     tags: [Exercise]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               Exercise_Class:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Exercises by class retrieved successfully
+ *       400:
+ *         description: Invalid Exercise_Class
+ *       500:
+ *         description: Internal server error
+ */  
 app.post("/exerciseByClass", async (req, res) => {
     try {
         const { Exercise_Class } = req.body
@@ -301,6 +541,27 @@ app.post("/exerciseByClass", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /regiment/{id}:
+ *   get:
+ *     summary: Retrieve regiment data for a patient
+ *     tags: [Patient]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the patient
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Regiment data retrieved successfully
+ *       400:
+ *         description: Invalid patient ID
+ *       500:
+ *         description: Internal server error
+ */  
 app.get("/regiment/:id", async (req, res) => { //based on patient -VC
     const rows = await getRegiment(req.params.id)
     const event_Details = 'retrieval of patient regiment'
