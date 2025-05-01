@@ -1123,9 +1123,27 @@ app.post("/fetchApptMessages", async (req, res) => {
 // Ensure that the Pharm_ID passed in the Pharm_ID field of the request body is an EXISTING Pharm_ID in the Pharmacies table } via frontend? - FI
 // Ensure that Email holds the form of an email address, Phone holds the form of a phone number, and Address holds the form of a Street address } via frontend? - FI 
 
-/* ADDED: appointments, Doctor schedule, perscription, preliminaries, survey, regiments, chat rooms<-messages, authattempts, 
-payments, audit logs*/
 
+/**
+ * @swagger
+ * /patient:
+ *   post:
+ *     summary: Create new patient
+ *     tags: [Patient]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new Patient
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/patient", async (req, res) => {
     const { Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, Doctor_ID } = req.body
     const docId = Doctor_ID !== undefined ? Doctor_ID : null; // Inserts null if Doctor_ID is not provided
@@ -1157,6 +1175,26 @@ app.post("/patient", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /doctor:
+ *   post:
+ *     summary: Create new Doctor
+ *     tags: [Doctor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new Doctor
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 // Ensure that Email holds the form of an email address, Phone holds the form of a phone number } via frontend? - FI 
 app.post("/doctor", async (req, res) => {
     const { License_Serial, First_Name, Last_Name, Specialty, Email, Phone, PW, Availability } = req.body
@@ -1178,13 +1216,32 @@ app.post("/doctor", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /doctorSchedule:
+ *   post:
+ *     summary: Create new Doctor Schedule
+ *     tags: [Doctor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new Doctor Schedule
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/doctorSchedule", async (req, res) => {
     const {Doctor_ID, Doctor_Schedule} = req.body
-
-    if (!Doctor_ID |!Doctor_Schedule) {
+    console.log(Doctor_Schedule)
+    if (!Doctor_ID || !Doctor_Schedule) {
         return res.status(400).json({ error: "Missing required information" });
     }
-
     try {
         const newDoctor = await createDoctorSchedule(Doctor_ID, Doctor_Schedule)
         const event_Details = 'Created new Doctor Schedule'
@@ -1195,6 +1252,26 @@ app.post("/doctorSchedule", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /doctor:
+ *   post:
+ *     summary: Get Doctor Schedule
+ *     tags: [Doctor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: retrieval of doctor schedule data
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/getDoctorSchedule", async (req, res) => {
     const {doc_id, day, date} = req.body
 
@@ -1212,6 +1289,26 @@ app.post("/getDoctorSchedule", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /pharmacies:
+ *   post:
+ *     summary: Create new Pharmacy
+ *     tags: [Pharmacy]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new Pharmacy
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 // Ensure that the ZIP code passed in the Zip field of the request body is an INTEGER between 10000 and 99999 TO SATISFY THE DB CONSTRAINT - FI
 // Modify the DB such that the check ensures that Zip codes must be between 88011 and 88019 to match the geographical constraints of the system? ^ - FI
 // Ensure that Email holds the form of an email address, Phone holds the form of a phone number, and Address holds the form of a Street address } via frontend? - FI 
@@ -1231,6 +1328,21 @@ app.post("/pharmacies", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /getPharmByZip:
+ *   get:
+ *     summary: Get pharmacy by Zip
+ *     tags: [Pharmacy]
+ *     parameters:
+ *       - in: path
+ *         schema:
+ *           type: string
+ *         description: Zip
+ *     responses:
+ *       200:
+ *         description: Get pharmacies based on zip code
+ */
 app.post("/getPharmByZip", async (req, res) => {
     const {Zip} = req.body
     if (!Zip) {
@@ -1245,6 +1357,26 @@ app.post("/getPharmByZip", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /pillbank:
+ *   post:
+ *     summary: Create new Pill for pharmacy
+ *     tags: [Pharmacy]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new Pill
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 // Ensure that Pharm_ID passed into Pharm_ID field is an existing Pharmacy ID in the Pharmacies table } via frontend? - FI
 app.post("/pillbank", async (req, res) => {
     const { Cost, Pill_Name, Pharm_ID, Dosage, Quantity } = req.body
@@ -1262,6 +1394,26 @@ app.post("/pillbank", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /fetchApptStartStatus:
+ *   get:
+ *     summary: Get start status for appointment
+ *     tags: [Appointments]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Get start status for appointment
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/fetchApptStartStatus", async (req, res) => {
     const {Appointment_ID} = req.body
     if (!Appointment_ID) {
@@ -1277,6 +1429,26 @@ app.post("/fetchApptStartStatus", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /fetchApptEndStatus:
+ *   get:
+ *     summary: Get end status for appointment
+ *     tags: [Appointments]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Get end status for appointment
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/fetchApptEndStatus", async (req, res) => {
     const {Appointment_ID} = req.body
     if (!Appointment_ID) {
@@ -1291,30 +1463,27 @@ app.post("/fetchApptEndStatus", async (req, res) => {
         res.status(500).json({ error: error.message || "Internal server error" });
     }
 })
-/*
-for this function to work each entry should be labeled as such:
-<form method="POST" action="/upload" enctype="multipart/form-data"> <!--post, /upload-->
-        <input type="text" name="desc">  ------- req.body (each attribute has it's proper label)
-        <input type="file" name="image"> ------- req.file.originalname
-        <input type="submit">
-</form>
-*/
-// -VC
-app.post("/exercisebank", upload.single('image'), async (req, res) => { //User created exercise from post - VC
-    const { Patient_ID, Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps } = req.body
-    if (!Patient_ID || !Exercise_Name || !Muscle_Group || !Exercise_Description || !Exercise_Class || !Sets || !Reps) {
-        return res.status(400).json({ error: "Missing required information" });
-    }
-    try {
-        const newExercise = await createExercise(Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps)
-        const event_Details = 'Created new exercise'
-        const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
-        res.status(201).send(newExercise)
-    } catch (error) {
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})
 
+/**
+ * @swagger
+ * /forumPosts:
+ *   post:
+ *     summary: Create forum post
+ *     tags: [ForumPosts]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new post
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 // Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
 app.post("/forumPosts", async (req, res) => {
     const { Patient_ID, Forum_Text, Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps } = req.body
@@ -1336,11 +1505,30 @@ app.post("/forumPosts", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /comments:
+ *   post:
+ *     summary: Create comment for forum post
+ *     tags: [ForumPosts]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new Comment
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 // Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
 // Ensure that the Forum_ID passed into the Forum_ID field is an existing Forum ID in the ForumPosts table } via frontend? - FI
 app.post("/comments", async (req, res) => {
     const { Patient_ID, Forum_ID, Comment_Text } = req.body
-    console.log("Comment Body: ", req.body)
     if (!Patient_ID || !Forum_ID | !Comment_Text) {
         return res.status(400).json({ error: "Missing required information" });
     }
@@ -1355,7 +1543,26 @@ app.post("/comments", async (req, res) => {
     }
 })
 
-
+/**
+ * @swagger
+ * /regiment:
+ *   post:
+ *     summary: Create regiment for patient
+ *     tags: [Patient]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new regiment
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/regiment", async (req, res) => {
     const { Patient_ID, Regiment } = req.body
     if (!Patient_ID || !Regiment) {
@@ -1373,38 +1580,26 @@ app.post("/regiment", async (req, res) => {
     }
 })
 
-app.post("/chatrooms", async (req, res) => { //Chatroom maker is determined by front end in req.body -VC
-    if(req.body.Chatroom_Name){
-        return res.status(400).json({ error: "Missing required information" });
-    }
-
-    try {
-    const newChatroom = await createChatroom(req.body.Chatroom_Name)
-    const event_Details = 'Created new chatroom'
-    const audit = await genereateAudit(req.body.UserID, req.body.UserType, 'POST', event_Details)
-    res.status(201).send(newChatroom)
-    }catch (error) {  
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})
-
-app.post("/messages", async (req, res) => { //chat room id, based on sender type and ID - VC
-    const {Appointment_ID, SenderID, SenderType, Message} = req.body
-    if(!Appointment_ID | !SenderID | !SenderType |  !Message){
-        return res.status(400).json({ error: "Missing required information" });
-    }
-
-    try{
-    const newMsg = await createChatMsg(Appointment_ID, SenderID, SenderType, Message)
-    const event_Details = 'Created message to Appointment Room'
-    const audit = await genereateAudit(SenderID, SenderType, 'POST', event_Details)
-    res.status(201).send(newMsg)
-    }catch (error) {  
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})
-
-
+/**
+ * @swagger
+ * /appointment:
+ *   post:
+ *     summary: Create forum post
+ *     tags: [Appointments]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new Appointment & accepted request
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 // Ensure that the Patient_ID passed into the Patient_ID field is an existing Patient ID in the PatientBase table } via frontend? - FI
 // Ensure that the Doctor_ID passed into the Doctor_ID field is an existing Doctor ID in the DoctorBase table } via frontend? - FI
 // Doctor Accepts the Patient's Request
@@ -1433,7 +1628,30 @@ app.post("/appointment", async (req, res) => {
     }
 })
 
-
+/**
+ * @swagger
+ * /request:
+ *   post:
+ *     summary: Create request to doctor
+ *     tags: [Appointments]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new Request for an appointment
+ *       400:
+ *         description: Missing required information
+ *      400:
+ *         Patient already has a different doctor
+ *      400:
+ *         Timeslot taken
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/request", async (req, res) => { // We might not need this since it's in appointments - VC
     const {Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier} = req.body
     if (!Patient_ID || !Doctor_ID) {
@@ -1443,7 +1661,7 @@ app.post("/request", async (req, res) => { // We might not need this since it's 
     console.log(req.body)
     try {
         const patientsDoctor = await getPatientDoc(Patient_ID)
-        console.log("Patient Info: ", patientsDoctor, "DoctorID: ", Doctor_ID)
+        console.log("Patient Info: ", patientsDoctor.doctor_id, "DoctorID: ", Doctor_ID)
         //check if correct doctor
         if (patientsDoctor !== undefined && patientsDoctor?.doctor_id !== Doctor_ID) {
             return res.status(400).json({ error: "Patient already has a different doctor"});
@@ -1471,6 +1689,26 @@ app.post("/request", async (req, res) => { // We might not need this since it's 
     }
 })
 
+/**
+ * @swagger
+ * /preliminaries:
+ *   post:
+ *     summary: Create preliminary for patient
+ *     tags: [Patient]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new Preliminary
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/preliminaries", async (req, res) => {
     const {Patient_ID, Symptoms} = req.body
     if (!Patient_ID | !Symptoms) {
@@ -1487,23 +1725,26 @@ app.post("/preliminaries", async (req, res) => {
     }
 })
 
-// MAY NOT NEED BELOW BECAUSE ITS DONE IN /sendPrescription
-app.post("/prescription", async (req, res) => {
-    const {Patient_ID, Doctor_ID, Pill_ID, Quantity} = req.body
-    if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity) {
-        return res.status(400).json({ error: "Missing required information" });
-    }
-
-    try {
-        const newPrescription = await createPerscription(Patient_ID, Doctor_ID, Pill_ID, Quantity)
-        const event_Details = 'Created new Prescription'
-        const audit = await genereateAudit(Doctor_ID, 'Doctor', 'POST', event_Details)
-        res.status(201).send(newPrescription)
-    } catch (error) {  
-        res.status(500).json({ error: error.message || "Internal server error" });
-    }
-})
-
+/**
+ * @swagger
+ * /sendPrescription:
+ *   post:
+ *     summary: Create and send presciption to pharmacy
+ *     tags: [Appointments]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Prescription sent to pharmacy
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 // ENDPOINT USED WITH RABBITMQ, SO DOCTOR CAN CREATE AND SEND PRESCRIPTION TO QUEUE
 app.post('/sendPrescription', async (req, res) => {
     const {Patient_ID, Doctor_ID, Pill_ID, Quantity, Pharm_ID} = req.body
@@ -1536,6 +1777,26 @@ app.post('/sendPrescription', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /reviews:
+ *   post:
+ *     summary: Create review of a doctor
+ *     tags: [Reviews]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new review
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 // Ensure that Patient_ID and Doctor_ID are existing IDs in the PatientBase and DoctorBase tables, respectively } via frontend? - FI
 app.post("/reviews", async (req, res) => {
     const {Patient_ID, Doctor_ID, Review_Text, Rating} = req.body
@@ -1557,6 +1818,26 @@ app.post("/reviews", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /patientsurvey:
+ *   post:
+ *     summary: Create review of a doctor
+ *     tags: [Surveys]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new survey
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/patientsurvey", apiKeyMiddleware, async (req, res) => {
     const {Patient_ID, Weight, Caloric_Intake, Water_Intake, Mood} = req.body
     if (!Patient_ID | !Weight | !Caloric_Intake | !Water_Intake| !Mood) {
@@ -1573,8 +1854,31 @@ app.post("/patientsurvey", apiKeyMiddleware, async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /patientsurvey/date:
+ *   get:
+ *     summary: retrieve recent date for survey
+ *     tags: [Surveys]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description:
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/patientsurvey/date/", async (req, res) => {
     const {patient_id} = req.body
+    if (!patient_id) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
     const rows = await getSurveyLatestDate(patient_id)
     const today = new Date().toISOString().split('T')[0]
     if (rows[0]?.survey_date.toISOString().split('T')[0] != today) {
@@ -1583,14 +1887,34 @@ app.post("/patientsurvey/date/", async (req, res) => {
     return res.send('true')
 })
 
+/**
+ * @swagger
+ * /payment:
+ *   post:
+ *     summary: Create payment info for patient
+ *     tags: [Patient]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new payment
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/payment", async (req, res) => {
-    const {Patient_ID, Related_ID, Payment_Type, Payment_Status} = req.body
-    if (!Patient_ID || !Related_ID || !Payment_Type || !Payment_Status) {
+    const {Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status} = req.body
+    if (!Patient_ID | !Card_Number | !Related_ID | !Payment_Type | !Payment_Status) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
     try {
-    const newPayment = await createPayment(Patient_ID, Related_ID, Payment_Type, Payment_Status)
+    const newPayment = await createPayment(Patient_ID, Card_Number, Related_ID, Payment_Type, Payment_Status)
     const event_Details = 'Patient has made a payment'
     const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
     res.status(201).send(newPayment)
