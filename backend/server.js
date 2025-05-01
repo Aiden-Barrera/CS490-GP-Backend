@@ -608,6 +608,37 @@ app.get("/fetchPrescriptionAccepted/:id", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /passAuthPatient:
+ *   post:
+ *     summary: Authenticate a patient by email and password
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - pw
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               pw:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Successful authentication
+ *       400:
+ *         description: Missing email or password
+ *       401:
+ *         description: Invalid credentials
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/passAuthPatient", async (req, res) => {
     const { email, pw } = req.body;
     if (!email || !pw) {
@@ -629,6 +660,25 @@ app.post("/passAuthPatient", async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /fetchPatient/{id}:
+ *   get:
+ *     summary: Fetch patient information by ID
+ *     tags: [Patient]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Patient data
+ *       500:
+ *         description: Internal server error
+ */
 app.get("/fetchPatient/:id", async (req, res) => {
     try {
         const rows = await fetchPatient(req.params.id)
@@ -638,6 +688,37 @@ app.get("/fetchPatient/:id", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /passAuthDoctor:
+ *   post:
+ *     summary: Authenticate a doctor by email and password
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - pw
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               pw:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Successful authentication
+ *       400:
+ *         description: Missing email or password
+ *       401:
+ *         description: Invalid credentials
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/passAuthDoctor", async (req, res) => {
     const { email, pw } = req.body;
     if (!email || !pw) {
@@ -659,6 +740,25 @@ app.post("/passAuthDoctor", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /fetchDoctor/{id}:
+ *   get:
+ *     summary: Fetch doctor information by ID
+ *     tags: [Doctor]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Doctor ID
+ *     responses:
+ *       200:
+ *         description: Doctor data
+ *       500:
+ *         description: Internal server error
+ */
 app.get("/fetchDoctor/:id", async (req, res) => {
     try {
         const rows = await fetchDoctor(req.params.id)
@@ -668,6 +768,37 @@ app.get("/fetchDoctor/:id", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /passAuthPharm:
+ *   post:
+ *     summary: Authenticate a pharmacy by email and password
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - pw
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               pw:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Successful authentication
+ *       400:
+ *         description: Missing email or password
+ *       401:
+ *         description: Invalid credentials
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/passAuthPharm", async (req, res) => {
     const { email, pw } = req.body;
     console.log(req.body)
@@ -690,6 +821,25 @@ app.post("/passAuthPharm", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /fetchPharmacy/{id}:
+ *   get:
+ *     summary: Fetch pharmacy information by ID
+ *     tags: [Pharmacy]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Pharmacy ID
+ *     responses:
+ *       200:
+ *         description: Pharmacy data
+ *       500:
+ *         description: Internal server error
+ */
 app.get("/fetchPharmacy/:id", async (req, res) => {
     try {
         const rows = await fetchPharmacy(req.params.id)
@@ -699,6 +849,32 @@ app.get("/fetchPharmacy/:id", async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /fetchApptMessages:
+ *   post:
+ *     summary: Fetch messages associated with a specific appointment
+ *     tags: [Appointments]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - Appointment_ID
+ *             properties:
+ *               Appointment_ID:
+ *                 type: integer
+ *                 description: ID of the appointment
+ *     responses:
+ *       200:
+ *         description: List of appointment messages
+ *       400:
+ *         description: Missing Appointment ID
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/fetchApptMessages", async (req, res) => {
     const { Appointment_ID } = req.body;
     if (!Appointment_ID) {
