@@ -57,10 +57,10 @@ const io = new socket(server);
 
 const app = express()
 app.use(express.json())
-app.use(cors(cors({ 
+app.use(cors({ 
     origin: [ 'https://cs490-gp-frontend-production.up.railway.app' ], 
-    methods: ['GET','POST','PATCH','DELETE','PUT'] 
-})))
+    methods: ['GET','POST','PATCH','DELETE','PUT']
+}))
 
 app.use((err, req, res, next) => {
     console.error(err.stack)
