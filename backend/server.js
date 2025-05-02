@@ -846,7 +846,7 @@ app.get("/chatroomMsgs/:id", async (req, res) => { //by chatroom_id - VC
  *       200:
  *         description: Top reviews
  */
-app.get("/reviewsTop", apiKeyMiddleware, async (req, res) => {
+app.get("/reviewsTop", async (req, res) => {
     const rows = await getReviewsTop()
     res.send(rows)
 })
