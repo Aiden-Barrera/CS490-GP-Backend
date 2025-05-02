@@ -847,9 +847,14 @@ app.get("/chatroomMsgs/:id", async (req, res) => { //by chatroom_id - VC
  *         description: Top reviews
  */
 app.get("/reviewsTop", async (req, res) => {
-    const rows = await getReviewsTop()
-    res.send(rows)
-})
+    try {
+        const rows = await getReviewsTop();
+        res.send(rows);
+    } catch (err) {
+        console.error("Error in /reviewsTop:", err);
+        res.status(500).json({ error: "Failed to fetch top reviews" });
+    }
+});
 
 /**
  * @swagger
