@@ -4,11 +4,13 @@ dotenv.config()
 
 //make a file called .env if you dont and write each process.env. as ENTRY="value", and place the file at the root - VC
 const pool = mysql.createPool({
-    host: process.env.MYSQL_HOST, 
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
+    host:     process.env.MYSQLHOST,
+    port:     process.env.MYSQLPORT,
+    user:     process.env.MYSQLUSER,
+    password: process.env.MYSQL_ROOT_PASSWORD,
     database: process.env.MYSQL_DATABASE,
-    multipleStatements: true
+    waitForConnections: true,
+    connectionLimit: 10,
 }).promise()
 
 //GET DATA ----------------------------------------------------------------------------------------------
