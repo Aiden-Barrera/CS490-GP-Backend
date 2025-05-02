@@ -4,6 +4,7 @@ import {
     createPayment,
     getPrescriptionWithNamesById
 } from './PrimeWell_db.js';
+import dotenv from 'dotenv'
 dotenv.config()
 
 
