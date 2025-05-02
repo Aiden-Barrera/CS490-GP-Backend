@@ -4,8 +4,11 @@ import {
     createPayment,
     getPrescriptionWithNamesById
 } from './PrimeWell_db.js';
+import dotenv from 'dotenv'
+dotenv.config()
 
-const RABBITMQ_URL = 'amqp://localhost';
+
+const RABBITMQ_URL = process.env.RABBITMQ_URL;
 const EXCHANGE_NAME = 'prescriptions_exchange';
 
 async function sendPrescription(pharmacyName, prescriptionData) {

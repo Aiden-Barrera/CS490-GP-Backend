@@ -296,7 +296,7 @@ export async function getReviewsComments(id) {
 
 export async function getReviewsTop() { //top 3 reviews for splash page - VC
     try {
-    const [resultRows] = await pool.query(`with topDoctors as (SELECT doctor_id FROM reviews group by doctor_id ORDER BY avg(rating) DESC LIMIT 3)
+    const [resultRows] = await pool.query(`with topDoctors as (SELECT doctor_id FROM Reviews group by doctor_id ORDER BY avg(rating) DESC LIMIT 3)
                             select DB.first_name, DB.last_name, DB.specialty from 
                             DoctorBase as DB, topDoctors as TD where DB.doctor_id = TD.doctor_id;`)
     return resultRows
@@ -592,8 +592,8 @@ export async function getAppointmentInfo(patient_id) {
 
 export async function getPaymentsForAppointments(patient_id) {
     try {
-        const [resultRows] = await pool.query(`select P.Payment_ID, Concat(DB.First_Name, ' ', DB.Last_Name) as Doctor_Name, P.Payment_Type, A.Tier, T.Service, T.Cost, P.Payment_Status, P.Create_Date from payments as P, 
-            appointments as A, doctorBase as DB, tiers as T where P.payment_type = "Appointment" and P.patient_id = A.patient_id and P.Related_ID = A.appointment_id 
+        const [resultRows] = await pool.query(`select P.Payment_ID, Concat(DB.First_Name, ' ', DB.Last_Name) as Doctor_Name, P.Payment_Type, A.Tier, T.Service, T.Cost, P.Payment_Status, P.Create_Date from Payments as P, 
+            Appointments as A, DoctorBase as DB, Tiers as T where P.payment_type = "Appointment" and P.patient_id = A.patient_id and P.Related_ID = A.appointment_id 
             and A.doctor_id = DB.doctor_id and A.doctor_id = T.doctor_id and A.tier = T.tier and P.patient_id = ? order by A.Appt_Date desc;`, [patient_id])
         console.log(resultRows)
         return resultRows
@@ -616,10 +616,10 @@ export async function getPaymentForPrescription(patientID) {
                 PB.Dosage,
                 PR.Quantity,
                 PR.Create_Date AS Create_Date
-            FROM payments AS P
-            JOIN prescription AS PR ON P.Related_ID = PR.Prescription_ID
-            JOIN pillbank AS PB ON PR.Pill_ID = PB.Pill_ID
-            JOIN doctorbase AS DB ON PR.Doctor_ID = DB.Doctor_ID
+            FROM Payments AS P
+            JOIN Prescription AS PR ON P.Related_ID = PR.Prescription_ID
+            JOIN PillBank AS PB ON PR.Pill_ID = PB.Pill_ID
+            JOIN DoctorBase AS DB ON PR.Doctor_ID = DB.Doctor_ID
             WHERE P.Payment_Type = 'Prescription' AND P.Patient_ID = ?
             ORDER BY PR.Create_Date DESC;
         `, [patientID]);
@@ -667,7 +667,7 @@ export async function LogAttempt(UserEmail, Success_Status){
 export async function genereateAudit(User_ID, User_type, Event_Type, Event_Details){
     try {
     const [resultGenerateAudit] = await pool.query(`
-        INSERT INTO auditlog (UserID, UserType, Event_Type, Event_Details) VALUES (?, ?, ?, ?);`
+        INSERT INTO AuditLog (UserID, UserType, Event_Type, Event_Details) VALUES (?, ?, ?, ?);`
     , [User_ID, User_type, Event_Type, Event_Details])
     return resultGenerateAudit
     }
@@ -682,7 +682,7 @@ export async function createPatient(Pharm_ID, First_Name, Last_Name, Email, Phon
     const [resultPatientCreate] = await pool.query(`
         INSERT INTO PatientBase (Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, Doctor_ID) VALUES (?, ?, ?, ?, ?, SHA2(CONCAT(?),256), ?, ?, ?);`
     , [Pharm_ID, First_Name, Last_Name, Email, Phone, PW, Address, Zip, Doctor_ID])
-    const [body] = await pool.query(`select patient_id, First_Name, Last_Name from patientbase where patient_id = ?`, [resultPatientCreate.insertId])
+    const [body] = await pool.query(`select patient_id, First_Name, Last_Name from PatientBase where patient_id = ?`, [resultPatientCreate.insertId])
     console.log("Body Info: ", body)
     return body[0]
     }
@@ -699,7 +699,7 @@ export async function createDoctor(License_Serial,First_Name,Last_Name,Specialty
     , [License_Serial,First_Name,Last_Name,Specialty,Email,Phone,PW,Availability])
     
     console.log(resultDoctorCreate)
-    const [body] = await pool.query(`select doctor_id, First_Name, Last_Name from doctorbase where doctor_id = ?`, [resultDoctorCreate.insertId])
+    const [body] = await pool.query(`select doctor_id, First_Name, Last_Name from DoctorBase where doctor_id = ?`, [resultDoctorCreate.insertId])
     console.log("Doctor: ", body)
     return body[0]
     }
@@ -712,9 +712,9 @@ export async function createDoctor(License_Serial,First_Name,Last_Name,Specialty
 export async function createDoctorTiers(Doctor_ID) {
     try {
     const [resultDoctorTiersCreate] = await pool.query(`
-        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Basic', 'General Consulatation', 100);
-        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Plus', 'Elevated Servicing', 200);
-        INSERT INTO tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Premium', 'Premium Doctor-Patient Facilities', 300);`, 
+        INSERT INTO Tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Basic', 'General Consulatation', 100);
+        INSERT INTO Tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Plus', 'Elevated Servicing', 200);
+        INSERT INTO Tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Premium', 'Premium Doctor-Patient Facilities', 300);`, 
         [Doctor_ID, Doctor_ID,Doctor_ID])
     return resultDoctorTiersCreate
     } 
@@ -726,7 +726,7 @@ export async function createDoctorTiers(Doctor_ID) {
 
 export async function createDoctorSchedule(Doctor_ID, Doctor_Schedule) {
     try {
-    const [resultDocScheduleCreate] = await pool.query(`INSERT INTO doctorschedules (Doctor_ID, Doctor_Schedule) VALUES (?, ?);`, [Doctor_ID, Doctor_Schedule])
+    const [resultDocScheduleCreate] = await pool.query(`INSERT INTO DoctorSchedules (Doctor_ID, Doctor_Schedule) VALUES (?, ?);`, [Doctor_ID, Doctor_Schedule])
     return resultDocScheduleCreate
     }
     catch (err) {
@@ -739,14 +739,14 @@ export async function createPharmacy(Company_Name,Address,Zip,Work_Hours,Email,P
     try {
         const workHoursString = JSON.stringify(Work_Hours);
         const [resultPharmacyCreate] = await pool.query(`
-          INSERT INTO pharmacies (Company_Name, Address, Zip, Work_Hours, Email, PW) 
+          INSERT INTO Pharmacies (Company_Name, Address, Zip, Work_Hours, Email, PW) 
           VALUES (?, ?, ?, ?, ?, SHA2(CONCAT(?),256));
         `, [Company_Name, Address, Zip, workHoursString, Email, PW]);
     
         console.log("Insert Result:", resultPharmacyCreate);
     
         const [body] = await pool.query(
-          `SELECT pharm_id, Company_Name FROM pharmacies WHERE pharm_id = ?`, 
+          `SELECT pharm_id, Company_Name FROM Pharmacies WHERE pharm_id = ?`, 
           [resultPharmacyCreate.insertId]
         );
         console.log("Query Result:", body);
@@ -761,7 +761,7 @@ export async function createPharmacy(Company_Name,Address,Zip,Work_Hours,Email,P
 export async function createPill(Cost, Pill_Name, Pharm_ID, Dosage, Quantity) {
     try {
     const [resultPillCreate] = await pool.query(`
-        INSERT INTO pillbank (Cost, Pill_Name, Pharm_ID, Dosage, Quantity) VALUES (?,?,?,?, ?);`
+        INSERT INTO PillBank (Cost, Pill_Name, Pharm_ID, Dosage, Quantity) VALUES (?,?,?,?, ?);`
     , [Cost, Pill_Name, Pharm_ID, Dosage, Quantity])
     return resultPillCreate
     }
@@ -774,7 +774,7 @@ export async function createPill(Cost, Pill_Name, Pharm_ID, Dosage, Quantity) {
 export async function createExercise(Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps) {
     try {
     const [resultExerciseCreate] = await pool.query(`
-        INSERT INTO exercisebank (Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps) VALUES (?,?,?,?,?,?);`
+        INSERT INTO ExerciseBank (Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps) VALUES (?,?,?,?,?,?);`
     , [Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps])
     return resultExerciseCreate
     }
@@ -800,7 +800,7 @@ export async function createRegiment(Patient_ID, Regiment) {
 export async function createForumPost(Patient_ID, Exercise_ID, Forum_Text) {
     try {
     const [resultFPostCreate] = await pool.query(`
-        INSERT INTO forum_posts (Patient_ID, Exercise_ID, Forum_Text, Date_Posted) VALUES (?,?,?,CURRENT_DATE);`
+        INSERT INTO Forum_Posts (Patient_ID, Exercise_ID, Forum_Text, Date_Posted) VALUES (?,?,?,CURRENT_DATE);`
     , [Patient_ID, Exercise_ID, Forum_Text])
     return resultFPostCreate
     }
@@ -813,7 +813,7 @@ export async function createForumPost(Patient_ID, Exercise_ID, Forum_Text) {
 export async function createComment(Patient_ID, Forum_ID, Comment_Text) { //for forums above -VC
     try {
     const [resultCommentCreate] = await pool.query(`
-        INSERT INTO comments (Patient_ID, Forum_ID, Comment_Text, Date_Posted) VALUES (?, ?, ?, CURRENT_DATE);`
+        INSERT INTO Comments (Patient_ID, Forum_ID, Comment_Text, Date_Posted) VALUES (?, ?, ?, CURRENT_DATE);`
     , [Patient_ID, Forum_ID, Comment_Text])
     return resultCommentCreate
     }
@@ -860,7 +860,7 @@ export async function fetchAppointmentMessages(Appointment_ID) {
 
 export async function createAppointment(Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier) {
     try {        
-        const [resultApptCreate] = await pool.query(`INSERT INTO appointments (Patient_ID, Doctor_ID, Date_Scheduled,
+        const [resultApptCreate] = await pool.query(`INSERT INTO Appointments (Patient_ID, Doctor_ID, Date_Scheduled,
             Appt_Date, Appt_Time, Tier) VALUES (?, ?, CURRENT_DATE, ?, ?, ?);`, [Patient_ID, Doctor_ID, Appt_Date, Appt_Time, Tier])
         return resultApptCreate
     } catch (err) {
@@ -882,7 +882,7 @@ export async function createApptRequest(Patient_ID, Doctor_ID, Appt_Date, Appt_T
 
 export async function createPreliminary(Patient_ID, Symptoms) {
     try {
-    const [resultPrelimCreate] = await pool.query(`INSERT INTO preliminaries (Patient_ID, Symptoms) VALUES (?, ?);`, [Patient_ID, Symptoms])
+    const [resultPrelimCreate] = await pool.query(`INSERT INTO Preliminaries (Patient_ID, Symptoms) VALUES (?, ?);`, [Patient_ID, Symptoms])
     return resultPrelimCreate
     }
     catch (err) {
@@ -964,7 +964,7 @@ export async function getPrescriptionWithNamesById(prescriptionId) {
 
 export async function fetchPrescriptionPaid(prescription_id) {
     try {
-        const [resultRows] = await pool.query(`select * from payments where payment_type = "Prescription" 
+        const [resultRows] = await pool.query(`select * from Payments where payment_type = "Prescription" 
             and related_id = ? and payment_status = "paid";`, [prescription_id])
         return resultRows[0]
     } catch (err) {
@@ -1013,7 +1013,7 @@ export async function getAllPharmacyIds() {
 
 
 export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
-    const [check] = await pool.query(`select patient_id from patientBase 
+    const [check] = await pool.query(`select patient_id from PatientBase 
         where patient_id = ? and doctor_id = ?;`, [Patient_ID, Doctor_ID])
 
     if (check.length === 0) {
@@ -1021,7 +1021,7 @@ export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
     }
     try {
     const [resultReviewCreate] = await pool.query(`
-        INSERT INTO reviews (Patient_ID, Doctor_ID, Review_Text, Date_Posted, Rating) VALUES (?,?,?,CURRENT_DATE,?);`
+        INSERT INTO Reviews (Patient_ID, Doctor_ID, Review_Text, Date_Posted, Rating) VALUES (?,?,?,CURRENT_DATE,?);`
     , [Patient_ID, Doctor_ID, Review_Text, Rating])
     return resultReviewCreate
     }
@@ -1033,7 +1033,7 @@ export async function createReveiw(Patient_ID, Doctor_ID, Review_Text, Rating) {
 
 export async function createSurvey(Patient_ID, Weight, Caloric_Intake, Water_Intake, Mood) {
     try {
-    const [resultSurveyCreate] = await pool.query(`INSERT INTO patientdailysurvey (Patient_ID, Survey_Date, Weight, Caloric_Intake, Water_Intake, Mood)
+    const [resultSurveyCreate] = await pool.query(`INSERT INTO PatientDailySurvey (Patient_ID, Survey_Date, Weight, Caloric_Intake, Water_Intake, Mood)
         VALUES (?, CURRENT_DATE, ?, ?, ?, ?);`, [Patient_ID, Weight, Caloric_Intake, Water_Intake, Mood])
     return resultSurveyCreate
     }
@@ -1045,7 +1045,7 @@ export async function createSurvey(Patient_ID, Weight, Caloric_Intake, Water_Int
 
 export async function createPayment(Patient_ID, Related_ID, Payment_Type, Payment_Status) {
     try {
-    const [resultPaymentCreate] = await pool.query(`INSERT INTO payments (Patient_ID, Related_ID, Payment_Type, Payment_Status)
+    const [resultPaymentCreate] = await pool.query(`INSERT INTO Payments (Patient_ID, Related_ID, Payment_Type, Payment_Status)
         VALUES (?, ?, ?, ?);`, [Patient_ID, Related_ID, Payment_Type, Payment_Status])
     return resultPaymentCreate
     }
@@ -1062,7 +1062,7 @@ export async function createPayment(Patient_ID, Related_ID, Payment_Type, Paymen
 export async function UpdatePatientInfo(id, entry) {
     try{
     const [returnResult] = await pool.query(`
-        UPDATE patientbase SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
+        UPDATE PatientBase SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
@@ -1077,7 +1077,7 @@ export async function UpdatePatientInfo(id, entry) {
 export async function addPatientDoc(id, doc_id) {
     try {
         const [returnResult] = await pool.query(`
-            UPDATE patientbase SET \`Doctor_ID\` = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
+            UPDATE PatientBase SET \`Doctor_ID\` = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
         , [doc_id, id])
         return returnResult
     } catch (err) {
@@ -1090,7 +1090,7 @@ export async function addPatientDoc(id, doc_id) {
 export async function rmPatientDoc(id) {
     try {
     const [returnResult] = await pool.query(`
-        UPDATE patientbase SET \`Doctor_ID\` = NULL, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
+        UPDATE PatientBase SET \`Doctor_ID\` = NULL, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
     , [id])
     console.log("Database update result:", returnResult);
     return returnResult
@@ -1103,7 +1103,7 @@ export async function rmPatientDoc(id) {
 
 export async function rmPatientAppt(patient_id, doctor_id) {
     try {
-        const [returnResult] = await pool.query(`delete from appointments where patient_id = ? and doctor_id = ? 
+        const [returnResult] = await pool.query(`delete from Appointments where patient_id = ? and doctor_id = ? 
             and Appt_End = false and (Appt_Date > CURDATE() OR (Appt_Date = CURDATE() AND Appt_Time > CURTIME()))`, [patient_id, doctor_id])
         return returnResult
     } catch (err) {
@@ -1115,7 +1115,7 @@ export async function rmPatientAppt(patient_id, doctor_id) {
 export async function UpdatePharmInfo(id, entry) {
     try {
     const [returnResult] = await pool.query(`
-        UPDATE pharmacies SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Pharm_ID = ?;`
+        UPDATE Pharmacies SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Pharm_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
@@ -1129,7 +1129,7 @@ export async function UpdatePharmInfo(id, entry) {
 export async function UpdateDoctorInfo(id, entry) {
     try {
     const [returnResult] = await pool.query(`
-        UPDATE doctorbase SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
+        UPDATE DoctorBase SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
@@ -1207,7 +1207,7 @@ export async function fetchApptEndStatus(apptID) {
 export async function UpdateDoctorSchedule(id, entry) {
     try {
     const [returnResult] = await pool.query(`
-        UPDATE doctorschedules SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
+        UPDATE DoctorSchedules SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Doctor_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
@@ -1222,7 +1222,7 @@ export async function UpdateDoctorSchedule(id, entry) {
 export async function UpdateApptStat(id, status) {
     try {
     const [returnResult] = await pool.query(`
-        UPDATE requests SET Request_Status = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Request_ID = ?;`
+        UPDATE Requests SET Request_Status = ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Request_ID = ?;`
     , [status, id])
     console.log("Database update result:", returnResult);
     return returnResult
@@ -1235,7 +1235,7 @@ export async function UpdateApptStat(id, status) {
 
 export async function UpdateDoctorFeedback(appointment_id, doctor_feedback) {
     try {
-        const [returnedResult] = await pool.query(`Update appointments set doctors_feedback = ?, \`Last_Update\` = CURRENT_TIMESTAMP where appointment_id = ?`, 
+        const [returnedResult] = await pool.query(`Update Appointments set doctors_feedback = ?, \`Last_Update\` = CURRENT_TIMESTAMP where appointment_id = ?`, 
             [doctor_feedback, appointment_id])
         console.log("Doctor Feedback Updated Result: ", returnedResult)
         return returnedResult
@@ -1249,7 +1249,7 @@ export async function UpdateDoctorFeedback(appointment_id, doctor_feedback) {
 export async function UpdatePerscriptionInfo(id, entry) {
     try {
     const [returnResult] = await pool.query(`
-        UPDATE prescription SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Prescription_ID = ?;`
+        UPDATE Prescription SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Prescription_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
@@ -1264,7 +1264,7 @@ export async function UpdatePerscriptionInfo(id, entry) {
 export async function UpdatePillInfo(id, entry) {
     try {
     const [returnResult] = await pool.query(`
-        UPDATE pillbank SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Pill_ID = ?;`
+        UPDATE PillBank SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Pill_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
@@ -1279,7 +1279,7 @@ export async function UpdatePillInfo(id, entry) {
 export async function UpdateRegiment(id, entry) {
     try {
     const [returnResult] = await pool.query(`
-        UPDATE regiments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
+        UPDATE Regiments SET ?, \`Last_Update\` = CURRENT_TIMESTAMP Where Patient_ID = ?;`
     , [entry, id])
     console.log("Database update result:", returnResult);
     return returnResult
@@ -1405,7 +1405,7 @@ export async function deletePatient(id) {
 // Add Patient info to this to make secure?
 export async function deleteAppointment(id) {
     try {
-    const [deleteResult] = await pool.query(`DELETE FROM appointments WHERE Appointment_ID = ?;`
+    const [deleteResult] = await pool.query(`DELETE FROM Appointments WHERE Appointment_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
@@ -1418,7 +1418,7 @@ export async function deleteAppointment(id) {
 
 export async function deleteRegiment(id) {
     try {
-    const [deleteResult] = await pool.query(`DELETE FROM regiments WHERE Patient_ID = ?;`
+    const [deleteResult] = await pool.query(`DELETE FROM Regiments WHERE Patient_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
@@ -1431,7 +1431,7 @@ export async function deleteRegiment(id) {
 
 export async function deleteDoctor(id) {
     try {
-    const [deleteResult] = await pool.query(`DELETE FROM doctorbase WHERE Doctor_ID = ?;`
+    const [deleteResult] = await pool.query(`DELETE FROM DoctorBase WHERE Doctor_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
@@ -1471,7 +1471,7 @@ export async function deleteDoctorSchedule(id) {
 export async function deletePerscription(id) {
     
     try {
-    const [deleteResult] = await pool.query(`DELETE FROM prescription WHERE Prescription_ID = ?;`
+    const [deleteResult] = await pool.query(`DELETE FROM Prescription WHERE Prescription_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
@@ -1484,7 +1484,7 @@ export async function deletePerscription(id) {
 
 export async function deletePill(id) {
     try {
-    const [deleteResult] = await pool.query(`DELETE FROM pillbank WHERE Pill_ID = ?;`
+    const [deleteResult] = await pool.query(`DELETE FROM PillBank WHERE Pill_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
@@ -1497,7 +1497,7 @@ export async function deletePill(id) {
 
 export async function deleteComment(id) {
     try {
-    const [deleteResult] = await pool.query(`DELETE FROM comments WHERE Comment_ID = ?;`
+    const [deleteResult] = await pool.query(`DELETE FROM Comments WHERE Comment_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
@@ -1511,8 +1511,8 @@ export async function deleteComment(id) {
 export async function deleteForumPost(id) {
     try {
     const [deleteResult] = await pool.query(`
-        DELETE FROM comments WHERE Forum_ID = ?;
-        DELETE FROM forum_post WHERE Forum_ID = ?;`
+        DELETE FROM Comments WHERE Forum_ID = ?;
+        DELETE FROM Forum_Post WHERE Forum_ID = ?;`
     , [id, id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
