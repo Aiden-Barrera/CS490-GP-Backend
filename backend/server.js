@@ -46,6 +46,7 @@ import http from "http"
 import {Server} from "socket.io"
 import swaggerUi from "swagger-ui-express"
 import swaggerSpec from './swagger.js';
+import helmet from 'helmet';
 dotenv.config()
 
 //import socket from 'socket.io'
@@ -62,10 +63,18 @@ app.use((err, req, res, next) => {
     console.error(err.stack)
     res.status(500).send('Something broke!')
 })
-app.use((req, res, next) => {
-    res.removeHeader('Content-Security-Policy');
-    next();
-});
+
+app.use(
+    helmet.contentSecurityPolicy({
+      directives: {
+        defaultSrc: ["'self'"],
+        imgSrc: ["'self'", "data:"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        connectSrc: ["'self'", "*"], 
+      },
+    })
+);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // Remove any existing Content-Security-Policy header
   
