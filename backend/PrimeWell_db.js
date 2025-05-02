@@ -296,7 +296,7 @@ export async function getReviewsComments(id) {
 
 export async function getReviewsTop() { //top 3 reviews for splash page - VC
     try {
-    const [resultRows] = await pool.query(`with topDoctors as (SELECT doctor_id FROM reviews group by doctor_id ORDER BY avg(rating) DESC LIMIT 3)
+    const [resultRows] = await pool.query(`with topDoctors as (SELECT doctor_id FROM Reviews group by doctor_id ORDER BY avg(rating) DESC LIMIT 3)
                             select DB.first_name, DB.last_name, DB.specialty from 
                             DoctorBase as DB, topDoctors as TD where DB.doctor_id = TD.doctor_id;`)
     return resultRows
