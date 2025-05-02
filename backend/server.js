@@ -63,6 +63,12 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!')
 })
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Remove any existing Content-Security-Policy header
+app.use((req, res, next) => {
+    res.removeHeader('Content-Security-Policy');
+    next();
+  });
+  
 
 const server = http.createServer(app)
 const io = new Server(server, {
