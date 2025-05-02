@@ -667,7 +667,7 @@ export async function LogAttempt(UserEmail, Success_Status){
 export async function genereateAudit(User_ID, User_type, Event_Type, Event_Details){
     try {
     const [resultGenerateAudit] = await pool.query(`
-        INSERT INTO auditlog (UserID, UserType, Event_Type, Event_Details) VALUES (?, ?, ?, ?);`
+        INSERT INTO AuditLog (UserID, UserType, Event_Type, Event_Details) VALUES (?, ?, ?, ?);`
     , [User_ID, User_type, Event_Type, Event_Details])
     return resultGenerateAudit
     }
