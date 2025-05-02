@@ -32,7 +32,7 @@ export async function getPatients(id) {
 // These endpoints are insecure but I need them for allowing user to view their profile
 export async function getPatientInfo(id) {
     try {
-    const [resultRows] = await pool.query(`select * from patientbase where patient_id = ?`, [id])
+    const [resultRows] = await pool.query(`select * from PatientBase where patient_id = ?`, [id])
     return resultRows
     }
     catch (err) {
@@ -44,7 +44,7 @@ export async function getPatientInfo(id) {
 // These endpoints are insecure but I need them for allowing user to view their profile
 export async function getDoctorInfo(id) {
     try {
-    const [resultRows] = await pool.query(`select * from doctorbase where doctor_id = ?`, [id])
+    const [resultRows] = await pool.query(`select * from DoctorBase where doctor_id = ?`, [id])
     return resultRows
     }
     catch (err) {  
@@ -56,7 +56,7 @@ export async function getDoctorInfo(id) {
 // These endpoints are insecure but I need them for allowing user to view their profile
 export async function getPharmInfo(id) {
     try {
-    const [resultRows] = await pool.query(`select * from pharmacies where pharm_id = ?`, [id])
+    const [resultRows] = await pool.query(`select * from Pharmacies where pharm_id = ?`, [id])
     return resultRows
     }
     catch (err) {
@@ -69,7 +69,7 @@ export async function getPatientDoc(id) { //changed for doc info
     try {
     const [resultRows] = await pool.query(`SELECT doctorbase.doctor_id, doctorbase.first_name, doctorbase.last_name, 
         doctorbase.specialty, doctorbase.availability 
-        FROM PatientBase INNER JOIN doctorbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
+        FROM PatientBase INNER JOIN DoctorBase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
         WHERE Patient_ID = ?;`, [id])
     return resultRows[0]
     }
@@ -81,7 +81,7 @@ export async function getPatientDoc(id) { //changed for doc info
 
 export async function getAllDoctors() {
     try {
-    const [resultRows] = await pool.query('select doctor_id, first_name, last_name, specialty, availability from doctorbase')
+    const [resultRows] = await pool.query('select doctor_id, first_name, last_name, specialty, availability from DoctorBase')
     return resultRows
     }
     catch (err) {
@@ -105,7 +105,7 @@ export async function getDocPatients(Doctor_ID) { //patient info for doc
     try {
     const [resultRows] = await pool.query(`SELECT patientbase.First_Name, patientbase.Last_Name, 
     patientbase.email, patientbase.phone 
-    FROM DoctorBase INNER JOIN patientbase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
+    FROM DoctorBase INNER JOIN PatientBase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
     WHERE DoctorBase.Doctor_ID = ?;`, [Doctor_ID])
     return resultRows
     }
@@ -117,7 +117,7 @@ export async function getDocPatients(Doctor_ID) { //patient info for doc
 
 export async function getDocID(email, pw) {
     try {
-    const [resultRows] = await pool.query(`SELECT Doctor_ID FROM doctorbase WHERE Email = ? AND PW = SHA2(CONCAT(?),256);`, [email, pw])
+    const [resultRows] = await pool.query(`SELECT Doctor_ID FROM DoctorBase WHERE Email = ? AND PW = SHA2(CONCAT(?),256);`, [email, pw])
     return resultRows[0]
     }
     catch (err) {
@@ -134,8 +134,8 @@ export async function getDoctorSchedule(id, day, date) {
     }
 
     try {
-        const [slotsRow] = await pool.query(`select JSON_UNQUOTE(JSON_EXTRACT(doctor_schedule, '$.${day}')) as Slots from doctorschedules where doctor_id = ?;`, [id]) 
-        const [bookedRows] = await pool.query(`select appt_time from appointments where doctor_id = ? and appt_date = ?`, [id, date])
+        const [slotsRow] = await pool.query(`select JSON_UNQUOTE(JSON_EXTRACT(doctor_schedule, '$.${day}')) as Slots from DoctorSchedules where doctor_id = ?;`, [id]) 
+        const [bookedRows] = await pool.query(`select appt_time from Appointments where doctor_id = ? and appt_date = ?`, [id, date])
         // Parse JSON string from MySQL
         const fullSlots = JSON.parse(slotsRow[0].Slots);
         const bookedSlots = bookedRows.map(row => row.appt_time);
@@ -255,9 +255,9 @@ export async function getComments_id(id) { //comments for specific forum post -V
 
 export async function getReviews() {
     try {
-    const [resultRows] = await pool.query(`with numReviews as (select count(doctor_id) as cnt, doctor_id from reviews group by doctor_id)
-                select db.doctor_id, db.first_name, db.last_name, db.specialty, avg(r.rating) as rating, nr.cnt from reviews as r, 
-                doctorbase as db, numReviews as nr where r.doctor_id = db.doctor_id and nr.doctor_id = db.doctor_id group by r.doctor_id`)
+    const [resultRows] = await pool.query(`with numReviews as (select count(doctor_id) as cnt, doctor_id from Reviews group by doctor_id)
+                select db.doctor_id, db.first_name, db.last_name, db.specialty, avg(r.rating) as rating, nr.cnt from Reviews as r, 
+                DoctorBase as db, numReviews as nr where r.doctor_id = db.doctor_id and nr.doctor_id = db.doctor_id group by r.doctor_id`)
 
     return resultRows
     }
@@ -269,9 +269,9 @@ export async function getReviews() {
 
 export async function getReviewsByID(id) {
     try {
-    const [resultRows] = await pool.query(`with numReviews as (select count(doctor_id) as cnt, doctor_id from reviews group by doctor_id)
-                select db.doctor_id, db.first_name, db.last_name, db.specialty, avg(r.rating) as rating, nr.cnt from reviews as r, 
-                doctorbase as db, numReviews as nr where r.doctor_id = db.doctor_id and nr.doctor_id = db.doctor_id and db.doctor_id = ? group by r.doctor_id`, 
+    const [resultRows] = await pool.query(`with numReviews as (select count(doctor_id) as cnt, doctor_id from Reviews group by doctor_id)
+                select db.doctor_id, db.first_name, db.last_name, db.specialty, avg(r.rating) as rating, nr.cnt from Reviews as r, 
+                DoctorBase as db, numReviews as nr where r.doctor_id = db.doctor_id and nr.doctor_id = db.doctor_id and db.doctor_id = ? group by r.doctor_id`, 
             [id])
     return resultRows
     }
@@ -284,7 +284,7 @@ export async function getReviewsByID(id) {
 export async function getReviewsComments(id) {
     try {
     const [resultRows] = await pool.query(`select r.patient_id, r.review_text, r.doctor_id, pb.first_name, pb.last_name, 
-        db.first_name as doctor_fname, db.last_name as doctor_lname, r.rating, r.date_posted from reviews as r, patientbase as pb, doctorbase as db where 
+        db.first_name as doctor_fname, db.last_name as doctor_lname, r.rating, r.date_posted from Reviews as r, PatientBase as pb, DoctorBase as db where 
         r.patient_id = pb.patient_id and r.doctor_id = db.doctor_id and r.doctor_id = ?`, [id])
     return resultRows
     }
@@ -322,7 +322,7 @@ export async function getSurvey(id) { // get patient's recent surveys by recent 
 
 export async function getSurveyLatestDate(id){
     try {
-    const [resultRows] = await pool.query(`select survey_date from patientdailysurvey where patient_id = ? order by survey_date desc limit 1`, [id])
+    const [resultRows] = await pool.query(`select survey_date from PatientDailySurvey where patient_id = ? order by survey_date desc limit 1`, [id])
     return resultRows
     }
     catch (err) {
@@ -357,7 +357,7 @@ export async function getAppointmentsPatient(id) {
         FROM 
             Appointments AS A
         JOIN 
-            doctorbase AS DB ON DB.doctor_id = A.doctor_id
+            DoctorBase AS DB ON DB.doctor_id = A.doctor_id
         WHERE 
             A.Patient_ID = ?
         ORDER BY 
