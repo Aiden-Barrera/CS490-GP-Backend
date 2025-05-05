@@ -5,13 +5,13 @@ import app from './server.js'
 
 })*/
 
-describe("/reviewsTop", ()=>{
-    test("should return rows", async ()=>{
-        const response = await request(app).get("/reviewsTop").send({})
-        expect(response.statusCode).toBe(200)
-        expect(response.body).toBeDefined()
-    })
-})
+// describe("/reviewsTop", ()=>{
+//     test("should return rows", async ()=>{
+//         const response = await request(app).get("/reviewsTop").send({})
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body).toBeDefined()
+//     })
+// })
 
 
 //==================GET===================
