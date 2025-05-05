@@ -1942,7 +1942,7 @@ app.post("/request", async (req, res) => { // We might not need this since it's 
     console.log(req.body)
     try {
         const patientsDoctor = await getPatientDoc(Patient_ID)
-        console.log("Patient Info: ", patientsDoctor.doctor_id, "DoctorID: ", Doctor_ID)
+        console.log("Patient Info: ", patientsDoctor?.doctor_id, "DoctorID: ", Doctor_ID)
         //check if correct doctor
         if (patientsDoctor !== undefined && patientsDoctor?.doctor_id !== Doctor_ID) {
             return res.status(400).json({ error: "Patient already has a different doctor"});
