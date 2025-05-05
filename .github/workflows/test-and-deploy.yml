@@ -1,0 +1,32 @@
+name: Test and Deploy
+
+on:
+  push:
+    branches:
+      - dev2  # change to your deploy branch if different
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend  # matches where your package.json lives
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Jest tests
+        run: npm test
+        env:
+          NODE_OPTIONS: "--experimental-vm-modules"
+
