@@ -71,6 +71,7 @@ export async function getPatientDoc(id) { //changed for doc info
         DoctorBase.specialty, DoctorBase.availability 
         FROM PatientBase INNER JOIN DoctorBase on DoctorBase.Doctor_ID = PatientBase.Doctor_ID 
         WHERE Patient_ID = ?;`, [id])
+    console.log("PatientDoc: ", resultRows)
     return resultRows[0]
     }
     catch (err) {
