@@ -838,7 +838,7 @@ export async function createChatroom(Chatroom_Name) {
 
 export async function createChatMsg(Appointment_ID, SenderID, SenderName, SenderType, Message) { //for chatroom above -VC
     try {
-    const [resultMsgCreate] = await pool.query(`INSERT INTO messages (Appointment_ID, SenderID, SenderName, SenderType, Message) 
+    const [resultMsgCreate] = await pool.query(`INSERT INTO Messages (Appointment_ID, SenderID, SenderName, SenderType, Message) 
         VALUES (?, ?, ?, ?, ?);`, [Appointment_ID, SenderID,  SenderName, SenderType, Message])
     return resultMsgCreate
     }
