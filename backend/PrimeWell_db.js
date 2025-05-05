@@ -103,9 +103,9 @@ export async function getDoctors(id) {
 
 export async function getDocPatients(Doctor_ID) { //patient info for doc
     try {
-    const [resultRows] = await pool.query(`SELECT patientbase.First_Name, patientbase.Last_Name, 
-    patientbase.email, patientbase.phone 
-    FROM DoctorBase INNER JOIN PatientBase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
+    const [resultRows] = await pool.query(`SELECT PatientBase.First_Name, PatientBase.Last_Name, 
+    PatientBase.email, PatientBase.phone 
+    FROM DoctorBase INNER JOIN PatientBase on DoctorBase.Doctor_ID = PatientBase.Doctor_ID 
     WHERE DoctorBase.Doctor_ID = ?;`, [Doctor_ID])
     return resultRows
     }
@@ -409,8 +409,8 @@ export async function checkExistingRequests(patient_id, doctor_id, appt_date, ap
 export async function getApptRequest(id) {
     try {
     const [resultRows] = await pool.query(`
-        SELECT patientbase.First_name, patientbase.last_name, Requests.Patient_ID, Requests.Doctor_ID, Requests.Appt_Date,
-        Requests.Appt_Time, Requests.Tier, Requests.Request_Status FROM requests INNER JOIN patientbase ON patientbase.Patient_ID = requests.Patient_ID
+        SELECT PatientBase.First_name, PatientBase.last_name, Requests.Patient_ID, Requests.Doctor_ID, Requests.Appt_Date,
+        Requests.Appt_Time, Requests.Tier, Requests.Request_Status FROM requests INNER JOIN PatientBase ON PatientBase.Patient_ID = Requests.Patient_ID
         WHERE requests.Doctor_ID = ?;`, [id]) 
         return resultRows
     }
@@ -463,7 +463,7 @@ export async function getPrescriptionDoc(id) {
 // Make the below a POST because it is sensitive? - FI
 export async function getPreliminaries(id) { //order by for most recent
     try {
-    const [resultRows] = await pool.query(`SELECT patient_id, Symptoms FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
+    const [resultRows] = await pool.query(`SELECT patient_id, Symptoms FROM Preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
     return resultRows
     }
     catch (err) {
