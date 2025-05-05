@@ -29,4 +29,8 @@ jobs:
         run: npm test
         env:
           NODE_OPTIONS: "--experimental-vm-modules"
-
+          MYSQLHOST: ${{ secrets.MYSQLHOST }}  # Add your MySQL host here
+          MYSQLPORT: ${{ secrets.MYSQLPORT }}
+          MYSQLUSER: ${{ secrets.MYSQLUSER }}  # Add your MySQL username here
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}  # Add your MySQL password here
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }} 
