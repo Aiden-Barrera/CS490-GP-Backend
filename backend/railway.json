@@ -1,9 +1,0 @@
-{
-    "build": {
-        "env": "production",
-        "cmd": "npm run test && npm run build"
-    },
-    "deploy":{
-        "cmd": "npm start"
-    }
-}
