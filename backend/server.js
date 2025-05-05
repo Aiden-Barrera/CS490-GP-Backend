@@ -595,8 +595,12 @@ app.get("/regiment/:id", async (req, res) => { //based on patient -VC
  *         description: List of all forum posts
  */
 app.get("/forumPosts", async (req, res) => {
-    const rows = await getForumPosts()
-    res.send(rows)
+    try {
+        const rows = await getForumPosts()
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch top reviews" });
+    }
 })
 
 
