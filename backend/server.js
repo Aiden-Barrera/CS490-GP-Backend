@@ -82,7 +82,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 const server = http.createServer(app)
 const io = new Server(server, {
     cors: {
-        origin: "https://cs490-gp-frontend-production.up.railway.app/",
+        origin: "https://cs490-gp-frontend-production.up.railway.app",
         methods: ["GET", "POST"]
     }
 })
