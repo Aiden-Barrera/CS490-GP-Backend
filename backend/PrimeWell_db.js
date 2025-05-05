@@ -410,8 +410,8 @@ export async function getApptRequest(id) {
     try {
     const [resultRows] = await pool.query(`
         SELECT PatientBase.First_name, PatientBase.last_name, Requests.Patient_ID, Requests.Doctor_ID, Requests.Appt_Date,
-        Requests.Appt_Time, Requests.Tier, Requests.Request_Status FROM requests INNER JOIN PatientBase ON PatientBase.Patient_ID = Requests.Patient_ID
-        WHERE requests.Doctor_ID = ?;`, [id]) 
+        Requests.Appt_Time, Requests.Tier, Requests.Request_Status FROM Requests INNER JOIN PatientBase ON PatientBase.Patient_ID = Requests.Patient_ID
+        WHERE Requests.Doctor_ID = ?;`, [id]) 
         return resultRows
     }
     catch (err) {

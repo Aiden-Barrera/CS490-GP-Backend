@@ -1926,10 +1926,10 @@ app.post("/appointment", async (req, res) => {
  *         description: Created new Request for an appointment
  *       400:
  *         description: Missing required information
- *      400:
- *         Patient already has a different doctor
- *      400:
- *         Timeslot taken
+ *       409:
+ *         description: Patient already has a different doctor
+ *       410:
+ *         description: Timeslot taken
  *       500:
  *         description: Internal server error
  */
@@ -1952,7 +1952,7 @@ app.post("/request", async (req, res) => { // We might not need this since it's 
         const timeTaken =  await getTimeslot(Doctor_ID, Appt_Date, Appt_Time);
         // console.log("Time Slot Booked: ", timeTaken)
         if(timeTaken.length > 0){
-            return res.status(400).json({ error: "Timeslot taken"});    
+            return res.status(410).json({ error: "Timeslot taken"});    
         }
 
         const requestTaken = await checkExistingRequests(Patient_ID, Doctor_ID, Appt_Date, Appt_Time)
@@ -3364,3 +3364,5 @@ app.delete("/forumPost", async(req, res) => { //delete all comment rows with thi
     const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'DELETE', event_Details)
     res.status(204).send(deleteResult)
 })
+
+export default app
