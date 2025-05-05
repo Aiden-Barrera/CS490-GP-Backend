@@ -104,9 +104,9 @@ export async function getDoctors(id) {
 
 export async function getDocPatients(Doctor_ID) { //patient info for doc
     try {
-    const [resultRows] = await pool.query(`SELECT patientbase.First_Name, patientbase.Last_Name, 
-    patientbase.email, patientbase.phone 
-    FROM DoctorBase INNER JOIN PatientBase on doctorbase.Doctor_ID = patientbase.Doctor_ID 
+    const [resultRows] = await pool.query(`SELECT PatientBase.First_Name, PatientBase.Last_Name, 
+    PatientBase.email, PatientBase.phone 
+    FROM DoctorBase INNER JOIN PatientBase on DoctorBase.Doctor_ID = PatientBase.Doctor_ID 
     WHERE DoctorBase.Doctor_ID = ?;`, [Doctor_ID])
     return resultRows
     }
@@ -410,8 +410,8 @@ export async function checkExistingRequests(patient_id, doctor_id, appt_date, ap
 export async function getApptRequest(id) {
     try {
     const [resultRows] = await pool.query(`
-        SELECT patientbase.First_name, patientbase.last_name, Requests.Patient_ID, Requests.Doctor_ID, Requests.Appt_Date,
-        Requests.Appt_Time, Requests.Tier, Requests.Request_Status FROM requests INNER JOIN patientbase ON patientbase.Patient_ID = requests.Patient_ID
+        SELECT PatientBase.First_name, PatientBase.last_name, Requests.Patient_ID, Requests.Doctor_ID, Requests.Appt_Date,
+        Requests.Appt_Time, Requests.Tier, Requests.Request_Status FROM requests INNER JOIN PatientBase ON PatientBase.Patient_ID = Requests.Patient_ID
         WHERE requests.Doctor_ID = ?;`, [id]) 
         return resultRows
     }
@@ -464,7 +464,7 @@ export async function getPrescriptionDoc(id) {
 // Make the below a POST because it is sensitive? - FI
 export async function getPreliminaries(id) { //order by for most recent
     try {
-    const [resultRows] = await pool.query(`SELECT patient_id, Symptoms FROM preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
+    const [resultRows] = await pool.query(`SELECT patient_id, Symptoms FROM Preliminaries WHERE Patient_ID = ? ORDER BY Create_Date DESC;`, [id])
     return resultRows
     }
     catch (err) {
@@ -1104,7 +1104,7 @@ export async function rmPatientDoc(id) {
 
 export async function rmPatientAppt(patient_id, doctor_id) {
     try {
-        const [returnResult] = await pool.query(`delete from Appointments where patient_id = ? and doctor_id = ? 
+        const [returnResult] = await pool.query(`delete from Appointments where Patient_ID = ? and Doctor_ID = ? 
             and Appt_End = false and (Appt_Date > CURDATE() OR (Appt_Date = CURDATE() AND Appt_Time > CURTIME()))`, [patient_id, doctor_id])
         return returnResult
     } catch (err) {
@@ -1236,7 +1236,7 @@ export async function UpdateApptStat(id, status) {
 
 export async function UpdateDoctorFeedback(appointment_id, doctor_feedback) {
     try {
-        const [returnedResult] = await pool.query(`Update Appointments set doctors_feedback = ?, \`Last_Update\` = CURRENT_TIMESTAMP where appointment_id = ?`, 
+        const [returnedResult] = await pool.query(`Update Appointments set Doctors_Feedback = ?, \`Last_Update\` = CURRENT_TIMESTAMP where Appointment_ID = ?`, 
             [doctor_feedback, appointment_id])
         console.log("Doctor Feedback Updated Result: ", returnedResult)
         return returnedResult
@@ -1303,7 +1303,6 @@ export async function appendToRegiment(patientId, newRegimentData) {
         throw new Error("No existing regiment found for this patient.");
       }
   
-      // ✅ Robust parsing of existing regiment
       let existingRegiment = {};
   
       try {
@@ -1392,7 +1391,7 @@ export async function AcceptPrescription(prescription_id) {
 
 export async function deletePatient(id) {
     try {
-    const [deleteResult] = await pool.query(`DELETE FROM patientbase WHERE Patient_ID = ?;`
+    const [deleteResult] = await pool.query(`DELETE FROM PatientBase WHERE Patient_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
@@ -1445,7 +1444,7 @@ export async function deleteDoctor(id) {
 
 export async function deleteDoctorTiers(id) {
     try {
-    const [deleteResult] = await pool.query(`DELETE FROM tiers WHERE Doctor_ID = ?;`
+    const [deleteResult] = await pool.query(`DELETE FROM Tiers WHERE Doctor_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
@@ -1458,7 +1457,7 @@ export async function deleteDoctorTiers(id) {
 
 export async function deleteDoctorSchedule(id) {
     try {
-    const [deleteResult] = await pool.query(`DELETE FROM doctorschedules WHERE Doctor_ID = ?;`
+    const [deleteResult] = await pool.query(`DELETE FROM DoctorSchedules WHERE Doctor_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
@@ -1513,7 +1512,7 @@ export async function deleteForumPost(id) {
     try {
     const [deleteResult] = await pool.query(`
         DELETE FROM Comments WHERE Forum_ID = ?;
-        DELETE FROM Forum_Post WHERE Forum_ID = ?;`
+        DELETE FROM Forum_Posts WHERE Forum_ID = ?;`
     , [id, id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
