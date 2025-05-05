@@ -712,12 +712,14 @@ export async function createDoctor(License_Serial,First_Name,Last_Name,Specialty
 
 export async function createDoctorTiers(Doctor_ID) {
     try {
-    const [resultDoctorTiersCreate] = await pool.query(`
-        INSERT INTO Tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Basic', 'General Consulatation', 100);
-        INSERT INTO Tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Plus', 'Elevated Servicing', 200);
+    const [resultDoctorTiersCreate1] = await pool.query(`
+        INSERT INTO Tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Basic', 'General Consulatation', 100);`, [Doctor_ID])
+    const [resultDoctorTiersCreate2] = await pool.query(`
+        INSERT INTO Tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Plus', 'Elevated Servicing', 200);`, [Doctor_ID])
+    const [resultDoctorTiersCreate3] = await pool.query(` 
         INSERT INTO Tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Premium', 'Premium Doctor-Patient Facilities', 300);`, 
-        [Doctor_ID, Doctor_ID,Doctor_ID])
-    return resultDoctorTiersCreate
+        [Doctor_ID])
+    return resultDoctorTiersCreate1
     } 
     catch (err) {
         console.log("Error Creating Doctor Tiers: ", err)
