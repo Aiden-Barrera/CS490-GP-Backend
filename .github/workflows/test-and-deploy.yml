@@ -3,7 +3,7 @@ name: Test and Deploy
 on:
   push:
     branches:
-      - main  # change to your deploy branch if different
+      - dev2  # change to your deploy branch if different
 
 jobs:
   test:
@@ -29,3 +29,4 @@ jobs:
         run: npm test
         env:
           NODE_OPTIONS: "--experimental-vm-modules"
+
