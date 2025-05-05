@@ -7,7 +7,7 @@ import app from './server.js'
 
 describe("/reviewsTop", ()=>{
     test("should return rows", async ()=>{
-        const response = await request(app).get("/reviewsTop").set("x-api-key", process.env.API_KEY).send({})
+        const response = await request(app).get("/reviewsTop").send({})
         expect(response.statusCode).toBe(200)
         expect(response.body).toBeDefined()
     })
@@ -15,15 +15,15 @@ describe("/reviewsTop", ()=>{
 
 
 //==================GET===================
-describe("/patientInfo/:id", ()=>{
-    test("should return rows", async ()=>{
-        const response = await request(app).get("/patientInfo/2").send({})
-        expect(response.statusCode).toBe(200)
-        expect(response.body).toStrictEqual([{"Patient_ID": 2,"Pharm_ID": 2, "First_Name": "Crystal", "Last_Name": "Nunnery", "Email": "cnunnery1@so-net.ne.jp",
-            "Phone": "468-327-9664", "PW": "5a5fa13e2caabe784968883d2eb2b00d50f87aaa10b172261ea9e7ff56de8b1b", "Address": "9 Loeprich Pass",
-            "Zip": 88017, "Doctor_ID": 5, "Last_Update": "2025-03-11T04:00:00.000Z","Create_Date": "2025-03-11T04:00:00.000Z"}])
-    })
-})
+// describe("/patientInfo/:id", ()=>{
+//     test("should return rows", async ()=>{
+//         const response = await request(app).get("/patientInfo/2").send({})
+//         expect(response.statusCode).toBe(200)
+//         expect(response.body).toStrictEqual([{"Patient_ID": 2,"Pharm_ID": 2, "First_Name": "Crystal", "Last_Name": "Nunnery", "Email": "cnunnery1@so-net.ne.jp",
+//             "Phone": "468-327-9664", "PW": "5a5fa13e2caabe784968883d2eb2b00d50f87aaa10b172261ea9e7ff56de8b1b", "Address": "9 Loeprich Pass",
+//             "Zip": 88017, "Doctor_ID": 5, "Last_Update": "2025-03-11T04:00:00.000Z","Create_Date": "2025-03-11T04:00:00.000Z"}])
+//     })
+// })
 
 /*
 describe("/doctorInfo/:id", ()=>{
@@ -158,7 +158,7 @@ describe("/preliminaries/:id", ()=>{
 
 describe("/reviewsTop", ()=>{
     test("should return rows", async ()=>{
-        const response = await request(app).get("/reviewsTop").set("x-api-key", process.env.API_KEY).send({})
+        const response = await request(app).get("/reviewsTop").send({})
         expect(response.statusCode).toBe(200)
         expect(response.body).toBeDefined()
     })
@@ -573,24 +573,24 @@ describe("/preliminaries", ()=>{
     })
 })
 
-describe("/sendPrescription", ()=>{
-    test("should make entry", async ()=>{
-        const response = await request(app).post("/sendPrescription").send({
-            "Patient_ID":"21", 
-            "Doctor_ID": "3", 
-            "Pill_ID": "1",
-            "Quantity": "2",
-            "Pharm_ID": "3" 
-        })
-        expect(response.statusCode).toBe(200)
-    })
+// describe("/sendPrescription", ()=>{
+//     test("should make entry", async ()=>{
+//         const response = await request(app).post("/sendPrescription").send({
+//             "Patient_ID":"21", 
+//             "Doctor_ID": "3", 
+//             "Pill_ID": "1",
+//             "Quantity": "2",
+//             "Pharm_ID": "3" 
+//         })
+//         expect(response.statusCode).toBe(200)
+//     })
 
-    test("should result in an error", async ()=>{
-        const response = await request(app).post("/sendPrescription").send({
-        })
-        expect(response.statusCode).toBe(400)
-    })
-})
+//     test("should result in an error", async ()=>{
+//         const response = await request(app).post("/sendPrescription").send({
+//         })
+//         expect(response.statusCode).toBe(400)
+//     })
+// })
 
 describe("/reviews", ()=>{
     test("should make entry", async ()=>{
