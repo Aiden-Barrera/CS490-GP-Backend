@@ -139,7 +139,12 @@ export async function getDoctorSchedule(id, day, date) {
         console.log("Slots: ", slotsRow) 
         const [bookedRows] = await pool.query(`select appt_time from Appointments where doctor_id = ? and appt_date = ?`, [id, date])
         // Parse JSON string from MySQL
-        const fullSlots = JSON.parse(slotsRow[0]?.Slots);
+        const slotsString = slotsRow[0]?.Slots;
+        if (!slotsString) {
+            return []; // No available slots defined for that day
+        }
+
+        const fullSlots = JSON.parse(slotsString);
         const bookedSlots = bookedRows.map(row => row.appt_time);
         //console.log(bookedSlots)
         
