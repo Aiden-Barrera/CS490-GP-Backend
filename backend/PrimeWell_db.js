@@ -135,7 +135,8 @@ export async function getDoctorSchedule(id, day, date) {
     }
 
     try {
-        const [slotsRow] = await pool.query(`select JSON_UNQUOTE(JSON_EXTRACT(doctor_schedule, '$.${day}')) as Slots from DoctorSchedules where doctor_id = ?;`, [id]) 
+        const [slotsRow] = await pool.query(`select JSON_UNQUOTE(JSON_EXTRACT(doctor_schedule, '$.${day}')) as Slots from DoctorSchedules where doctor_id = ?;`, [id])
+        console.log("Slots: ", slotsRow) 
         const [bookedRows] = await pool.query(`select appt_time from Appointments where doctor_id = ? and appt_date = ?`, [id, date])
         // Parse JSON string from MySQL
         const fullSlots = JSON.parse(slotsRow[0].Slots);
