@@ -11,7 +11,7 @@ const options = {
     },
     servers: [
       {
-        url: "http://localhost:3000", 
+        url: "https://cs490-gp-backend-production.up.railway.app/", 
       },
     ],
   },

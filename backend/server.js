@@ -46,6 +46,7 @@ import http from "http"
 import {Server} from "socket.io"
 import swaggerUi from "swagger-ui-express"
 import swaggerSpec from './swagger.js';
+import helmet from 'helmet';
 dotenv.config()
 
 //import socket from 'socket.io'
@@ -62,12 +63,26 @@ app.use((err, req, res, next) => {
     console.error(err.stack)
     res.status(500).send('Something broke!')
 })
+
+app.use(
+    helmet.contentSecurityPolicy({
+      directives: {
+        defaultSrc: ["'self'"],
+        imgSrc: ["'self'", "data:"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        connectSrc: ["'self'", "*"], 
+      },
+    })
+);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Remove any existing Content-Security-Policy header
+  
 
 const server = http.createServer(app)
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: "https://cs490-gp-frontend-production.up.railway.app/",
         methods: ["GET", "POST"]
     }
 })
@@ -831,10 +846,15 @@ app.get("/chatroomMsgs/:id", async (req, res) => { //by chatroom_id - VC
  *       200:
  *         description: Top reviews
  */
-app.get("/reviewsTop", apiKeyMiddleware, async (req, res) => {
-    const rows = await getReviewsTop()
-    res.send(rows)
-})
+app.get("/reviewsTop", async (req, res) => {
+    try {
+        const rows = await getReviewsTop();
+        res.send(rows);
+    } catch (err) {
+        console.error("Error in /reviewsTop:", err);
+        res.status(500).json({ error: "Failed to fetch top reviews" });
+    }
+});
 
 /**
  * @swagger
