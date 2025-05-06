@@ -983,7 +983,7 @@ app.get("/pharmacyPills/:id", async (req, res) => {
     res.send(rows)
     }
     catch (err) {
-        console.log("Failed Fetching Appointment Info: ", err)
+        console.log("Failed Fetching Pharmacy Pills: ", err)
     }
 })
 
