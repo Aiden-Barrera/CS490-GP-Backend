@@ -71,6 +71,7 @@ export async function getPatientDoc(id) { //changed for doc info
         DoctorBase.specialty, DoctorBase.availability 
         FROM PatientBase INNER JOIN DoctorBase on DoctorBase.Doctor_ID = PatientBase.Doctor_ID 
         WHERE Patient_ID = ?;`, [id])
+    console.log("PatientDoc: ", resultRows)
     return resultRows[0]
     }
     catch (err) {
@@ -410,8 +411,8 @@ export async function getApptRequest(id) {
     try {
     const [resultRows] = await pool.query(`
         SELECT PatientBase.First_name, PatientBase.last_name, Requests.Patient_ID, Requests.Doctor_ID, Requests.Appt_Date,
-        Requests.Appt_Time, Requests.Tier, Requests.Request_Status FROM requests INNER JOIN PatientBase ON PatientBase.Patient_ID = Requests.Patient_ID
-        WHERE requests.Doctor_ID = ?;`, [id]) 
+        Requests.Appt_Time, Requests.Tier, Requests.Request_Status FROM Requests INNER JOIN PatientBase ON PatientBase.Patient_ID = Requests.Patient_ID
+        WHERE Requests.Doctor_ID = ?;`, [id]) 
         return resultRows
     }
     catch (err) {
@@ -711,12 +712,14 @@ export async function createDoctor(License_Serial,First_Name,Last_Name,Specialty
 
 export async function createDoctorTiers(Doctor_ID) {
     try {
-    const [resultDoctorTiersCreate] = await pool.query(`
-        INSERT INTO Tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Basic', 'General Consulatation', 100);
-        INSERT INTO Tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Plus', 'Elevated Servicing', 200);
+    const [resultDoctorTiersCreate1] = await pool.query(`
+        INSERT INTO Tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Basic', 'General Consulatation', 100);`, [Doctor_ID])
+    const [resultDoctorTiersCreate2] = await pool.query(`
+        INSERT INTO Tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Plus', 'Elevated Servicing', 200);`, [Doctor_ID])
+    const [resultDoctorTiersCreate3] = await pool.query(` 
         INSERT INTO Tiers (Doctor_ID, Tier, Service, Cost) VALUES (?, 'Premium', 'Premium Doctor-Patient Facilities', 300);`, 
-        [Doctor_ID, Doctor_ID,Doctor_ID])
-    return resultDoctorTiersCreate
+        [Doctor_ID])
+    return resultDoctorTiersCreate1
     } 
     catch (err) {
         console.log("Error Creating Doctor Tiers: ", err)
@@ -837,7 +840,7 @@ export async function createChatroom(Chatroom_Name) {
 
 export async function createChatMsg(Appointment_ID, SenderID, SenderName, SenderType, Message) { //for chatroom above -VC
     try {
-    const [resultMsgCreate] = await pool.query(`INSERT INTO messages (Appointment_ID, SenderID, SenderName, SenderType, Message) 
+    const [resultMsgCreate] = await pool.query(`INSERT INTO Messages (Appointment_ID, SenderID, SenderName, SenderType, Message) 
         VALUES (?, ?, ?, ?, ?);`, [Appointment_ID, SenderID,  SenderName, SenderType, Message])
     return resultMsgCreate
     }
@@ -1103,7 +1106,7 @@ export async function rmPatientDoc(id) {
 
 export async function rmPatientAppt(patient_id, doctor_id) {
     try {
-        const [returnResult] = await pool.query(`delete from Appointments where patient_id = ? and doctor_id = ? 
+        const [returnResult] = await pool.query(`delete from Appointments where Patient_ID = ? and Doctor_ID = ? 
             and Appt_End = false and (Appt_Date > CURDATE() OR (Appt_Date = CURDATE() AND Appt_Time > CURTIME()))`, [patient_id, doctor_id])
         return returnResult
     } catch (err) {
@@ -1235,7 +1238,7 @@ export async function UpdateApptStat(id, status) {
 
 export async function UpdateDoctorFeedback(appointment_id, doctor_feedback) {
     try {
-        const [returnedResult] = await pool.query(`Update Appointments set doctors_feedback = ?, \`Last_Update\` = CURRENT_TIMESTAMP where appointment_id = ?`, 
+        const [returnedResult] = await pool.query(`Update Appointments set Doctors_Feedback = ?, \`Last_Update\` = CURRENT_TIMESTAMP where Appointment_ID = ?`, 
             [doctor_feedback, appointment_id])
         console.log("Doctor Feedback Updated Result: ", returnedResult)
         return returnedResult
@@ -1302,7 +1305,6 @@ export async function appendToRegiment(patientId, newRegimentData) {
         throw new Error("No existing regiment found for this patient.");
       }
   
-      // ✅ Robust parsing of existing regiment
       let existingRegiment = {};
   
       try {
@@ -1391,7 +1393,7 @@ export async function AcceptPrescription(prescription_id) {
 
 export async function deletePatient(id) {
     try {
-    const [deleteResult] = await pool.query(`DELETE FROM patientbase WHERE Patient_ID = ?;`
+    const [deleteResult] = await pool.query(`DELETE FROM PatientBase WHERE Patient_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
@@ -1444,7 +1446,7 @@ export async function deleteDoctor(id) {
 
 export async function deleteDoctorTiers(id) {
     try {
-    const [deleteResult] = await pool.query(`DELETE FROM tiers WHERE Doctor_ID = ?;`
+    const [deleteResult] = await pool.query(`DELETE FROM Tiers WHERE Doctor_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
@@ -1457,7 +1459,7 @@ export async function deleteDoctorTiers(id) {
 
 export async function deleteDoctorSchedule(id) {
     try {
-    const [deleteResult] = await pool.query(`DELETE FROM doctorschedules WHERE Doctor_ID = ?;`
+    const [deleteResult] = await pool.query(`DELETE FROM DoctorSchedules WHERE Doctor_ID = ?;`
     , [id])
     console.log("Database delete result:", deleteResult);
     return deleteResult
@@ -1512,7 +1514,7 @@ export async function deleteForumPost(id) {
     try {
     const [deleteResult] = await pool.query(`
         DELETE FROM Comments WHERE Forum_ID = ?;
-        DELETE FROM Forum_Post WHERE Forum_ID = ?;`
+        DELETE FROM Forum_Posts WHERE Forum_ID = ?;`
     , [id, id])
     console.log("Database delete result:", deleteResult);
     return deleteResult

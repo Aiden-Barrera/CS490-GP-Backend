@@ -82,7 +82,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 const server = http.createServer(app)
 const io = new Server(server, {
     cors: {
-        origin: "https://cs490-gp-frontend-production.up.railway.app/",
+        origin: "https://cs490-gp-frontend-production.up.railway.app",
         methods: ["GET", "POST"]
     }
 })
@@ -595,8 +595,12 @@ app.get("/regiment/:id", async (req, res) => { //based on patient -VC
  *         description: List of all forum posts
  */
 app.get("/forumPosts", async (req, res) => {
-    const rows = await getForumPosts()
-    res.send(rows)
+    try {
+        const rows = await getForumPosts()
+        res.send(rows)
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch top reviews" });
+    }
 })
 
 
@@ -979,7 +983,7 @@ app.get("/pharmacyPills/:id", async (req, res) => {
     res.send(rows)
     }
     catch (err) {
-        console.log("Failed Fetching Appointment Info: ", err)
+        console.log("Failed Fetching Pharmacy Pills: ", err)
     }
 })
 
@@ -1926,10 +1930,10 @@ app.post("/appointment", async (req, res) => {
  *         description: Created new Request for an appointment
  *       400:
  *         description: Missing required information
- *      400:
- *         Patient already has a different doctor
- *      400:
- *         Timeslot taken
+ *       409:
+ *         description: Patient already has a different doctor
+ *       410:
+ *         description: Timeslot taken
  *       500:
  *         description: Internal server error
  */
@@ -1942,7 +1946,7 @@ app.post("/request", async (req, res) => { // We might not need this since it's 
     console.log(req.body)
     try {
         const patientsDoctor = await getPatientDoc(Patient_ID)
-        console.log("Patient Info: ", patientsDoctor.doctor_id, "DoctorID: ", Doctor_ID)
+        console.log("Patient Info: ", patientsDoctor?.doctor_id, "DoctorID: ", Doctor_ID)
         //check if correct doctor
         if (patientsDoctor !== undefined && patientsDoctor?.doctor_id !== Doctor_ID) {
             return res.status(400).json({ error: "Patient already has a different doctor"});
@@ -1952,7 +1956,7 @@ app.post("/request", async (req, res) => { // We might not need this since it's 
         const timeTaken =  await getTimeslot(Doctor_ID, Appt_Date, Appt_Time);
         // console.log("Time Slot Booked: ", timeTaken)
         if(timeTaken.length > 0){
-            return res.status(400).json({ error: "Timeslot taken"});    
+            return res.status(410).json({ error: "Timeslot taken"});    
         }
 
         const requestTaken = await checkExistingRequests(Patient_ID, Doctor_ID, Appt_Date, Appt_Time)
@@ -3364,3 +3368,5 @@ app.delete("/forumPost", async(req, res) => { //delete all comment rows with thi
     const audit = await genereateAudit(req.body.Patient_ID, 'Patient', 'DELETE', event_Details)
     res.status(204).send(deleteResult)
 })
+console.log("Hello brochacho")
+export default app
