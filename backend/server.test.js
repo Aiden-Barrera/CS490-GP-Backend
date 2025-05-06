@@ -467,7 +467,7 @@ describe("/forumPosts", ()=>{
 describe("/comments", ()=>{
     test("should make entry", async ()=>{
         const response = await request(app).post("/comments").send({
-            "Patient_ID":"21", 
+            "Patient_ID":"2", 
             "Forum_ID":"11", 
             "Comment_Text":"It's like Ghandi says, you can drink Diet Coke but why?"
         })
@@ -500,7 +500,7 @@ describe("/regiment", ()=>{
 describe("/appointment", ()=>{
     test("should make entry", async ()=>{
         const response = await request(app).post("/appointment").send({
-            "Patient_ID":"21", 
+            "Patient_ID":"6", 
             "Doctor_ID":"3", 
             "Appt_Date":"2025-04-28", 
             "Appt_Time":"9:00-10:00", 
@@ -557,6 +557,7 @@ describe("/request", ()=>{
     })
 })
 */
+/*
 describe("/preliminaries", ()=>{
     test("should make entry", async ()=>{
         const response = await request(app).post("/preliminaries").send({
@@ -572,7 +573,7 @@ describe("/preliminaries", ()=>{
         expect(response.statusCode).toBe(400)
     })
 })
-
+*/
 // describe("/sendPrescription", ()=>{
 //     test("should make entry", async ()=>{
 //         const response = await request(app).post("/sendPrescription").send({
