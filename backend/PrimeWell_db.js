@@ -105,7 +105,7 @@ export async function getDoctors(id) {
 export async function getDocPatients(Doctor_ID) { //patient info for doc
     try {
     const [resultRows] = await pool.query(`SELECT PatientBase.First_Name, PatientBase.Last_Name, 
-    PatientBase.email, PatientBase.phone 
+    PatientBase.email, PatientBase.phone, PatientBase.Patient_ID 
     FROM DoctorBase INNER JOIN PatientBase on DoctorBase.Doctor_ID = PatientBase.Doctor_ID 
     WHERE DoctorBase.Doctor_ID = ?;`, [Doctor_ID])
     return resultRows
