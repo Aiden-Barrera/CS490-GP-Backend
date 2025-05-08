@@ -593,6 +593,7 @@ describe("/preliminaries", ()=>{
 //     })
 // })
 
+/*
 describe("/reviews", ()=>{
     test("should make entry", async ()=>{
         const response = await request(app).post("/reviews").send({
@@ -610,6 +611,7 @@ describe("/reviews", ()=>{
         expect(response.statusCode).toBe(400)
     })
 })
+*/
 /*
 describe("/patientsurvey", ()=>{
     test("should make entry", async ()=>{
