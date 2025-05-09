@@ -1792,6 +1792,41 @@ app.post("/forumPosts", async (req, res) => {
 
 /**
  * @swagger
+ * /exercisebank:
+ *   post:
+ *     summary: Create exercise for exercise bank
+ *     tags: [ForumPosts]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Created new exercise
+ *       400:
+ *         description: Missing required information
+ *       500:
+ *         description: Internal server error
+ */
+app.post("/exercisebank", async (req, res) => { //User created exercise from post - VC
+    const { Patient_ID, Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps } = req.body
+    if (!Patient_ID || !Exercise_Name || !Muscle_Group || !Exercise_Description || !Exercise_Class || !Sets || !Reps) {
+        return res.status(400).json({ error: "Missing required information" });
+    }
+    try {
+        const newExercise = await createExercise(Exercise_Name, Muscle_Group, Exercise_Description, Exercise_Class, Sets, Reps)
+        const event_Details = 'Created new exercise'
+        const audit = await genereateAudit(Patient_ID, 'Patient', 'POST', event_Details)
+        res.status(201).send(newExercise)
+    } catch (error) {
+        res.status(500).json({ error: error.message || "Internal server error" });
+    }
+})
+
+/**
+ * @swagger
  * /comments:
  *   post:
  *     summary: Create comment for forum post
