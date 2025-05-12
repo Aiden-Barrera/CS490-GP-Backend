@@ -145,26 +145,6 @@ async function setupQueuesAtStartup() {
     }
 }
 
-// await consumePrescriptions("1", (prescription) => {
-//     console.log('New prescription received:', prescription); // 
-//     // Here, push to frontend via WebSocket, or store in database, etc.
-// });
-
-// await consumePrescriptions("2", (prescription) => {
-//     console.log('New prescription received:', prescription); // 
-//     // Here, push to frontend via WebSocket, or store in database, etc.
-// });
-
-// await consumePrescriptions("5", (prescription) => {
-//     console.log('New prescription received:', prescription); // 
-//     // Here, push to frontend via WebSocket, or store in database, etc.
-// });
-
-// await consumePrescriptions("7", (prescription) => {
-//     console.log('New prescription received:', prescription); // 
-//     // Here, push to frontend via WebSocket, or store in database, etc.
-// });
-
 const PORT = process.env.PORT || 3000;
 setupQueuesAtStartup().then(() => {
     server.listen(PORT, () => {
@@ -188,8 +168,6 @@ const apiKeyMiddleware = (req, res, next) => {
   
     next(); // Proceed to the next middleware or route handler
 };
-
-// app.use(apiKeyMiddleware)
 
 const store = multer.diskStorage({
     destination: (req, file, cb) => { //where to store (folder name ExerciseBankImages)

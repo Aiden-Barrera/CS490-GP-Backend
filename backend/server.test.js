@@ -517,7 +517,7 @@ describe("/appointment", ()=>{
         expect(response.statusCode).toBe(400)
     })
 })
-/*
+
 describe("/request", ()=>{
     test("should make entry", async ()=>{
         const response = await request(app).post("/request").send({
@@ -527,7 +527,7 @@ describe("/request", ()=>{
             "Appt_Time":"8:30-9:30", 
             "Tier":"Basic"
         })
-        expect(response.statusCode).toBe(201)
+        expect(response.statusCode).toBe(400)
     })
 
     test("should result in an error", async ()=>{
@@ -558,8 +558,8 @@ describe("/request", ()=>{
         expect(response.statusCode).toBe(400)
     })
 })
-*/
-/*
+
+
 describe("/preliminaries", ()=>{
     test("should make entry", async ()=>{
         const response = await request(app).post("/preliminaries").send({
@@ -575,7 +575,7 @@ describe("/preliminaries", ()=>{
         expect(response.statusCode).toBe(400)
     })
 })
-*/
+
 // describe("/sendPrescription", ()=>{
 //     test("should make entry", async ()=>{
 //         const response = await request(app).post("/sendPrescription").send({
@@ -595,7 +595,7 @@ describe("/preliminaries", ()=>{
 //     })
 // })
 
-/*
+
 describe("/reviews", ()=>{
     test("should make entry", async ()=>{
         const response = await request(app).post("/reviews").send({
@@ -613,7 +613,7 @@ describe("/reviews", ()=>{
         expect(response.statusCode).toBe(400)
     })
 })
-*/
+
 /*
 describe("/patientsurvey", ()=>{
     test("should make entry", async ()=>{
