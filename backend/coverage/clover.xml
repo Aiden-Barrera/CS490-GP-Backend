@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1747093546764" clover="3.2.0">
-  <project timestamp="1747093546764" name="All files">
-    <metrics statements="1403" coveredstatements="617" conditionals="302" coveredconditionals="101" methods="223" coveredmethods="112" elements="1928" coveredelements="830" complexity="0" loc="1403" ncloc="1403" packages="1" files="4" classes="4"/>
+<coverage generated="1747094624749" clover="3.2.0">
+  <project timestamp="1747094624750" name="All files">
+    <metrics statements="1403" coveredstatements="595" conditionals="302" coveredconditionals="94" methods="223" coveredmethods="108" elements="1928" coveredelements="797" complexity="0" loc="1403" ncloc="1403" packages="1" files="4" classes="4"/>
     <file name="PrimeWell_db.js" path="/Users/fardbook/Desktop/Courses/NJIT Classes/CS490/GROUP_PROJECT/CS490-GP-Backend/backend/PrimeWell_db.js">
-      <metrics statements="595" coveredstatements="205" conditionals="22" coveredconditionals="11" methods="107" coveredmethods="57"/>
+      <metrics statements="595" coveredstatements="199" conditionals="22" coveredconditionals="10" methods="107" coveredmethods="55"/>
       <line num="3" count="1" type="stmt"/>
       <line num="6" count="1" type="stmt"/>
       <line num="22" count="0" type="stmt"/>
@@ -26,10 +26,10 @@
       <line num="60" count="1" type="stmt"/>
       <line num="63" count="0" type="stmt"/>
       <line num="64" count="0" type="stmt"/>
-      <line num="69" count="4" type="stmt"/>
-      <line num="70" count="4" type="stmt"/>
-      <line num="74" count="4" type="stmt"/>
-      <line num="75" count="4" type="stmt"/>
+      <line num="69" count="2" type="stmt"/>
+      <line num="70" count="2" type="stmt"/>
+      <line num="74" count="2" type="stmt"/>
+      <line num="75" count="2" type="stmt"/>
       <line num="78" count="0" type="stmt"/>
       <line num="79" count="0" type="stmt"/>
       <line num="84" count="1" type="stmt"/>
@@ -253,9 +253,9 @@
       <line num="666" count="3" type="stmt"/>
       <line num="669" count="0" type="stmt"/>
       <line num="670" count="0" type="stmt"/>
-      <line num="675" count="27" type="stmt"/>
-      <line num="676" count="27" type="stmt"/>
-      <line num="679" count="27" type="stmt"/>
+      <line num="675" count="26" type="stmt"/>
+      <line num="676" count="26" type="stmt"/>
+      <line num="679" count="26" type="stmt"/>
       <line num="682" count="0" type="stmt"/>
       <line num="683" count="0" type="stmt"/>
       <line num="688" count="0" type="stmt"/>
@@ -344,9 +344,9 @@
       <line num="885" count="0" type="stmt"/>
       <line num="887" count="0" type="stmt"/>
       <line num="888" count="0" type="stmt"/>
-      <line num="893" count="1" type="stmt"/>
-      <line num="894" count="1" type="stmt"/>
-      <line num="895" count="1" type="stmt"/>
+      <line num="893" count="0" type="stmt"/>
+      <line num="894" count="0" type="stmt"/>
+      <line num="895" count="0" type="stmt"/>
       <line num="898" count="0" type="stmt"/>
       <line num="899" count="0" type="stmt"/>
       <line num="904" count="0" type="stmt"/>
@@ -380,9 +380,9 @@
       <line num="1016" count="15" type="stmt"/>
       <line num="1018" count="0" type="stmt"/>
       <line num="1019" count="0" type="stmt"/>
-      <line num="1025" count="1" type="stmt"/>
-      <line num="1028" count="1" type="cond" truecount="1" falsecount="1"/>
-      <line num="1029" count="1" type="stmt"/>
+      <line num="1025" count="0" type="stmt"/>
+      <line num="1028" count="0" type="cond" truecount="0" falsecount="2"/>
+      <line num="1029" count="0" type="stmt"/>
       <line num="1031" count="0" type="stmt"/>
       <line num="1032" count="0" type="stmt"/>
       <line num="1035" count="0" type="stmt"/>
@@ -643,7 +643,7 @@
       <line num="88" count="15" type="stmt"/>
     </file>
     <file name="server.js" path="/Users/fardbook/Desktop/Courses/NJIT Classes/CS490/GROUP_PROJECT/CS490-GP-Backend/backend/server.js">
-      <metrics statements="767" coveredstatements="398" conditionals="278" coveredconditionals="90" methods="112" coveredmethods="54"/>
+      <metrics statements="767" coveredstatements="382" conditionals="278" coveredconditionals="84" methods="112" coveredmethods="52"/>
       <line num="50" count="1" type="stmt"/>
       <line num="58" count="1" type="stmt"/>
       <line num="59" count="1" type="stmt"/>
@@ -1098,15 +1098,15 @@
       <line num="1923" count="1" type="stmt"/>
       <line num="1925" count="0" type="cond" truecount="0" falsecount="2"/>
       <line num="1953" count="1" type="stmt"/>
-      <line num="1954" count="4" type="stmt"/>
-      <line num="1955" count="4" type="cond" truecount="4" falsecount="0"/>
-      <line num="1956" count="1" type="stmt"/>
-      <line num="1959" count="3" type="stmt"/>
-      <line num="1960" count="3" type="stmt"/>
-      <line num="1961" count="3" type="stmt"/>
-      <line num="1962" count="3" type="stmt"/>
-      <line num="1964" count="3" type="cond" truecount="3" falsecount="1"/>
-      <line num="1965" count="3" type="stmt"/>
+      <line num="1954" count="1" type="stmt"/>
+      <line num="1955" count="1" type="cond" truecount="3" falsecount="1"/>
+      <line num="1956" count="0" type="stmt"/>
+      <line num="1959" count="1" type="stmt"/>
+      <line num="1960" count="1" type="stmt"/>
+      <line num="1961" count="1" type="stmt"/>
+      <line num="1962" count="1" type="stmt"/>
+      <line num="1964" count="1" type="cond" truecount="3" falsecount="1"/>
+      <line num="1965" count="1" type="stmt"/>
       <line num="1969" count="0" type="stmt"/>
       <line num="1971" count="0" type="cond" truecount="0" falsecount="2"/>
       <line num="1972" count="0" type="stmt"/>
@@ -1119,14 +1119,14 @@
       <line num="1983" count="0" type="stmt"/>
       <line num="1986" count="0" type="cond" truecount="0" falsecount="2"/>
       <line num="2010" count="1" type="stmt"/>
-      <line num="2011" count="2" type="stmt"/>
-      <line num="2012" count="2" type="cond" truecount="2" falsecount="0"/>
-      <line num="2013" count="1" type="stmt"/>
-      <line num="2016" count="1" type="stmt"/>
-      <line num="2017" count="1" type="stmt"/>
-      <line num="2018" count="1" type="stmt"/>
-      <line num="2019" count="1" type="stmt"/>
-      <line num="2020" count="1" type="stmt"/>
+      <line num="2011" count="0" type="stmt"/>
+      <line num="2012" count="0" type="cond" truecount="0" falsecount="2"/>
+      <line num="2013" count="0" type="stmt"/>
+      <line num="2016" count="0" type="stmt"/>
+      <line num="2017" count="0" type="stmt"/>
+      <line num="2018" count="0" type="stmt"/>
+      <line num="2019" count="0" type="stmt"/>
+      <line num="2020" count="0" type="stmt"/>
       <line num="2022" count="0" type="cond" truecount="0" falsecount="2"/>
       <line num="2047" count="1" type="stmt"/>
       <line num="2048" count="0" type="stmt"/>
@@ -1139,13 +1139,13 @@
       <line num="2073" count="0" type="stmt"/>
       <line num="2074" count="0" type="stmt"/>
       <line num="2099" count="1" type="stmt"/>
-      <line num="2100" count="2" type="stmt"/>
-      <line num="2101" count="2" type="cond" truecount="2" falsecount="0"/>
-      <line num="2102" count="1" type="stmt"/>
-      <line num="2105" count="1" type="stmt"/>
-      <line num="2106" count="1" type="stmt"/>
-      <line num="2107" count="1" type="cond" truecount="1" falsecount="1"/>
-      <line num="2108" count="1" type="stmt"/>
+      <line num="2100" count="0" type="stmt"/>
+      <line num="2101" count="0" type="cond" truecount="0" falsecount="2"/>
+      <line num="2102" count="0" type="stmt"/>
+      <line num="2105" count="0" type="stmt"/>
+      <line num="2106" count="0" type="stmt"/>
+      <line num="2107" count="0" type="cond" truecount="0" falsecount="2"/>
+      <line num="2108" count="0" type="stmt"/>
       <line num="2110" count="0" type="stmt"/>
       <line num="2111" count="0" type="stmt"/>
       <line num="2112" count="0" type="stmt"/>
