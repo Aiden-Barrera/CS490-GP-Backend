@@ -2047,7 +2047,8 @@ app.post("/preliminaries", async (req, res) => {
 // ENDPOINT USED WITH RABBITMQ, SO DOCTOR CAN CREATE AND SEND PRESCRIPTION TO QUEUE
 app.post('/sendPrescription', async (req, res) => {
     const {Patient_ID, Doctor_ID, Pill_ID, Quantity, Pharm_ID} = req.body
-    if (!Patient_ID | !Doctor_ID | !Pill_ID | !Quantity || !Pharm_ID) {
+    console.log("Sending Prescription Info: ", req.body)
+    if (!Patient_ID || !Doctor_ID || !Pill_ID || !Quantity || !Pharm_ID) {
         return res.status(400).json({ error: "Missing required information" });
     }
 
