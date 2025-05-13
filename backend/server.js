@@ -2518,17 +2518,17 @@ app.patch('/doctor/:id', async (req, res) => {
         const id = req.params.id;
         let entry = req.body;
 
-        // Fields that are NOT allowed to be updated
-        const restrictedFields = ['PW', 'Doctor_ID', 'License_Serial', 'Specialty', 'Availability', 'Last_Update', 'Create_Date'];
+        // // Fields that are NOT allowed to be updated
+        // const restrictedFields = ['PW', 'Doctor_ID', 'License_Serial', 'Specialty', 'Availability', 'Last_Update', 'Create_Date'];
 
-        // Remove restricted fields from the entry object
-        entry = Object.fromEntries(
-            Object.entries(entry).filter(([key]) => !restrictedFields.includes(key))
-        );
+        // // Remove restricted fields from the entry object
+        // entry = Object.fromEntries(
+        //     Object.entries(entry).filter(([key]) => !restrictedFields.includes(key))
+        // );
 
-        if (Object.keys(entry).length === 0) {
-            return res.status(400).json({ error: "No valid fields to update." });
-        }
+        // if (Object.keys(entry).length === 0) {
+        //     return res.status(400).json({ error: "No valid fields to update." });
+        // }
         console.log("Doctor ID: ", id, " new info: ", entry)
         const updateResult = await UpdateDoctorInfo(id, entry);
         const event_Details = 'Edited Doctor info';
