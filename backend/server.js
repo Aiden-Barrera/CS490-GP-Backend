@@ -2529,7 +2529,7 @@ app.patch('/doctor/:id', async (req, res) => {
         if (Object.keys(entry).length === 0) {
             return res.status(400).json({ error: "No valid fields to update." });
         }
-        console.log("Doctor ID: ", id)
+        console.log("Doctor ID: ", id, " new info: ", entry)
         const updateResult = await UpdateDoctorInfo(id, entry);
         const event_Details = 'Edited Doctor info';
         const audit = await genereateAudit(id, 'Doctor', 'PATCH', event_Details);
