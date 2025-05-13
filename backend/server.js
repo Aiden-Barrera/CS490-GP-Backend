@@ -2518,8 +2518,8 @@ app.patch('/doctor/:id', async (req, res) => {
         const id = req.params.id;
         let entry = req.body;
         console.log("New Body for Doctor: ", req.body)
-        // // Fields that are NOT allowed to be updated
-        const restrictedFields = ['PW', 'Doctor_ID', 'License_Serial', 'Specialty', 'Availability', 'Last_Update', 'Create_Date'];
+        // Fields that are NOT allowed to be updated
+        const restrictedFields = ['PW', 'Doctor_ID', 'License_Serial', 'Specialty', 'Last_Update', 'Create_Date'];
 
         // // Remove restricted fields from the entry object
         entry = Object.fromEntries(
